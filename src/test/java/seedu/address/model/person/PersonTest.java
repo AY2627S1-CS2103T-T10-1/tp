@@ -93,7 +93,32 @@ public class PersonTest {
     @Test
     public void toStringMethod() {
         String expected = Person.class.getCanonicalName() + "{name=" + ALICE.getName() + ", phone=" + ALICE.getPhone()
-                + ", email=" + ALICE.getEmail() + ", address=" + ALICE.getAddress() + ", tags=" + ALICE.getTags() + "}";
+                + ", email=" + ALICE.getEmail() + ", address=" + ALICE.getAddress() + ", remark=" + ALICE.getRemark()
+                + ", tags=" + ALICE.getTags() + "}";
         assertEquals(expected, ALICE.toString());
+    }
+
+    @Test
+    public void remark_isDataNotIdentity() {
+        Person edited = new PersonBuilder(ALICE).withRemark("note").build();
+        assertTrue(ALICE.isSamePerson(edited));
+        assertFalse(ALICE.equals(edited));
+        Person copy = new PersonBuilder(edited).build();
+        assertEquals(edited, copy);
+        assertEquals(edited.hashCode(), copy.hashCode());
+        assertEquals("note", copy.getRemark().value);
+    }
+
+    @Test
+    public void constructor_withoutRemark_defaultsToEmpty() {
+        Person person = new Person(ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(), ALICE.getAddress(),
+                ALICE.getTags());
+        assertEquals(new Remark(""), person.getRemark());
+    }
+
+    @Test
+    public void constructor_nullRemark_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> new Person(ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(),
+                ALICE.getAddress(), null, ALICE.getTags()));
     }
 }
