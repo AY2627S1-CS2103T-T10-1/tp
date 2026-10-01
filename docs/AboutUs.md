@@ -37,15 +37,14 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 * Role: Developer
 * Responsibilities: Client-management features and related testing
 
-### Jean Doe
+### Anson
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/iians0n.png" width="200px">
 
-[[github](http://github.com/johndoe)]
-[[portfolio](team/johndoe.md)]
+[[github](https://github.com/iians0n)]
 
 * Role: Developer
-* Responsibilities: Dev Ops + Threading
+* Responsibilities: Project website and CI
 
 ### Pang Yi Jie
 
