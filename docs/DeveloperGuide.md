@@ -261,13 +261,11 @@ _{Explain here how the data archiving feature will be implemented}_
 
 **Target user profile**:
 
-* has a need to manage a significant number of contacts
-* prefers desktop apps over other types of applications
-* can type fast
-* prefers typing to mouse interactions
-* is reasonably comfortable using CLI apps
+* is a freelancer or independent professional
+* manages clients, projects, deadlines, and follow-ups
+* prefers a keyboard-first desktop application
 
-**Value proposition**: Manage contacts faster than with a typical mouse-driven GUI application.
+**Value proposition**: Manage client relationships and related work in a keyboard-first desktop CRM.
 
 
 ### User stories
