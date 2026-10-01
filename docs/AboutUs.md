@@ -19,24 +19,23 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 * Role: Project Advisor
 
-### Jane Doe
+### Ng Ting Hui
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/436.png" width="200px">
 
-[[github](http://github.com/johndoe)]
-[[portfolio](team/johndoe.md)]
+[[github](http://github.com/ting436)]
 
 * Role: Team Lead
 * Responsibilities: UI
 
-### Johnny Doe
+### Clarence Choo Jia Yi
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/clarencechoo.png" width="200px">
 
-[[github](http://github.com/johndoe)] [[portfolio](team/johndoe.md)]
+[[github](https://github.com/ClarenceChoo)]
 
 * Role: Developer
-* Responsibilities: Data
+* Responsibilities: Client-management features and related testing
 
 ### Anson
 
@@ -47,12 +46,11 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 * Role: Developer
 * Responsibilities: Project website and CI
 
-### James Doe
+### Pang Yi Jie
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/pang16334.png" width="200px">
 
-[[github](http://github.com/johndoe)]
-[[portfolio](team/johndoe.md)]
+[[github](https://github.com/pang16334)]
 
 * Role: Developer
-* Responsibilities: UI
+* Responsibilities: Develop features and user-facing product functionality that meet user requirements.
