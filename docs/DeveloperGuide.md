@@ -259,15 +259,16 @@ _{Explain here how the data archiving feature will be implemented}_
 
 ### Product scope
 
+<!-- Anson used OpenAI Codex to draft this wording. -->
+
 **Target user profile**:
 
-* has a need to manage a significant number of contacts
-* prefers desktop apps over other types of applications
-* can type fast
-* prefers typing to mouse interactions
-* is reasonably comfortable using CLI apps
+* is a freelancer or independent professional managing client relationships
+* needs to organize client details, projects, deadlines and follow-ups
+* prefers a desktop app with local data storage
+* can type fast and prefers typed commands to mouse interactions
 
-**Value proposition**: Manage contacts faster than with a typical mouse-driven GUI application.
+**Value proposition**: Keep client details and related work in one place, using typed commands to find and update records.
 
 
 ### User stories
