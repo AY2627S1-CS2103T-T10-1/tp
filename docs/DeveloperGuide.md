@@ -259,8 +259,6 @@ _{Explain here how the data archiving feature will be implemented}_
 
 ### Product scope
 
-<!-- Anson used OpenAI Codex to draft this wording. -->
-
 **Target user profile**:
 
 * is a freelancer or independent professional managing client relationships
