@@ -2,7 +2,6 @@
 
 [![CI Status](https://github.com/AY2627S1-CS2103T-T10-1/tp/workflows/Java%20CI/badge.svg)](https://github.com/AY2627S1-CS2103T-T10-1/tp/actions)
 
-<!-- Anson used OpenAI Codex to draft this wording. -->
 ClientDesk is a keyboard-first desktop CRM for freelancers and independent professionals who type fast and prefer typing to mouse interactions. It is designed to keep client details, projects, deadlines and follow-ups in one place.
 
 This is the CS2103T team project for **CS2103T-T10-1**. Development starts from the course's AddressBook Level 3 (AB3) codebase; the initial application and detailed guides still describe AB3 while ClientDesk features are being developed.
@@ -25,5 +24,3 @@ This is the CS2103T team project for **CS2103T-T10-1**. Development starts from 
 ## Acknowledgements
 
 ClientDesk is based on [AddressBook Level 3](https://se-education.org/addressbook-level3/) by [SE-EDU](https://se-education.org/), using the [course starter repository](https://github.com/NUS-CS2103-AY2627-S1/tp).
-
-OpenAI Codex assisted with the initial repository and project website setup under the direction of iians0n.
