@@ -280,7 +280,7 @@ High-priority stories support the core workflows in the agreed MVP feature speci
 Medium- and low-priority stories record optional enhancements and deferred requirements.
 
 IDs 1-30 refer to the original requirements list. Overlapping stories are combined while retaining their IDs.
-IDs 31-35 capture needs made explicit by the feature specification and usage narrative.
+IDs 31-36 capture needs made explicit by the feature specification and usage narrative.
 
 | ID | Priority | As a ... | I want to ... | So that I can ... |
 | --- | --- | --- | --- | --- |
@@ -290,31 +290,32 @@ IDs 31-35 capture needs made explicit by the feature specification and usage nar
 | 4, 27, 28, 29 | `* * *` | freelancer | edit a client's name, phone number or email address | keep their contact information accurate |
 | 5 | `*` | freelancer working with several people at one organization | associate multiple contact people with one client record | keep related contacts together |
 | 6 | `* * *` | freelancer | record notes about a client | remember information from previous interactions |
-| 7 | `* *` | freelancer with many clients | choose to sort clients by name or date added | browse records in the order useful to me |
-| 8, 12 | `* *` | freelancer working across industries and project types | categorize clients using tags | distinguish different professional relationships |
+| 7 | `* *` | freelancer with many clients | choose to sort clients by name, follow-up date or date added | browse records in the order useful to me |
+| 8, 12 | `* * *` | freelancer working across industries and project types | add or remove client tags | keep the categories of my professional relationships accurate |
 | 9 | `* *` | freelancer | export my client records | keep a backup or use the information outside ClientDesk |
 | 10 | `* * *` | freelancer | delete a client record I no longer need | remove unwanted records from my client list |
 | 11 | `* * *` | freelancer | find clients using partial names, phone numbers, email addresses or tags | retrieve a client's information without scanning the whole list |
 | 13 | `* * *` | freelancer | set or update a client's follow-up date and details | remember when and why to contact them |
-| 14 | `* *` | freelancer | archive inactive clients while keeping their history | focus on active relationships without losing old records |
+| 14 | `* *` | freelancer | archive inactive clients and restore them when needed | focus on active relationships while retaining access to old records |
 | 15 | `* * *` | freelancer | record notes about a client's ongoing project | retain the requirements and decisions relevant to that work |
 | 16 | `* * *` | freelancer | update a project's status, including marking it completed | distinguish work still in progress from finished work |
 | 17 | `* *` | freelancer | receive an alert when a client follow-up is due | notice important actions without repeatedly checking the agenda |
 | 18 | `* *` | freelancer reviewing several clients | compare the details of multiple clients at once | review related records without repeatedly switching between them |
-| 19 | `* * *` | freelancer | view a client's contact details, projects, notes and follow-up | recover the context needed to work with or contact that client |
+| 19 | `* * *` | freelancer | view a client's contact details, tags, projects, notes and follow-up | recover the context needed to work with or contact that client |
 | 20 | `* * *` | freelancer | identify overdue follow-ups and the clients they belong to | contact clients whose follow-ups I have missed |
 | 21 | `*` | freelancer using client tags | distinguish tags by colour | recognize client categories at a glance |
 | 22 | `* * *` | freelancer who made an accidental change | undo my most recent data-changing action | recover the previous records without re-entering them |
 | 23 | `* *` | freelancer | view a summary of my clients and pending work | understand my current business workload |
 | 24 | `*` | freelancer seeking new clients | receive prospective clients' enquiries through ClientDesk | keep incoming leads together with my client records |
-| 25 | `* *` | freelancer with competing commitments | assign priority levels to projects | identify work that matters most when deadlines alone are insufficient |
+| 25 | `* * *` | freelancer with competing commitments | set or update a project's priority | identify work that matters most when deadlines alone are insufficient |
 | 26 | `* * *` | freelancer | add a project with a deadline under its client | track that client's deliverables and when they are due |
 | 30 | `* *` | freelancer | view a summary of completed projects | review my past work and output |
 | 31 | `* * *` | new or returning user | view command descriptions, formats and examples | learn or recall how to use ClientDesk |
-| 32 | `* * *` | freelancer | list my clients with their contact details | browse my records and choose the client I need to work with |
+| 32 | `* * *` | freelancer | list my clients in name order with their contact details and tags | browse my records and choose the client I need to work with |
 | 33 | `* * *` | freelancer | edit a project's title or deadline | keep the recorded work accurate when plans change |
 | 34 | `* * *` | freelancer planning upcoming work | view upcoming projects and client follow-ups together in an agenda | plan my work and client communications in one place |
 | 35 | `* * *` | freelancer returning to ClientDesk | retrieve the records saved during my previous session | continue managing clients without re-entering their information |
+| 36 | `* *` | freelancer with many clients | filter clients by tags or by whether they have pending or overdue work | focus on the relationships relevant to my current task |
 
 ### Use cases
 
