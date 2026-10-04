@@ -356,8 +356,12 @@ IDs 31-36 capture needs made explicit by the feature specification and usage nar
 
 ### Glossary
 
+* **Agenda**: A chronological view that brings together upcoming and overdue project deadlines and follow-ups.
+* **Client**: A person or organization that receives the user's professional services and whose information is managed in ClientDesk.
+* **Customer relationship management (CRM)**: The practice of organizing client information and interactions to manage ongoing professional relationships.
+* **Follow-up**: A dated action that the user plans to carry out for a client.
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
-* **Private contact detail**: A contact detail that is not meant to be shared with others
+* **Project**: A piece of work undertaken for a client and tracked by its status, priority, and optional deadline.
 
 --------------------------------------------------------------------------------------------------------------------
 
