@@ -21,9 +21,9 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 ### Ng Ting Hui
 
-<img src="images/436.png" width="200px">
+<img src="images/ting436.png" width="200px">
 
-[[github](http://github.com/ting436)]
+[[github](https://github.com/ting436)]
 
 * Role: Team Lead
 * Responsibilities: UI
