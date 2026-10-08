@@ -66,9 +66,9 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 
 ### Viewing help: `help`
 
-Shows a message explaining how to access the help page.
-
-![help message](images/helpMessage.png)
+Opens a help window containing the link to the ClientDesk User Guide. Click **Copy URL**
+to copy the link, then paste it into your browser. You can also open this window from
+the Help menu or by pressing `F1`.
 
 Format: `help`
 
