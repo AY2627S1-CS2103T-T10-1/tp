@@ -1,37 +1,44 @@
 package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.model.Model.PREDICATE_SHOW_ALL_PERSONS;
 
 import seedu.address.commons.util.ToStringBuilder;
-import seedu.address.logic.Messages;
 import seedu.address.model.Model;
-import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.person.PersonContainsKeywordsPredicate;
 
 /**
- * Finds and lists all persons in the address book whose name contains any of the argument keywords.
- * Keyword matching is case insensitive.
+ * Finds clients matching every keyword across their name, phone, email, and tags.
+ * Lists matches in name order, or restores the full list when there are no matches.
  */
 public class FindCommand extends Command {
 
     public static final String COMMAND_WORD = "find";
 
-    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Finds all persons whose names contain any of "
-            + "the specified keywords (case-insensitive) and displays them as a list with index numbers.\n"
-            + "Parameters: KEYWORD [MORE_KEYWORDS]...\n"
-            + "Example: " + COMMAND_WORD + " alice bob charlie";
+    public static final String MESSAGE_USAGE = "Usage: " + COMMAND_WORD + " KEYWORD [KEYWORD]...";
+    public static final String MESSAGE_SUCCESS = "Found %1$d matching clients.";
+    public static final String MESSAGE_NO_MATCHES = "No clients matched: %1$s.";
 
-    private final NameContainsKeywordsPredicate predicate;
+    private final PersonContainsKeywordsPredicate predicate;
 
-    public FindCommand(NameContainsKeywordsPredicate predicate) {
-        this.predicate = predicate;
+    /**
+     * Creates a command that searches using the given {@code predicate}.
+     */
+    public FindCommand(PersonContainsKeywordsPredicate predicate) {
+        this.predicate = requireNonNull(predicate);
     }
 
     @Override
     public CommandResult execute(Model model) {
         requireNonNull(model);
         model.updateFilteredPersonList(predicate);
-        return new CommandResult(
-                String.format(Messages.MESSAGE_PERSONS_LISTED_OVERVIEW, model.getFilteredPersonList().size()));
+        int matchingClientCount = model.getFilteredPersonList().size();
+        if (matchingClientCount == 0) {
+            model.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
+            return new CommandResult(String.format(MESSAGE_NO_MATCHES, String.join(" ", predicate.getKeywords())));
+        }
+
+        return new CommandResult(String.format(MESSAGE_SUCCESS, matchingClientCount));
     }
 
     @Override
