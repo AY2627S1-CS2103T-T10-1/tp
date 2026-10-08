@@ -173,7 +173,8 @@ share this displayed list, so editing or deleting index 1 always targets the fir
 `FindCommand` displays `Found <number> matching clients.` when matches exist. Otherwise, it restores the full list
 and displays `No clients matched: <keywords>.`, preserving keyword case and joining keywords with single spaces.
 Each search considers the full address book. `LogicManager` skips saving for `FindCommand` because search only
-changes the view. Other commands keep their existing saving behavior.
+changes the view. `HelpCommand` also skips saving because it only displays instructions.
+Other commands keep their existing saving behavior.
 
 ### \[Proposed\] Undo/redo feature
 
