@@ -119,6 +119,10 @@ public class LogicManager implements Logic {
         }
 
         model.setAddressBook(proposedModel.getAddressBook());
+        return result;
+    }
+
+    /**
      * Saves an email update before returning success and restores the record if saving fails.
      * Unchanged emails do not trigger a save. The current list filter is preserved.
      */
