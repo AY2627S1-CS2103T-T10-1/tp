@@ -11,6 +11,9 @@ public class ClientDeskHelp {
 
     private static final Map<String, CommandHelp> COMMANDS = createCommands();
 
+    private ClientDeskHelp() {
+    }
+
     /**
      * Returns whether the given command has a help entry.
      */
