@@ -68,6 +68,12 @@ public class ClientDeskHelp {
                 "list",
                 "No parameters. Clients are sorted by name, ignoring case; ties use creation order.",
                 "list"));
+        commands.put("list-clients", new CommandHelp(
+                "Display all clients with indexes.",
+                "list-clients",
+                "No parameters. Clients are sorted by name, ignoring case; ties use creation order."
+                + " The existing `list` command remains available.",
+                "list-clients"));
         commands.put("view", new CommandHelp(
                 "Show a client record, projects, notes, tags and follow-up.",
                 "view CLIENT_INDEX",

@@ -26,7 +26,7 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
    Some example commands you can try:
 
-   * `list` : Lists all contacts.
+   * `list-clients` : Lists all clients.
 
    * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01` : Adds a contact named `John Doe` to the Address Book.
 
@@ -134,6 +134,14 @@ Examples:
 Shows a list of all persons in the address book.
 
 Format: `list`
+
+### Listing all clients: `list-clients`
+
+Displays all clients and resets the current search filter. Clients appear in case-insensitive name order; clients with the same name retain their creation order. The existing `list` command remains available.
+
+Format: `list-clients`
+
+Example: `find acme` followed by `list-clients` restores the full client list.
 
 ### Editing a person: `edit`
 
@@ -244,4 +252,5 @@ Action | Format, Examples
 **Edit** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [t/TAG]…​`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
 **Find** | `find KEYWORD [KEYWORD]...`<br> e.g., `find acme startup`
 **List** | `list`
+**List Clients** | `list-clients`
 **Help** | `help [COMMAND]`
