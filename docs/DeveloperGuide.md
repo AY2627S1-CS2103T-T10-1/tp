@@ -339,40 +339,160 @@ IDs 31-36 capture needs made explicit by the feature specification and usage nar
 
 ### Use cases
 
-(For all use cases below, the **System** is the `AddressBook` and the **Actor** is the `user`, unless specified otherwise)
+(For all use cases below, the **System** is `ClientDesk` and the **Actor** is a freelancer or independent
+professional, unless specified otherwise.)
 
-**Use case: Delete a person**
+#### UC01: Record new work for a client
+
+**Preconditions:** ClientDesk is running and the client has already been added.
 
 **MSS**
 
-1.  User requests to list persons
-2.  AddressBook shows a list of persons
-3.  User requests to delete a specific person in the list
-4.  AddressBook deletes the person
+1.  User searches for the client by name.
+2.  ClientDesk shows the matching client.
+3.  User views the client's details.
+4.  User adds a project with a title and deadline to the client.
+5.  ClientDesk validates and saves the project.
+6.  User adds a note describing the latest client interaction.
+7.  ClientDesk validates and saves the note.
+8.  User sets a follow-up date and optional follow-up details for the client.
+9.  ClientDesk validates and saves the follow-up.
+10. User opens the agenda.
+11. ClientDesk shows the project and follow-up in date order.
 
     Use case ends.
 
 **Extensions**
 
-* 2a. The list is empty.
+* 2a. No client matches the search.
 
-  Use case ends.
+  * 2a1. ClientDesk informs the user that no clients matched and restores the full client list.
+  * 2a2. User adds the client using their name, phone number and email address.
+  * 2a3. ClientDesk validates and saves the new client.
 
-* 3a. The given index is invalid.
+    Use case resumes at step 3.
 
-    * 3a1. AddressBook shows an error message.
+* 3a. The selected client index is invalid.
 
-      Use case resumes at step 2.
+  * 3a1. ClientDesk informs the user that there is no client at that index.
 
-*{More to be added}*
+    Use case resumes at step 1.
+
+* 5a. The project details are invalid or duplicate an existing project for the client.
+
+  * 5a1. ClientDesk shows the relevant error and does not create the project.
+
+    Use case resumes at step 4.
+
+* 7a. The note is invalid or cannot be saved.
+
+  * 7a1. ClientDesk shows the relevant error and does not add the note.
+
+    Use case resumes at step 6.
+
+* 9a. The follow-up date or details are invalid, or the follow-up cannot be saved.
+
+  * 9a1. ClientDesk shows the relevant error and retains the previous follow-up.
+
+    Use case resumes at step 8.
+
+#### UC02: Resolve overdue work
+
+**Preconditions:** At least one client has an overdue project or follow-up in ClientDesk.
+
+**MSS**
+
+1.  User requests to view overdue agenda items.
+2.  ClientDesk shows all pending projects and follow-ups dated before today.
+3.  User selects an overdue client's record.
+4.  ClientDesk shows the client's projects, recent notes, tags and follow-up details.
+5.  User replaces the client's follow-up with a new date and optional details.
+6.  ClientDesk validates and saves the new follow-up.
+7.  User marks the overdue project as completed.
+8.  ClientDesk validates and saves the updated project.
+9.  User requests to view overdue agenda items again.
+10. ClientDesk no longer shows the completed project or rescheduled follow-up as overdue.
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. There are no overdue projects or follow-ups.
+
+  * 2a1. ClientDesk informs the user that there are no pending items in the period.
+
+    Use case ends.
+
+* 3a. The selected client index is invalid.
+
+  * 3a1. ClientDesk informs the user that there is no client at that index.
+
+    Use case resumes at step 2.
+
+* 6a. The follow-up date or details are invalid, or the follow-up cannot be saved.
+
+  * 6a1. ClientDesk shows the relevant error and retains the previous follow-up.
+
+    Use case resumes at step 5.
+
+* 8a. The project ID or updated status is invalid, or the project cannot be saved.
+
+  * 8a1. ClientDesk shows the relevant error and retains all previous project values.
+
+    Use case resumes at step 7.
+
+#### UC03: Recover a mistakenly deleted client
+
+**Preconditions:** At least one client exists and there is no more recent data-changing command to undo.
+
+**MSS**
+
+1.  User lists all clients.
+2.  ClientDesk shows the clients with their current indexes.
+3.  User deletes a client by index.
+4.  ClientDesk deletes the client and all associated projects, notes, tags and follow-up details.
+5.  ClientDesk informs the user that the client was deleted and can be restored using undo.
+6.  User requests to undo the deletion.
+7.  ClientDesk restores and saves the client and all associated data with their original IDs.
+8.  ClientDesk informs the user that the deletion was undone.
+
+    Use case ends.
+
+**Extensions**
+
+* 3a. The selected client index is invalid.
+
+  * 3a1. ClientDesk informs the user that there is no client at that index.
+
+    Use case resumes at step 2.
+
+* 4a. ClientDesk cannot save the deletion.
+
+  * 4a1. ClientDesk informs the user that the client could not be deleted and makes no changes.
+
+    Use case resumes at step 3.
+
+* 7a. ClientDesk cannot save the restored state.
+
+  * 7a1. ClientDesk keeps the current state unchanged and retains the undo entry for another attempt.
+
+    Use case resumes at step 6.
 
 ### Non-Functional Requirements
 
-1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed.
-2.  Should be able to hold up to 1000 persons without noticeable sluggishness in performance for typical usage.
-3.  A user with above average typing speed for regular English text (i.e. not code, not system admin commands) should be able to accomplish most of the tasks faster using commands than using the mouse.
-
-*{More to be added}*
+1.  ClientDesk should work on any _mainstream OS_ with Java `25` or above installed.
+2.  ClientDesk should support at least 1000 clients and their associated projects, notes, tags and follow-ups without
+    data loss.
+3.  ClientDesk should respond to `list`, `find`, `view` and `agenda` commands within 1 second under typical usage with
+    1000 clients stored.
+4.  All client, project, note, follow-up and agenda workflows should be completable using only the keyboard.
+5.  A new user who is familiar with command-line applications should be able to complete the feature list's
+    end-to-end acceptance scenarios within 15 minutes by referring to the User Guide.
+6.  ClientDesk should save each successful data-changing command before displaying its success message and should
+    preserve the saved data after a normal shutdown and restart.
+7.  A failed save or invalid command should not cause a partial update or modify previously saved data.
+8.  A failed search, details load or agenda computation should retain the previously displayed information instead
+    of leaving the user with an empty or unusable view.
 
 ### Glossary
 
