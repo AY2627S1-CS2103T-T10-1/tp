@@ -15,6 +15,7 @@ import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.Logic;
 import seedu.address.logic.commands.CommandResult;
+import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
 
@@ -144,6 +145,14 @@ public class MainWindow extends UiPart<Stage> {
      */
     @FXML
     public void handleHelp() {
+        showHelp(HelpCommand.SHOWING_HELP_MESSAGE);
+    }
+
+    /**
+     * Shows the requested command instructions in the help window.
+     */
+    private void showHelp(String content) {
+        helpWindow.setHelpContent(content);
         if (!helpWindow.isShowing()) {
             helpWindow.show();
         } else {
@@ -183,7 +192,7 @@ public class MainWindow extends UiPart<Stage> {
             resultDisplay.setFeedbackToUser(commandResult.getFeedbackToUser());
 
             if (commandResult.isShowHelp()) {
-                handleHelp();
+                showHelp(commandResult.getFeedbackToUser());
             }
 
             if (commandResult.isExit()) {
