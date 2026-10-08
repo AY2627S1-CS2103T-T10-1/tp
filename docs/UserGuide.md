@@ -58,19 +58,30 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
-* Extraneous parameters for commands that take no parameters, such as `help`, `list`, `exit`, and `clear`, are ignored.<br>
-  For example, `help 123` is interpreted as `help`.
+* Extraneous parameters for commands that take no parameters, such as `list`, `exit`, and `clear`, are ignored.<br>
+  For example, `list 123` is interpreted as `list`.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </div>
 
 ### Viewing help: `help`
 
-Opens a help window containing the link to the ClientDesk User Guide. Click **Copy URL**
-to copy the link, then paste it into your browser. You can also open this window from
-the Help menu or by pressing `F1`.
+Lists the MVP commands and short descriptions in a scrollable help window. Supply one
+command name to view its purpose, format, parameter rules and examples. Command names
+are case-insensitive. Help does not change client data.
 
-Format: `help`
+Format: `help [COMMAND]`
+
+Examples:
+* `help`
+* `help add-client`
+* `help agenda`
+
+An unknown command reports `Unknown command '<value>'. Type help to see all commands.`
+More than one command name reports `Usage: help [COMMAND]`.
+
+The Help menu and `F1` show the command overview. **Copy URL** copies the ClientDesk
+User Guide link so you can paste it into your browser.
 
 
 ### Adding a person: `add`
@@ -181,7 +192,6 @@ _Details coming soon ..._
 ## Known issues
 
 1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
-2. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -195,4 +205,4 @@ Action | Format, Examples
 **Edit** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [t/TAG]…​`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
 **Find** | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List** | `list`
-**Help** | `help`
+**Help** | `help [COMMAND]`
