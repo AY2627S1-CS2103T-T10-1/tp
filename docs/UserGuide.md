@@ -266,3 +266,20 @@ use the index in the search results. Details include name, phone, email, address
 An index outside the displayed list produces an error.
 
 Example: `view 1` displays the first client in the current list.
+
+### Editing a client's email: `edit-client`
+
+The first increment supports `edit-client CLIENT_INDEX e/EMAIL`.
+For example: `edit-client 1 e/new@example.com`.
+
+Use a positive index from the currently displayed list, including search results.
+The email must satisfy the existing email validation, have a dotted domain, and
+be at most 254 characters long. Email duplicates are checked case-insensitively
+against all clients, including those hidden by a search.
+
+All other fields and the current list filter are preserved. Success reports
+`Updated client: <name>.`; an identical email reports `No changes needed for <name>.`
+without saving. A save failure restores the previous record.
+
+Name and phone updates, tag additions/removals, and undo integration will be added
+in later increments. The existing `edit` command remains available.

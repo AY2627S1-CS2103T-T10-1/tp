@@ -10,12 +10,14 @@ import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.AddClientCommand;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.CommandResult;
+import seedu.address.logic.commands.EditClientCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListClientsCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.person.Person;
@@ -54,6 +56,9 @@ public class LogicManager implements Logic {
         if (command instanceof AddClientCommand) {
             return executeAddClient(command);
         }
+        if (command instanceof EditClientCommand editClientCommand) {
+            return executeEditClient(editClientCommand);
+        }
         commandResult = command.execute(model);
         if (command instanceof FindCommand) {
             // Avoid saving unchanged data or reporting a save error for a read-only search.
@@ -88,6 +93,25 @@ public class LogicManager implements Logic {
         }
         model.setAddressBook(proposedModel.getAddressBook());
         model.updateFilteredPersonList(Model.PREDICATE_SHOW_ALL_PERSONS);
+        return result;
+    }
+
+    /**
+     * Saves an email update before returning success and restores the record if saving fails.
+     * Unchanged emails do not trigger a save. The current list filter is preserved.
+     */
+    private CommandResult executeEditClient(EditClientCommand command) throws CommandException {
+        AddressBook previousData = new AddressBook(model.getAddressBook());
+        CommandResult result = command.execute(model);
+        if (previousData.equals(model.getAddressBook())) {
+            return result;
+        }
+        try {
+            storage.saveAddressBook(model.getAddressBook());
+        } catch (IOException ioe) {
+            model.setAddressBook(previousData);
+            throw new CommandException(EditClientCommand.MESSAGE_SAVE_FAILURE, ioe);
+        }
         return result;
     }
 
