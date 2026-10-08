@@ -84,6 +84,37 @@ The Help menu and `F1` show the command overview. **Copy URL** copies the Client
 User Guide link so you can paste it into your browser.
 
 
+### Adding a client: `add-client`
+
+Creates and saves a client, refreshes the client list and selects the new entry.
+
+Format: `add-client n/NAME p/PHONE e/EMAIL [t/TAG]…`
+
+Examples:
+* `add-client n/Acme Studio p/+65 8123 4567 e/hello@acme.sg`
+* `add-client n/Northstar Labs p/91234567 e/alex@northstar.io t/startup t/web-design`
+
+The name, phone and email are required; tags are optional and repeatable. Parameters
+can be supplied in any order. Command names and prefixes are case-insensitive.
+Repeated name, phone or email prefixes and unknown prefixes are rejected.
+
+Field | Rules
+------|------
+Name | 1–80 characters with at least one letter or number. Letters, numbers, spaces, apostrophes, hyphens, periods, ampersands and parentheses are allowed.
+Phone | 7–15 digits, with an optional leading `+`, spaces or hyphens. Formatting is removed before storage.
+Email | 3–254 characters, exactly one `@`, non-empty local and domain parts, no spaces and a dot in the domain. Domain labels cannot start or end with a hyphen.
+Tag | 1–30 lowercase letters, numbers or internal hyphens; no leading or trailing hyphen. Repeated tags are stored once.
+
+A duplicate has the same email (ignoring case), or the same name (ignoring case,
+outer spaces and repeated internal spaces) **and** normalized phone. The same name
+alone is allowed. Duplicates report `This client already exists: <name>.`
+Missing required fields report `Usage: add-client n/NAME p/PHONE e/EMAIL [t/TAG]...`.
+If saving fails, ClientDesk reports `Client could not be saved. No changes were made.`
+and keeps the existing data and displayed list.
+
+The inherited address field displays `Not provided` for a new client because
+`add-client` does not require an address.
+
 ### Adding a person: `add`
 
 Adds a person to the address book.
@@ -206,6 +237,7 @@ _Details coming soon ..._
 
 Action | Format, Examples
 --------|------------------
+**Add Client** | `add-client n/NAME p/PHONE e/EMAIL [t/TAG]…`<br> e.g., `add-client n/Acme Studio p/+65 8123 4567 e/hello@acme.sg`
 **Add** | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]…​` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 t/friend t/colleague`
 **Clear** | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`

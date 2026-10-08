@@ -108,6 +108,16 @@ public class UniquePersonListTest {
     }
 
     @Test
+    public void setPerson_retainedEmailButConflictingNameAndPhone_throwsDuplicatePersonException() {
+        uniquePersonList.add(ALICE);
+        uniquePersonList.add(BOB);
+        Person conflicting = new PersonBuilder(ALICE).withName(BOB.getName().fullName)
+                .withPhone(BOB.getPhone().value).build();
+        assertThrows(DuplicatePersonException.class, () -> uniquePersonList.setPerson(ALICE, conflicting));
+        assertEquals(List.of(ALICE, BOB), uniquePersonList.asUnmodifiableObservableList());
+    }
+
+    @Test
     public void remove_nullPerson_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> uniquePersonList.remove(null));
     }
