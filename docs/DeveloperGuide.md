@@ -123,7 +123,9 @@ How the parsing works:
 The `Model` component,
 
 * stores the address book data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
-* stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
+* stores the `Person` objects selected by the current filter in a `FilteredList`, wrapped in a `SortedList` for display.
+  It exposes the displayed list as an unmodifiable `ObservableList<Person>` that both the UI and indexed commands use.
+  Changes to the filter, ordering, or underlying records therefore update the same observable view.
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
 
@@ -154,6 +156,25 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 ## **Implementation**
 
 This section describes some noteworthy details on how certain features are implemented.
+
+### Find clients
+
+`FindCommandParser` splits the input into keywords and rejects empty input or keywords longer than 50 Unicode
+code points with `Usage: find KEYWORD [KEYWORD]...`. Validation happens before changing the displayed list.
+
+`PersonContainsKeywordsPredicate` copies the keywords and normalizes them with `Locale.ROOT`.
+Every keyword must be a substring of the same client's name, phone, email, or tags. Keywords may match different
+fields. Separate field, tag, and substring helpers keep matching at one level of abstraction.
+
+`ModelManager` wraps its `FilteredList` in a `SortedList`, ordered case-insensitively by name and then by the client's
+position in the stored address book. Sorting leaves stored records in creation order. The UI and indexed commands
+share this displayed list, so editing or deleting index 1 always targets the first visible client.
+
+`FindCommand` displays `Found <number> matching clients.` when matches exist. Otherwise, it restores the full list
+and displays `No clients matched: <keywords>.`, preserving keyword case and joining keywords with single spaces.
+Each search considers the full address book. `LogicManager` skips saving for `FindCommand` because search only
+changes the view. `HelpCommand` also skips saving because it only displays instructions.
+Other commands keep their existing saving behavior.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -261,29 +282,60 @@ _{Explain here how the data archiving feature will be implemented}_
 
 **Target user profile**:
 
-* has a need to manage a significant number of contacts
-* prefers desktop apps over other types of applications
-* can type fast
-* prefers typing to mouse interactions
-* is reasonably comfortable using CLI apps
+* is a freelancer or independent professional managing client relationships
+* needs to organize client details, projects, deadlines and follow-ups
+* prefers a desktop app with local data storage
+* can type fast and prefers typed commands to mouse interactions
 
-**Value proposition**: Manage contacts faster than with a typical mouse-driven GUI application.
+**Value proposition**: Keep client details and related work in one place, using typed commands to find and update records.
 
 
 ### User stories
 
-Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unlikely to have) - `*`
+The stories below describe the needs of freelancers and independent professionals using ClientDesk.
+They include requirements considered for later versions; inclusion here does not mean a feature has been implemented.
 
-| Priority | As a …​                                    | I want to …​                     | So that I can…​                                                        |
-| -------- | ------------------------------------------ | ------------------------------ | ---------------------------------------------------------------------- |
-| `* * *`  | new user                                   | see usage instructions         | refer to instructions when I forget how to use the App                 |
-| `* * *`  | user                                       | add a new person               |                                                                        |
-| `* * *`  | user                                       | delete a person                | remove entries that I no longer need                                   |
-| `* * *`  | user                                       | find a person by name          | locate details of persons without having to go through the entire list |
-| `* *`    | user                                       | hide private contact details   | minimize chance of someone else seeing them by accident                |
-| `*`      | user with many persons in the address book | sort persons by name           | locate a person easily                                                 |
+Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unlikely to have) - `*`.
+High-priority stories support the core workflows in the agreed MVP feature specification.
+Medium- and low-priority stories record optional enhancements and deferred requirements.
 
-*{More to be added}*
+IDs 1-30 refer to the original requirements list. Overlapping stories are combined while retaining their IDs.
+IDs 31-36 capture needs made explicit by the feature specification and usage narrative.
+
+| ID | Priority | As a ... | I want to ... | So that I can ... |
+| --- | --- | --- | --- | --- |
+| 1 | `* * *` | freelancer with several ongoing projects | view pending projects in deadline order | decide which work needs my attention first |
+| 2 | `* * *` | freelancer | add a client with their contact details | keep a record of the people and businesses I work with |
+| 3 | `* *` | freelancer seeking repeat business | identify inactive clients whose projects have ended | contact them about new opportunities |
+| 4, 27, 28, 29 | `* * *` | freelancer | edit a client's name, phone number or email address | keep their contact information accurate |
+| 5 | `*` | freelancer working with several people at one organization | associate multiple contact people with one client record | keep related contacts together |
+| 6 | `* * *` | freelancer | record notes about a client | remember information from previous interactions |
+| 7 | `* *` | freelancer with many clients | choose to sort clients by name, follow-up date or date added | browse records in the order useful to me |
+| 8, 12 | `* * *` | freelancer working across industries and project types | add or remove client tags | keep the categories of my professional relationships accurate |
+| 9 | `* *` | freelancer | export my client records | keep a backup or use the information outside ClientDesk |
+| 10 | `* * *` | freelancer | delete a client record I no longer need | remove unwanted records from my client list |
+| 11 | `* * *` | freelancer | find clients using partial names, phone numbers, email addresses or tags | retrieve a client's information without scanning the whole list |
+| 13 | `* * *` | freelancer | set or update a client's follow-up date and details | remember when and why to contact them |
+| 14 | `* *` | freelancer | archive inactive clients and restore them when needed | focus on active relationships while retaining access to old records |
+| 15 | `* * *` | freelancer | record notes about a client's ongoing project | retain the requirements and decisions relevant to that work |
+| 16 | `* * *` | freelancer | update a project's status, including marking it completed | distinguish work still in progress from finished work |
+| 17 | `* *` | freelancer | receive an alert when a client follow-up is due | notice important actions without repeatedly checking the agenda |
+| 18 | `* *` | freelancer reviewing several clients | compare the details of multiple clients at once | review related records without repeatedly switching between them |
+| 19 | `* * *` | freelancer | view a client's contact details, tags, projects, notes and follow-up | recover the context needed to work with or contact that client |
+| 20 | `* * *` | freelancer | identify overdue follow-ups and the clients they belong to | contact clients whose follow-ups I have missed |
+| 21 | `*` | freelancer using client tags | distinguish tags by colour | recognize client categories at a glance |
+| 22 | `* * *` | freelancer who made an accidental change | undo my most recent data-changing action | recover the previous records without re-entering them |
+| 23 | `* *` | freelancer | view a summary of my clients and pending work | understand my current business workload |
+| 24 | `*` | freelancer seeking new clients | receive prospective clients' enquiries through ClientDesk | keep incoming leads together with my client records |
+| 25 | `* * *` | freelancer with competing commitments | set or update a project's priority | identify work that matters most when deadlines alone are insufficient |
+| 26 | `* * *` | freelancer | add a project with a deadline under its client | track that client's deliverables and when they are due |
+| 30 | `* *` | freelancer | view a summary of completed projects | review my past work and output |
+| 31 | `* * *` | new or returning user | view command descriptions, formats and examples | learn or recall how to use ClientDesk |
+| 32 | `* * *` | freelancer | list my clients in name order with their contact details and tags | browse my records and choose the client I need to work with |
+| 33 | `* * *` | freelancer | edit a project's title or deadline | keep the recorded work accurate when plans change |
+| 34 | `* * *` | freelancer planning upcoming work | view upcoming projects and client follow-ups together in an agenda | plan my work and client communications in one place |
+| 35 | `* * *` | freelancer returning to ClientDesk | retrieve the records saved during my previous session | continue managing clients without re-entering their information |
+| 36 | `* *` | freelancer with many clients | filter clients by tags or by whether they have pending or overdue work | focus on the relationships relevant to my current task |
 
 ### Use cases
 
@@ -444,8 +496,12 @@ professional, unless specified otherwise.)
 
 ### Glossary
 
+* **Agenda**: A chronological view that brings together upcoming and overdue project deadlines and follow-ups.
+* **Client**: A person or organization that receives the user's professional services and whose information is managed in ClientDesk.
+* **Customer relationship management (CRM)**: The practice of organizing client information and interactions to manage ongoing professional relationships.
+* **Follow-up**: A dated action that the user plans to carry out for a client.
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
-* **Private contact detail**: A contact detail that is not meant to be shared with others
+* **Project**: A piece of work undertaken for a client and tracked by its status, priority, and optional deadline.
 
 --------------------------------------------------------------------------------------------------------------------
 

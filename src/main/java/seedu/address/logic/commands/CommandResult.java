@@ -3,8 +3,10 @@ package seedu.address.logic.commands;
 import static java.util.Objects.requireNonNull;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import seedu.address.commons.util.ToStringBuilder;
+import seedu.address.model.person.Person;
 
 /**
  * Represents the result of a command execution.
@@ -19,13 +21,27 @@ public class CommandResult {
     /** The application should exit. */
     private final boolean exit;
 
+    private final Person clientToSelect;
+
     /**
      * Constructs a {@code CommandResult} with the specified fields.
      */
     public CommandResult(String feedbackToUser, boolean showHelp, boolean exit) {
+        this(feedbackToUser, showHelp, exit, null);
+    }
+
+    private CommandResult(String feedbackToUser, boolean showHelp, boolean exit, Person clientToSelect) {
         this.feedbackToUser = requireNonNull(feedbackToUser);
         this.showHelp = showHelp;
         this.exit = exit;
+        this.clientToSelect = clientToSelect;
+    }
+
+    /**
+     * Constructs a result that selects the successfully saved client.
+     */
+    public CommandResult(String feedbackToUser, Person clientToSelect) {
+        this(feedbackToUser, false, false, requireNonNull(clientToSelect));
     }
 
     /**
@@ -48,6 +64,10 @@ public class CommandResult {
         return exit;
     }
 
+    public Optional<Person> getClientToSelect() {
+        return Optional.ofNullable(clientToSelect);
+    }
+
     @Override
     public boolean equals(Object other) {
         if (other == this) {
@@ -61,12 +81,13 @@ public class CommandResult {
 
         return feedbackToUser.equals(otherCommandResult.feedbackToUser)
                 && showHelp == otherCommandResult.showHelp
-                && exit == otherCommandResult.exit;
+                && exit == otherCommandResult.exit
+                && Objects.equals(clientToSelect, otherCommandResult.clientToSelect);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(feedbackToUser, showHelp, exit);
+        return Objects.hash(feedbackToUser, showHelp, exit, clientToSelect);
     }
 
     @Override
