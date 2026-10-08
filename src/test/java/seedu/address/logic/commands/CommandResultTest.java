@@ -7,6 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.model.person.Person;
+import seedu.address.testutil.PersonBuilder;
+
 public class CommandResultTest {
     @Test
     public void equals() {
@@ -59,5 +62,17 @@ public class CommandResultTest {
                 + commandResult.getFeedbackToUser() + ", showHelp=" + commandResult.isShowHelp()
                 + ", exit=" + commandResult.isExit() + "}";
         assertEquals(expected, commandResult.toString());
+    }
+
+    @Test
+    public void equals_differentSelectionTargets_areDifferentResults() {
+        Person client = new PersonBuilder().build();
+        CommandResult selected = new CommandResult("feedback", client);
+        assertEquals(selected, new CommandResult("feedback", new PersonBuilder(client).build()));
+        assertNotEquals(selected, new CommandResult("feedback"));
+        assertNotEquals(new CommandResult("feedback"), selected);
+        assertNotEquals(selected, new CommandResult("feedback", new PersonBuilder(client).withName("Other").build()));
+        assertEquals(client, selected.getClientToSelect().orElseThrow());
+        assertEquals(selected.hashCode(), new CommandResult("feedback", client).hashCode());
     }
 }
