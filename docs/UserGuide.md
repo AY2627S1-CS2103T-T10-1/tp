@@ -245,3 +245,15 @@ Action | Format, Examples
 **Find** | `find KEYWORD [KEYWORD]...`<br> e.g., `find acme startup`
 **List** | `list`
 **Help** | `help [COMMAND]`
+
+### Viewing client details: `view`
+
+Displays the existing details of a client without modifying the client or the displayed list.
+
+Format: `view INDEX`
+
+The index is a positive integer from the currently displayed list. After a `find` command,
+use the index in the search results. Details include name, phone, email, address, remark and tags.
+An index outside the displayed list produces an error.
+
+Example: `view 1` displays the first client in the current list.
