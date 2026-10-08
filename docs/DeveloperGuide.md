@@ -123,7 +123,9 @@ How the parsing works:
 The `Model` component,
 
 * stores the address book data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
-* stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
+* stores the `Person` objects selected by the current filter in a `FilteredList`, wrapped in a `SortedList` for display.
+  It exposes the displayed list as an unmodifiable `ObservableList<Person>` that both the UI and indexed commands use.
+  Changes to the filter, ordering, or underlying records therefore update the same observable view.
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
 
@@ -154,6 +156,24 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 ## **Implementation**
 
 This section describes some noteworthy details on how certain features are implemented.
+
+### Find clients
+
+`FindCommandParser` splits the input into keywords and rejects empty input or keywords longer than 50 Unicode
+code points with `Usage: find KEYWORD [KEYWORD]...`. Validation happens before changing the displayed list.
+
+`PersonContainsKeywordsPredicate` copies the keywords and normalizes them with `Locale.ROOT`.
+Every keyword must be a substring of the same client's name, phone, email, or tags. Keywords may match different
+fields. Separate field, tag, and substring helpers keep matching at one level of abstraction.
+
+`ModelManager` wraps its `FilteredList` in a `SortedList`, ordered case-insensitively by name and then by the client's
+position in the stored address book. Sorting leaves stored records in creation order. The UI and indexed commands
+share this displayed list, so editing or deleting index 1 always targets the first visible client.
+
+`FindCommand` displays `Found <number> matching clients.` when matches exist. Otherwise, it restores the full list
+and displays `No clients matched: <keywords>.`, preserving keyword case and joining keywords with single spaces.
+Each search considers the full address book. `LogicManager` skips saving for `FindCommand` because search only
+changes the view. Other commands keep their existing saving behavior.
 
 ### \[Proposed\] Undo/redo feature
 
