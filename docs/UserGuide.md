@@ -140,22 +140,28 @@ Examples:
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
 *  `edit 2 n/Betsy Crower t/` Edits the name of the 2nd person to be `Betsy Crower` and clears all existing tags.
 
-### Locating persons by name: `find`
+### Finding clients: `find`
 
-Finds persons whose names contain any of the given keywords.
+Finds clients using partial names, phone numbers, email addresses, or tags.
 
-Format: `find KEYWORD [MORE_KEYWORDS]`
+Format: `find KEYWORD [KEYWORD]...`
 
-* The search is case-insensitive; for example, `hans` matches `Hans`.
-* Keyword order does not matter; for example, `Hans Bo` matches `Bo Hans`.
-* The search considers only names.
-* Only full words match; for example, `Han` does not match `Hans`.
-* Persons matching at least one keyword are returned (an `OR` search); for example, `Hans Bo` returns `Hans Gruber` and `Bo Yang`.
+* Supply at least one keyword, each containing 1 to 50 characters. Separate keywords with whitespace.
+* Matching is case-insensitive and uses substrings; for example, `cme` matches `Acme Studio`.
+* **Every keyword must match the same client** (an `AND` search). Keywords may match different fields.
+  For example, `find acme startup` matches `Acme Studio` with the tag `startup`. Each client appears once.
+* Results appear in case-insensitive name order, with ties in creation order. Indexed commands use the displayed order.
+* Matches produce `Found <number> matching clients.`. No matches produce `No clients matched: <keywords>.`
+  and restore the full client list in name order. Feedback preserves keyword case and uses single spaces.
+* Missing keywords or a keyword exceeding 50 characters produce `Usage: find KEYWORD [KEYWORD]...`.
+  The previously displayed list stays visible.
+* Searching does not change client records or write the data file.
 
 Examples:
-* `find John` returns `john` and `John Doe`
-* `find alex david` returns `Alex Yeoh`, `David Li`<br>
-  ![result for 'find alex david'](images/findAlexDavidResult.png)
+
+* `find acme` finds clients with `acme` in any searchable field.
+* `find startup web` finds clients matching both keywords, such as clients with the tags `startup` and `webdesign`.
+* `find 8123` finds clients whose phone number contains `8123`, such as `98123456`.
 
 ### Deleting a person: `delete`
 
@@ -185,14 +191,15 @@ Format: `exit`
 
 ### Saving the data
 
-AddressBook automatically saves data after every command. You do not need to save manually.
+AddressBook automatically saves data after commands other than `find`. You do not need to save manually.
+The `find` command only changes the displayed list and does not write the data file.
 
 ### Editing the data file
 
 AddressBook data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
 
 <div markdown="span" class="alert alert-warning">:exclamation: **Caution:**
-If your changes make the data file invalid, AddressBook starts with an empty address book at the next run. The invalid file remains on disk until you run a command (AddressBook saves after every command). Still, we recommend backing up the file before editing it.<br>
+If your changes make the data file invalid, AddressBook starts with an empty address book at the next run. The invalid file remains on disk until you run a command that saves data. Still, we recommend backing up the file before editing it.<br>
 Furthermore, certain edits can cause the AddressBook to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
 </div>
 
@@ -225,6 +232,6 @@ Action | Format, Examples
 **Clear** | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [t/TAG]…​`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
-**Find** | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
+**Find** | `find KEYWORD [KEYWORD]...`<br> e.g., `find acme startup`
 **List** | `list`
 **Help** | `help`

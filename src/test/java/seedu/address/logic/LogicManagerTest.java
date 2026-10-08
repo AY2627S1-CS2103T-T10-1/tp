@@ -1,6 +1,7 @@
 package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 import static seedu.address.logic.commands.CommandTestUtil.ADDRESS_DESC_AMY;
@@ -9,10 +10,14 @@ import static seedu.address.logic.commands.CommandTestUtil.NAME_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.PHONE_DESC_AMY;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.AMY;
+import static seedu.address.testutil.TypicalPersons.BENSON;
+import static seedu.address.testutil.TypicalPersons.DANIEL;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,6 +25,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.CommandResult;
+import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -80,6 +86,28 @@ public class LogicManagerTest {
     public void execute_storageThrowsAdException_throwsCommandException() {
         assertCommandFailureForExceptionFromStorage(DUMMY_AD_EXCEPTION, String.format(
                 LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT, DUMMY_AD_EXCEPTION.getMessage()));
+    }
+
+    @Test
+    public void execute_find_doesNotChangeStoredData() throws Exception {
+        model.addPerson(DANIEL);
+        model.addPerson(BENSON);
+        CommandResult result = logic.execute("find MEI friends");
+        assertEquals("Found 2 matching clients.", result.getFeedbackToUser());
+        assertEquals(List.of(BENSON, DANIEL), logic.getFilteredPersonList());
+        assertEquals(List.of(DANIEL, BENSON), model.getAddressBook().getPersonList());
+        assertFalse(Files.exists(temporaryFolder.resolve("addressBook.json")));
+    }
+
+    @Test
+    public void execute_invalidFindAfterSearch_preservesDisplayedList() throws Exception {
+        model.addPerson(DANIEL);
+        model.addPerson(BENSON);
+        logic.execute("find Benson");
+        for (String invalidCommand : List.of("find", "find " + "a".repeat(51))) {
+            assertThrows(ParseException.class, FindCommand.MESSAGE_USAGE, () -> logic.execute(invalidCommand));
+            assertEquals(List.of(BENSON), logic.getFilteredPersonList());
+        }
     }
 
     @Test

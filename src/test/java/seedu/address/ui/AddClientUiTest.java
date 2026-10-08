@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -20,6 +21,7 @@ import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
 import seedu.address.testutil.JavaFxTestUtil;
+import seedu.address.testutil.PersonBuilder;
 
 public class AddClientUiTest {
 
@@ -27,8 +29,13 @@ public class AddClientUiTest {
     public Path testFolder;
 
     @Test
-    public void enterAddClient_savesDisplaysAndSelectsNewClient() throws Exception {
+    public void enterAddClient_savesAndSelectsNewClientInSortedList() throws Exception {
         ModelManager model = new ModelManager();
+        Person zulu = new PersonBuilder().withName("Zulu Studio").withEmail("zulu@example.com").build();
+        Person alpha = new PersonBuilder().withName("Alpha Studio").withEmail("alpha@example.com").build();
+        model.addPerson(zulu);
+        model.addPerson(alpha);
+        model.updateFilteredPersonList(person -> person.equals(zulu));
         JsonAddressBookStorage storage = new JsonAddressBookStorage(testFolder.resolve("clients.json"));
         LogicManager logic = new LogicManager(model, new StorageManager(storage,
                 new JsonUserPrefsStorage(testFolder.resolve("preferences.json"))));
@@ -47,12 +54,14 @@ public class AddClientUiTest {
                 assertNotNull(selected);
                 assertEquals("O'Neil & Co. (SG)", selected.getName().fullName);
                 assertEquals("6581234567", selected.getPhone().value);
-                assertEquals(model.getFilteredPersonList().get(0), selected);
+                assertEquals(List.of(alpha, selected, zulu), model.getFilteredPersonList());
+                assertEquals(1, list.getSelectionModel().getSelectedIndex());
+                assertEquals(List.of(zulu, alpha, selected), model.getAddressBook().getPersonList());
                 assertTrue(input.getText().isEmpty());
 
                 input.setText("add-client n/Other p/99998888 e/HELLO@ACME.SG");
                 input.fireEvent(new ActionEvent());
-                assertEquals(1, list.getItems().size());
+                assertEquals(3, list.getItems().size());
                 assertEquals(selected, list.getSelectionModel().getSelectedItem());
                 assertTrue(input.getStyleClass().contains("error"));
             } finally {
@@ -60,6 +69,6 @@ public class AddClientUiTest {
             }
         });
 
-        assertEquals(1, storage.readAddressBook().orElseThrow().getPersonList().size());
+        assertEquals(model.getAddressBook().getPersonList(), storage.readAddressBook().orElseThrow().getPersonList());
     }
 }
