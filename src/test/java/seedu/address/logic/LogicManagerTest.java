@@ -26,6 +26,7 @@ import org.junit.jupiter.api.io.TempDir;
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.FindCommand;
+import seedu.address.logic.commands.ListClientsCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -74,6 +75,19 @@ public class LogicManagerTest {
     public void execute_validCommand_success() throws Exception {
         String listCommand = ListCommand.COMMAND_WORD;
         assertCommandSuccess(listCommand, ListCommand.MESSAGE_SUCCESS, model);
+    }
+
+    @Test
+    public void execute_listClients_resetsFilterWithoutSaving() throws Exception {
+        model.addPerson(DANIEL);
+        model.addPerson(BENSON);
+        logic.execute("find Benson");
+
+        CommandResult result = logic.execute(ListClientsCommand.COMMAND_WORD);
+
+        assertEquals(ListClientsCommand.MESSAGE_SUCCESS, result.getFeedbackToUser());
+        assertEquals(2, logic.getFilteredPersonList().size());
+        assertFalse(Files.exists(temporaryFolder.resolve("addressBook.json")));
     }
 
     @Test
