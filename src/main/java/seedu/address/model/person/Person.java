@@ -4,6 +4,7 @@ import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 
@@ -68,16 +69,23 @@ public class Person {
     }
 
     /**
-     * Returns true if both persons have the same name.
-     * This defines a weaker notion of equality between two persons.
+     * Returns true for the same normalized email, or the same normalized name and phone.
+     * Clients may share a name when their contact information differs.
      */
     public boolean isSamePerson(Person otherPerson) {
         if (otherPerson == this) {
             return true;
         }
 
-        return otherPerson != null
-                && otherPerson.getName().equals(getName());
+        return otherPerson != null && (email.value.equalsIgnoreCase(otherPerson.email.value)
+                || (normalizedName().equals(otherPerson.normalizedName()) && phone.equals(otherPerson.phone)));
+    }
+
+    /**
+     * Returns the name used for duplicate comparison without changing its display value.
+     */
+    private String normalizedName() {
+        return name.fullName.trim().replaceAll("\\s+", " ").toLowerCase(Locale.ROOT);
     }
 
     /**

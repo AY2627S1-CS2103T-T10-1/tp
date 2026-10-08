@@ -7,12 +7,14 @@ import java.util.logging.Logger;
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
+import seedu.address.logic.commands.AddClientCommand;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
+import seedu.address.model.ModelManager;
 import seedu.address.model.person.Person;
 import seedu.address.storage.Storage;
 
@@ -46,6 +48,9 @@ public class LogicManager implements Logic {
 
         CommandResult commandResult;
         Command command = addressBookParser.parseCommand(commandText);
+        if (command instanceof AddClientCommand) {
+            return executeAddClient(command);
+        }
         commandResult = command.execute(model);
 
         try {
@@ -57,6 +62,22 @@ public class LogicManager implements Logic {
         }
 
         return commandResult;
+    }
+
+    /**
+     * Saves the proposed client data before publishing it to the live model and UI.
+     */
+    private CommandResult executeAddClient(Command command) throws CommandException {
+        Model proposedModel = new ModelManager(model.getAddressBook(), model.getUserPrefs());
+        CommandResult result = command.execute(proposedModel);
+        try {
+            storage.saveAddressBook(proposedModel.getAddressBook());
+        } catch (IOException error) {
+            throw new CommandException(AddClientCommand.MESSAGE_SAVE_FAILURE, error);
+        }
+        model.setAddressBook(proposedModel.getAddressBook());
+        model.updateFilteredPersonList(Model.PREDICATE_SHOW_ALL_PERSONS);
+        return result;
     }
 
     @Override

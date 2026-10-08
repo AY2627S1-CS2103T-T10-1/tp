@@ -9,8 +9,10 @@ import static seedu.address.testutil.TypicalPersons.IDA;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -24,6 +26,19 @@ public class JsonAddressBookStorageTest {
 
     @TempDir
     public Path testFolder;
+
+    @Test
+    public void saveAddressBook_failedReplacement_preservesDestinationAndRemovesTemporaryFile() throws Exception {
+        Path destination = Files.createDirectory(testFolder.resolve("existing-directory"));
+        Path existing = destination.resolve("keep.txt");
+        Files.writeString(existing, "Existing data");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(destination);
+        assertThrows(IOException.class, () -> storage.saveAddressBook(getTypicalAddressBook()));
+        assertEquals("Existing data", Files.readString(existing));
+        try (var files = Files.list(testFolder)) {
+            assertEquals(List.of(destination), files.toList());
+        }
+    }
 
     @Test
     public void readAddressBook_nullFilePath_throwsNullPointerException() {

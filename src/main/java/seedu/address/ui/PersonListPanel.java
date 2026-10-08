@@ -30,6 +30,14 @@ public class PersonListPanel extends UiPart<Region> {
     }
 
     /**
+     * Selects and scrolls to the newly saved client.
+     */
+    public void selectClient(Person client) {
+        personListView.getSelectionModel().select(client);
+        personListView.scrollTo(client);
+    }
+
+    /**
      * Custom {@code ListCell} that displays the graphics of a {@code Person} using a {@code PersonCard}.
      */
     class PersonListViewCell extends ListCell<Person> {

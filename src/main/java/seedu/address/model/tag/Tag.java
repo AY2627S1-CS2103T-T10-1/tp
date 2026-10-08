@@ -9,8 +9,9 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
  */
 public class Tag {
 
-    public static final String MESSAGE_CONSTRAINTS = "Tag names should be alphanumeric";
-    public static final String VALIDATION_REGEX = "\\p{Alnum}+";
+    public static final String MESSAGE_CONSTRAINTS = "Tag must be 1–30 letters, numbers, or internal hyphens.";
+    // Uppercase legacy tags remain readable; the client parser enforces lowercase tags on creation.
+    public static final String VALIDATION_REGEX = "[a-zA-Z0-9]+(?:-+[a-zA-Z0-9]+)*";
 
     public final String tagName;
 
@@ -29,7 +30,7 @@ public class Tag {
      * Returns true if a given string is a valid tag name.
      */
     public static boolean isValidTagName(String test) {
-        return test.matches(VALIDATION_REGEX);
+        return test.length() <= 30 && test.matches(VALIDATION_REGEX);
     }
 
     @Override
