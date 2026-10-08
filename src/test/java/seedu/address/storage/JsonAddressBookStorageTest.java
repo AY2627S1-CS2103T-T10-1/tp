@@ -9,10 +9,16 @@ import static seedu.address.testutil.TypicalPersons.IDA;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.commons.exceptions.DataLoadingException;
@@ -24,6 +30,44 @@ public class JsonAddressBookStorageTest {
 
     @TempDir
     public Path testFolder;
+
+    @Test
+    public void saveAddressBook_failedReplacement_preservesDestinationAndRemovesTemporaryFile() throws Exception {
+        Path destination = Files.createDirectory(testFolder.resolve("existing-directory"));
+        Path existing = destination.resolve("keep.txt");
+        Files.writeString(existing, "Existing data");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(destination);
+        assertThrows(IOException.class, () -> storage.saveAddressBook(getTypicalAddressBook()));
+        assertEquals("Existing data", Files.readString(existing));
+        try (var files = Files.list(testFolder)) {
+            assertEquals(List.of(destination), files.toList());
+        }
+    }
+
+    @Test
+    @EnabledOnOs({OS.LINUX, OS.MAC})
+    public void saveAddressBook_directoryBecomesReadOnly_preservesDataEvenIfCleanupFails() throws Exception {
+        Path destination = testFolder.resolve("clients.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(destination);
+        AddressBook original = getTypicalAddressBook();
+        storage.saveAddressBook(original);
+        String previousFile = Files.readString(destination);
+        ReadOnlyAddressBook interruptedData = () -> {
+            try {
+                // Simulate directory permissions changing after the temporary file has been created.
+                Files.setPosixFilePermissions(testFolder, PosixFilePermissions.fromString("r-x------"));
+            } catch (IOException error) {
+                throw new UncheckedIOException(error);
+            }
+            return original.getPersonList();
+        };
+        try {
+            assertThrows(IOException.class, () -> storage.saveAddressBook(interruptedData));
+            assertEquals(previousFile, Files.readString(destination));
+        } finally {
+            Files.setPosixFilePermissions(testFolder, PosixFilePermissions.fromString("rwx------"));
+        }
+    }
 
     @Test
     public void readAddressBook_nullFilePath_throwsNullPointerException() {

@@ -72,8 +72,10 @@ public class FindCommandTest {
 
     @Test
     public void execute_equalNames_preservesCreationOrder() {
-        Person first = new PersonBuilder().withName("acme").withPhone("11111111").build();
-        Person second = new PersonBuilder().withName("ACME").withPhone("22222222").build();
+        Person first = new PersonBuilder().withName("acme").withPhone("11111111")
+                .withEmail("first@acme.com").build();
+        Person second = new PersonBuilder().withName("ACME").withPhone("22222222")
+                .withEmail("second@acme.com").build();
         model = new ModelManager(new AddressBookBuilder().withPerson(first).withPerson(second).build(),
                 new UserPrefs());
         prepareCommand("2222").execute(model);
