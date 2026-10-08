@@ -57,6 +57,6 @@ public class ViewCommand extends Command {
 
     @Override
     public int hashCode() {
-        return targetIndex.hashCode();
+        return Integer.hashCode(targetIndex.getZeroBased());
     }
 }

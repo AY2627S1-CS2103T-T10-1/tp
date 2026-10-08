@@ -1,6 +1,7 @@
 package seedu.address.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
@@ -45,4 +46,16 @@ public class ViewCommandTest {
             assertThrows(ParseException.class, () -> new AddressBookParser().parseCommand(input));
         }
     }
+    @Test
+    public void equalsAndHashCode_compareDisplayedIndex() {
+        ViewCommand command = new ViewCommand(Index.fromOneBased(1));
+        ViewCommand equivalent = new ViewCommand(Index.fromOneBased(1));
+        assertEquals(command, command);
+        assertEquals(command, equivalent);
+        assertEquals(command.hashCode(), equivalent.hashCode());
+        assertNotEquals(command, null);
+        assertNotEquals(command, "view");
+        assertNotEquals(command, new ViewCommand(Index.fromOneBased(2)));
+    }
+
 }
