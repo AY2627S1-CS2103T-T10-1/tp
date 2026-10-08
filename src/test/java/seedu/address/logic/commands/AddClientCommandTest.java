@@ -1,6 +1,8 @@
 package seedu.address.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -93,5 +95,21 @@ public class AddClientCommandTest {
                 .withEmail("other@acme.com").build();
         assertCommandFailure(new AddClientCommand(normalizedDuplicate), model,
                 "This client already exists: acme   STUDIO.");
+    }
+
+    @Test
+    public void equals_comparesClientValuesAndCommandType() {
+        AddClientCommand command = new AddClientCommand(client);
+        assertTrue(command.equals(command));
+        assertTrue(command.equals(new AddClientCommand(new PersonBuilder(client).build())));
+        assertFalse(command.equals(new AddClientCommand(new PersonBuilder(client).withPhone("87654321").build())));
+        assertFalse(command.equals(new AddCommand(client)));
+        assertFalse(command.equals(null));
+    }
+
+    @Test
+    public void toString_includesClientForDiagnostics() {
+        assertEquals(AddClientCommand.class.getCanonicalName() + "{toAdd=" + client + "}",
+                new AddClientCommand(client).toString());
     }
 }
