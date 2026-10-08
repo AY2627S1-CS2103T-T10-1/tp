@@ -49,11 +49,15 @@ public class ClientDeskHelp {
         commands.put("add-client", new CommandHelp(
                 "Create a client with contact information and optional tags.",
                 "add-client n/NAME p/PHONE e/EMAIL [t/TAG]...",
-                "Name: 1–80 characters; letters, numbers, spaces, apostrophes, hyphens, periods, & "
-                + "and parentheses.\nPhone: 7–15 digits; optional leading +, spaces and hyphens.\nEmail:"
-                + " 3–254 characters, one @, no spaces, and a dot in the domain.\nTags: 1–30 lowercase "
-                + "letters, numbers or internal hyphens; repeat t/ to add more tags.\nDuplicates: same "
-                + "email, or same normalized name and phone. Same name alone is allowed.",
+                "Name: 1–80 characters with at least one letter or number; letters, numbers, spaces, "
+                + "apostrophes, hyphens, periods, & and parentheses are allowed.\n"
+                + "Phone: 7–15 digits; optional leading +, spaces and hyphens.\n"
+                + "Email: 3–254 characters, one @, non-empty local and domain parts, no spaces, "
+                + "and a dot in the domain. Domain labels cannot start or end with a hyphen.\n"
+                + "Tags: 1–30 lowercase letters, numbers or internal hyphens; no leading/trailing hyphen. "
+                + "Repeat t/ to add more tags; repeated tags are stored once.\n"
+                + "Name, phone and email are required. Duplicates: same normalized email, or the same "
+                + "normalized name and phone. Same name alone is allowed.",
                 "add-client n/Acme Studio p/+65 8123 4567 e/hello@acme.sg; add-client n/Northstar "
                 + "Labs p/91234567 e/alex@northstar.io t/startup t/web-design"));
         commands.put("list", new CommandHelp(
