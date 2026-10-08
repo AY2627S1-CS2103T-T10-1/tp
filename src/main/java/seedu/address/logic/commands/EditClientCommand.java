@@ -66,6 +66,6 @@ public class EditClientCommand extends Command {
 
     @Override
     public int hashCode() {
-        return Objects.hash(targetIndex, email);
+        return Objects.hash(targetIndex.getZeroBased(), email);
     }
 }

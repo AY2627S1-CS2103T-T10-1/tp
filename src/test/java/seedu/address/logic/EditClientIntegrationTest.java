@@ -1,6 +1,7 @@
 package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.EditClientCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
@@ -21,6 +23,7 @@ import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
+import seedu.address.model.person.Email;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -106,7 +109,8 @@ public class EditClientIntegrationTest {
     @Test
     public void parse_invalidInput_rejectsWithoutChangingData() {
         for (String input : List.of("edit-client", "edit-client 1", "edit-client 0 e/a@b.com",
-                "edit-client -1 e/a@b.com", "edit-client +1 e/a@b.com", "edit-client 1.5 e/a@b.com",
+                "edit-client 1 extra e/a@b.com", "edit-client -1 e/a@b.com",
+                "edit-client +1 e/a@b.com", "edit-client 1.5 e/a@b.com",
                 "edit-client 1 e/", "edit-client 1 e/not-an-email", "edit-client 1 e/a@example",
                 "edit-client 1 e/a@b.com e/c@d.com", "edit-client 1 e/a@b.com p/91234567",
                 "edit-client 1 e/" + "a".repeat(250) + "@b.com")) {
@@ -124,6 +128,19 @@ public class EditClientIntegrationTest {
                 ParseException.class, () -> parser.parseCommand("edit-client 0 e/a@b.com")).getMessage());
         assertEquals(EditClientCommandParser.MESSAGE_INVALID_EMAIL, assertThrows(
                 ParseException.class, () -> parser.parseCommand("edit-client 1 e/not-an-email")).getMessage());
+    }
+
+    @Test
+    public void equalsAndHashCode_compareIndexAndEmail() {
+        EditClientCommand command = new EditClientCommand(Index.fromOneBased(1), new Email("a@b.com"));
+        EditClientCommand equivalent = new EditClientCommand(Index.fromOneBased(1), new Email("a@b.com"));
+        assertEquals(command, command);
+        assertEquals(command, equivalent);
+        assertEquals(command.hashCode(), equivalent.hashCode());
+        assertNotEquals(command, null);
+        assertNotEquals(command, "edit-client");
+        assertNotEquals(command, new EditClientCommand(Index.fromOneBased(2), new Email("a@b.com")));
+        assertNotEquals(command, new EditClientCommand(Index.fromOneBased(1), new Email("c@d.com")));
     }
 
     /**
