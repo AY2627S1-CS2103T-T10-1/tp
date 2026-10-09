@@ -25,6 +25,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.CommandResult;
+import seedu.address.logic.commands.DeleteClientCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.ListClientsCommand;
 import seedu.address.logic.commands.ListCommand;
@@ -75,6 +76,56 @@ public class LogicManagerTest {
     public void execute_validCommand_success() throws Exception {
         String listCommand = ListCommand.COMMAND_WORD;
         assertCommandSuccess(listCommand, ListCommand.MESSAGE_SUCCESS, model);
+    }
+
+    @Test
+    public void execute_deleteClient_success() throws Exception {
+        model.addPerson(AMY);
+        logic = new LogicManager(model, new StorageManager(
+                new JsonAddressBookStorage(temporaryFolder.resolve("deleteClient.json")),
+                new JsonUserPrefsStorage(temporaryFolder.resolve("deleteClientPrefs.json"))));
+
+        CommandResult result = logic.execute(DeleteClientCommand.COMMAND_WORD + " 1");
+
+        assertEquals(String.format(DeleteClientCommand.MESSAGE_SUCCESS, AMY.getName().fullName),
+                result.getFeedbackToUser());
+        assertEquals(0, model.getAddressBook().getPersonList().size());
+    }
+
+    @Test
+    public void execute_deleteClientStorageFailure_keepsClient() {
+        model.addPerson(AMY);
+        JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(
+                temporaryFolder.resolve("deleteClientFailure.json")) {
+            @Override
+            public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
+                throw DUMMY_IO_EXCEPTION;
+            }
+        };
+        logic = new LogicManager(model, new StorageManager(addressBookStorage,
+                new JsonUserPrefsStorage(temporaryFolder.resolve("deleteClientFailurePrefs.json"))));
+
+        assertCommandFailure(DeleteClientCommand.COMMAND_WORD + " 1", CommandException.class,
+                DeleteClientCommand.MESSAGE_SAVE_FAILURE,
+                new ModelManager(model.getAddressBook(), new UserPrefs()));
+    }
+
+    @Test
+    public void execute_deleteClientAccessDenied_keepsClient() {
+        model.addPerson(AMY);
+        JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(
+                temporaryFolder.resolve("deleteClientAccessDenied.json")) {
+            @Override
+            public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
+                throw DUMMY_AD_EXCEPTION;
+            }
+        };
+        logic = new LogicManager(model, new StorageManager(addressBookStorage,
+                new JsonUserPrefsStorage(temporaryFolder.resolve("deleteClientAccessDeniedPrefs.json"))));
+
+        assertCommandFailure(DeleteClientCommand.COMMAND_WORD + " 1", CommandException.class,
+                DeleteClientCommand.MESSAGE_SAVE_FAILURE,
+                new ModelManager(model.getAddressBook(), new UserPrefs()));
     }
 
     @Test

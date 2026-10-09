@@ -90,7 +90,8 @@ public class ClientDeskHelp {
         commands.put("delete-client", new CommandHelp(
                 "Remove a client and all their data.",
                 "delete-client CLIENT_INDEX",
-                "CLIENT_INDEX must be a displayed positive integer. Use undo to restore a deletion.",
+                "CLIENT_INDEX must be a displayed positive integer. Deletion is saved immediately and cannot be "
+                + "undone in the app.",
                 "delete-client 3"));
         commands.put("find", new CommandHelp(
                 "Locate clients by partial name, phone, email or tag.",

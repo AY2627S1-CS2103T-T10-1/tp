@@ -9,6 +9,7 @@ title: Developer Guide
 
 ## **Acknowledgements**
 
+* The `delete-client` command and save-before-publish flow were developed with OpenAI Codex assistance and follow the command and atomic-save structure introduced for `add-client` in [team commit 332b415](https://github.com/AY2627S1-CS2103T-T10-1/tp/commit/332b415a1e13cf5dd3f1d6b8c1eeb62451060542). No source code was copied verbatim.
 * The `list-clients` command and parser were developed with OpenAI Codex assistance, following the separate client command structure established by [team commit 332b415](https://github.com/AY2627S1-CS2103T-T10-1/tp/commit/332b415a1e13cf5dd3f1d6b8c1eeb62451060542). No source code was copied verbatim.
 
 --------------------------------------------------------------------------------------------------------------------
@@ -549,6 +550,16 @@ testers are expected to do more *exploratory* testing.
 
 1. _{ more test cases …​ }_
 
+### Deleting a client
+
+1. Test case: `delete-client 1`<br>
+   Expected: The first client in the displayed list is removed, a success message names the client, and the change is saved.
+1. Test case: `delete-client 0` or `delete-client x`.<br>
+   Expected: A usage error is shown and no client is deleted.
+1. Search with `find acme`, then enter `delete-client 1`.<br>
+   Expected: The first matching client is deleted, and other displayed matches remain.
+1. Enter `delete-client 999` when fewer than 999 clients are displayed.<br>
+   Expected: An invalid client index error is shown and no client is deleted.
 ### Listing clients
 
 1. Add clients with different names, then enter `list-clients`.<br>

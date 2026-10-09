@@ -196,6 +196,18 @@ Examples:
 * `list` followed by `delete 2` deletes the 2nd person in the address book.
 * `find Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
 
+### Deleting a client: `delete-client`
+
+Removes a client from ClientDesk using the index in the currently displayed list. The command also works after `find`; use the displayed result index.
+
+Format: `delete-client CLIENT_INDEX`
+
+* `CLIENT_INDEX` must be a positive integer shown in the client list.
+* Deletion is saved immediately and cannot be undone in the app.
+* If saving fails, ClientDesk reports an error and keeps the client in the list.
+
+Example: `delete-client 3` removes the third displayed client.
+
 ### Clearing all entries: `clear`
 
 Clears all entries from the address book.
@@ -249,6 +261,7 @@ Action | Format, Examples
 **Add** | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]…​` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 t/friend t/colleague`
 **Clear** | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
+**Delete Client** | `delete-client CLIENT_INDEX`<br> e.g., `delete-client 3`
 **Edit** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [t/TAG]…​`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
 **Find** | `find KEYWORD [KEYWORD]...`<br> e.g., `find acme startup`
 **List** | `list`

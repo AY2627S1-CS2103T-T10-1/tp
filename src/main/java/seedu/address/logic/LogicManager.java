@@ -2,6 +2,8 @@ package seedu.address.logic;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import javafx.collections.ObservableList;
@@ -10,6 +12,7 @@ import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.AddClientCommand;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.CommandResult;
+import seedu.address.logic.commands.DeleteClientCommand;
 import seedu.address.logic.commands.EditClientCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
@@ -56,6 +59,11 @@ public class LogicManager implements Logic {
         if (command instanceof AddClientCommand) {
             return executeAddClient(command);
         }
+
+        if (command instanceof DeleteClientCommand deleteClientCommand) {
+            return executeDeleteClient(deleteClientCommand);
+        }
+
         if (command instanceof EditClientCommand editClientCommand) {
             return executeEditClient(editClientCommand);
         }
@@ -93,6 +101,25 @@ public class LogicManager implements Logic {
         }
         model.setAddressBook(proposedModel.getAddressBook());
         model.updateFilteredPersonList(Model.PREDICATE_SHOW_ALL_PERSONS);
+        return result;
+    }
+
+    /**
+     * Saves a proposed client deletion before publishing it to the live model.
+     */
+    private CommandResult executeDeleteClient(DeleteClientCommand command) throws CommandException {
+        Model proposedModel = new ModelManager(model.getAddressBook(), model.getUserPrefs());
+        Set<Person> displayedClients = new HashSet<>(model.getFilteredPersonList());
+        proposedModel.updateFilteredPersonList(displayedClients::contains);
+        CommandResult result = command.execute(proposedModel);
+
+        try {
+            storage.saveAddressBook(proposedModel.getAddressBook());
+        } catch (IOException exception) {
+            throw new CommandException(DeleteClientCommand.MESSAGE_SAVE_FAILURE, exception);
+        }
+
+        model.setAddressBook(proposedModel.getAddressBook());
         return result;
     }
 
