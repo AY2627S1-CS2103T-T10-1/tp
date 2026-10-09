@@ -126,6 +126,9 @@ public class LogicManagerTest {
         assertCommandFailure(DeleteClientCommand.COMMAND_WORD + " 1", CommandException.class,
                 DeleteClientCommand.MESSAGE_SAVE_FAILURE,
                 new ModelManager(model.getAddressBook(), new UserPrefs()));
+    }
+
+    @Test
     public void execute_listClients_resetsFilterWithoutSaving() throws Exception {
         model.addPerson(DANIEL);
         model.addPerson(BENSON);
