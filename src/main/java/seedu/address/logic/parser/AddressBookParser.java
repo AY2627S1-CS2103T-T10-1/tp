@@ -64,6 +64,7 @@ public class AddressBookParser {
 
         if (commandWord.equalsIgnoreCase(DeleteClientCommand.COMMAND_WORD)) {
             return new DeleteClientCommandParser().parse(arguments);
+        }
         if (commandWord.equalsIgnoreCase(ListClientsCommand.COMMAND_WORD)) {
             return new ListClientsCommandParser().parse(arguments);
         }
