@@ -27,6 +27,7 @@ import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.DeleteClientCommand;
 import seedu.address.logic.commands.FindCommand;
+import seedu.address.logic.commands.ListClientsCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -125,6 +126,16 @@ public class LogicManagerTest {
         assertCommandFailure(DeleteClientCommand.COMMAND_WORD + " 1", CommandException.class,
                 DeleteClientCommand.MESSAGE_SAVE_FAILURE,
                 new ModelManager(model.getAddressBook(), new UserPrefs()));
+    public void execute_listClients_resetsFilterWithoutSaving() throws Exception {
+        model.addPerson(DANIEL);
+        model.addPerson(BENSON);
+        logic.execute("find Benson");
+
+        CommandResult result = logic.execute(ListClientsCommand.COMMAND_WORD);
+
+        assertEquals(ListClientsCommand.MESSAGE_SUCCESS, result.getFeedbackToUser());
+        assertEquals(2, logic.getFilteredPersonList().size());
+        assertFalse(Files.exists(temporaryFolder.resolve("addressBook.json")));
     }
 
     @Test

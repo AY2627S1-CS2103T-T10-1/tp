@@ -16,6 +16,7 @@ import seedu.address.logic.commands.DeleteClientCommand;
 import seedu.address.logic.commands.EditClientCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
+import seedu.address.logic.commands.ListClientsCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -72,7 +73,7 @@ public class LogicManager implements Logic {
             return commandResult;
         }
 
-        if (command instanceof HelpCommand) {
+        if (command instanceof HelpCommand || command instanceof ListClientsCommand) {
             return commandResult;
         }
 
