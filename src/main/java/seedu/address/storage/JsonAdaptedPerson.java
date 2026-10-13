@@ -12,7 +12,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.LongNode;
-import com.fasterxml.jackson.databind.node.NullNode;
 
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.person.Address;
@@ -80,11 +79,12 @@ class JsonAdaptedPerson {
 
     /**
      * Reads projects only when the field is present. Missing fields in legacy files keep the empty default.
+     * Jackson represents an explicit JSON null with a non-null {@code NullNode}, which is rejected as non-array data.
      */
     @JsonSetter("projects")
     private void setProjects(JsonNode storedProjects) {
         projects.clear();
-        hasInvalidProjects = storedProjects == null || !storedProjects.isArray();
+        hasInvalidProjects = !storedProjects.isArray();
         if (hasInvalidProjects) {
             return;
         }
@@ -100,10 +100,12 @@ class JsonAdaptedPerson {
 
     /**
      * Retains explicit null as invalid data while an omitted legacy counter remains absent.
+     * Jackson supplies a non-null {@code NullNode} for an explicit JSON null.
+     * Omitted properties do not invoke this setter.
      */
     @JsonSetter("nextProjectId")
     private void setNextProjectId(JsonNode storedNextProjectId) {
-        nextProjectId = storedNextProjectId == null ? NullNode.getInstance() : storedNextProjectId;
+        nextProjectId = storedNextProjectId;
     }
 
     /**

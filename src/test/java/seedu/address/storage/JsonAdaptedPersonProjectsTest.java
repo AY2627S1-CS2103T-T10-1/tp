@@ -24,6 +24,7 @@ import seedu.address.model.project.ProjectDeadline;
 import seedu.address.model.project.ProjectPriority;
 import seedu.address.model.project.ProjectStatus;
 import seedu.address.model.project.ProjectTitle;
+import seedu.address.model.tag.Tag;
 
 public class JsonAdaptedPersonProjectsTest {
 
@@ -157,6 +158,14 @@ public class JsonAdaptedPersonProjectsTest {
         ArrayNode tags = (ArrayNode) json.get("tags");
         tags.addNull();
         assertInvalid(json);
+    }
+
+    @Test
+    public void toModelType_nullTagName_throwsIllegalValueException() {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(ALICE.getName().fullName, ALICE.getPhone().value,
+                ALICE.getEmail().value, ALICE.getAddress().value, ALICE.getRemark().value,
+                List.of(new JsonAdaptedTag((String) null)));
+        assertThrows(IllegalValueException.class, Tag.MESSAGE_CONSTRAINTS, person::toModelType);
     }
 
     @Test
