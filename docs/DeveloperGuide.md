@@ -175,7 +175,72 @@ share this displayed list, so editing or deleting index 1 always targets the fir
 and displays `No clients matched: <keywords>.`, preserving keyword case and joining keywords with single spaces.
 Each search considers the full address book. `LogicManager` skips saving for `FindCommand` because search only
 changes the view. `HelpCommand` also skips saving because it only displays instructions.
+`ListClientsCommand` and `ViewCommand` also bypass saving because they are read-only.
 Other commands keep their existing saving behavior.
+
+### Add project
+
+`AddProjectCommandParser` creates `AddProjectCommand` from a displayed client index and validated project fields.
+The title and deadline are required; status defaults to `NOT_STARTED` and priority defaults to `MEDIUM`.
+`ProjectStatus` represents the finite progress states; creation rejects `COMPLETED` while storage accepts it for
+future project editing. `ProjectPriority` represents the three priority levels.
+
+#### Validation and identity
+
+`ProjectTitle` counts Unicode code points, rejects control/format characters and unpaired surrogates, and requires
+a letter or number. Its display value retains internal spacing. Duplicate comparison collapses Unicode spaces
+and applies `Locale.ROOT` case conversion. `ProjectDeadline` accepts only an ASCII, strict ISO calendar date in
+years 0001–9999; impossible dates are not normalized into another day.
+
+The parser recognizes known prefixes at whitespace boundaries, allowing parameter reordering and literal slash
+text such as `UI/UX` in titles. Known parameter prefixes are reserved delimiters. It rejects repeated prefixes,
+invalid or overflowing indexes and invalid scalar values. `AddressBookParser` retains raw arguments for
+`add-project` so its outer trimming cannot hide a trailing title control character.
+
+Each immutable `Person` owns an immutable list of `Project` values and a persisted `nextProjectId`. The constructor
+checks unique positive IDs, unique normalized title/deadline pairs and a counter greater than every saved ID.
+IDs are independent between clients. The counter can reach `Integer.MAX_VALUE + 1L` as an exhausted sentinel;
+the command then reports exhaustion instead of overflowing. Removing a project through a future feature must
+retain the counter. Existing client edit and remark commands preserve both fields.
+
+#### Transaction and display
+
+1. `LogicManager` copies the live address book into a proposed `ModelManager`.
+2. It limits the proposed displayed list to the currently visible clients. The shared name/creation-order comparator
+   keeps their indexes aligned with the live sorted list.
+3. `AddProjectCommand` checks the target and duplicate key, proposes the next ID, and replaces the immutable client
+   in the proposed model. It uses a `Clock` to determine whether to append the overdue warning.
+4. `JsonAddressBookStorage` serializes the proposed data to a temporary file and atomically replaces the destination.
+5. Only after the save succeeds does `LogicManager` publish the proposed address book. `CommandResult` then selects
+   the updated client. The live search predicate is retained; project fields do not change client-search matching.
+
+An `IOException` produces the project save-failure message without publishing data, list changes, selection or ID
+allocation. Immutable values prevent the proposed transaction from mutating the live snapshot. The client card
+shows the project count, and `ViewCommand` formats projects in ID order without saving.
+
+#### Persistence and compatibility
+
+`JsonAdaptedProject` validates the original JSON token types before constructing model values. Numeric strings,
+fractional IDs, invalid enums, impossible dates and missing/null project fields fail loading. `JsonAdaptedPerson`
+rejects malformed project collections, duplicate IDs/keys and stale counters. Omitted project fields remain valid
+for legacy files; when a counter is omitted it is derived as one greater than the largest project ID. Serialization
+writes both `projects` and `nextProjectId` for all clients. Project lists and counters must be retained by any future
+client-copy operation, including undo snapshots.
+
+The implementation adds project creation and inspection. Project editing, undo, notes, follow-ups and agenda remain
+separate features; this increment does not claim to implement them.
+
+#### Test coverage
+
+The project unit tests check title/date boundaries, locale-independent identity, enums, immutable lists and ID
+exhaustion. Parser tests cover shuffled/case-insensitive prefixes, defaults, duplicate fields, literal slash text,
+control characters, invalid dates and index overflow. Storage tests exercise legacy files, round trips, malformed
+JSON token types, duplicate project data and retired IDs.
+
+`AddProjectCommandIntegrationTest` exercises the real parser/logic/storage path, including filtered indexes,
+restart allocation, failed saves with unchanged file bytes and no live-list events, retry, read-only details and
+existing client edits/deletion. `AddProjectUiTest` enters commands through the JavaFX command box and verifies
+feedback, selection, retained filtering, project counts and duplicate errors.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -568,6 +633,29 @@ testers are expected to do more *exploratory* testing.
    Expected: The search filter is cleared and the full client list is shown.
 1. Enter `list-clients extra`.<br>
    Expected: A usage error is shown and the displayed list is unchanged.
+
+### Adding and inspecting projects
+
+Use a disposable data folder for these checks. Create two clients with different emails, and use `list-clients`
+to see their current indexes.
+
+1. Run `add-project 1 title/Website redesign deadline/2026-10-15`.
+   Expected: success with project ID 1; the selected client's card shows one project. Run `view 1` to inspect the
+   title, deadline, default `not-started` status and `medium` priority. A past date also shows the overdue warning.
+2. Add another project for client 1, then the same first title/date for client 2.
+   Expected: client 1 receives ID 2, client 2 receives ID 1. Restart and add another project; the saved counters continue.
+3. Run `find` for the second client, then add a project at displayed index 1.
+   Expected: only that client receives the project, the filter remains active, and the success selects that client.
+4. Repeat a saved title/date with changed capitalization, repeated spaces, status or priority.
+   Expected: duplicate error; no new project and no consumed ID. A different date is accepted.
+5. Try `deadline/2026-02-29`, `deadline/2026-04-31`, `status/completed`, an empty title, a 101-character title,
+   repeated prefixes, `CLIENT_INDEX` values 0, -1, 1.5 and 2147483648, and an index not in the displayed list.
+   Expected: an actionable error with unchanged data. A valid leap day such as 2028-02-29 is accepted.
+6. In a disposable copy, make the containing data directory unwritable and attempt another addition.
+   Expected: `Project could not be saved. No changes were made.`; data, filter and project count stay unchanged.
+   Restore the directory permissions and retry; the same proposed ID remains available. `view` works without saving.
+7. Edit the client's email, use the inherited `edit` and `remark` commands, then restart.
+   Expected: all projects and their IDs remain. Deleting a client removes its projects without affecting another client.
 
 ### Saving data
 
