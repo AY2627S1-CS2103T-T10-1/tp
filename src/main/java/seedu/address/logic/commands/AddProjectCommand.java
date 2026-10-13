@@ -54,7 +54,7 @@ public class AddProjectCommand extends Command {
     /**
      * Creates a command with an explicit clock for deterministic date-boundary tests.
      */
-    public AddProjectCommand(Index clientIndex, ProjectTitle title, ProjectDeadline deadline,
+    AddProjectCommand(Index clientIndex, ProjectTitle title, ProjectDeadline deadline,
             ProjectStatus status, ProjectPriority priority, Clock clock) {
         requireAllNonNull(clientIndex, title, deadline, status, priority, clock);
         if (status == ProjectStatus.COMPLETED) {
@@ -93,7 +93,7 @@ public class AddProjectCommand extends Command {
         if (deadline.getDate().isBefore(LocalDate.now(clock))) {
             feedback += "\n" + MESSAGE_OVERDUE;
         }
-        return new CommandResult(feedback, updatedClient);
+        return new CommandResult(feedback);
     }
 
     @Override

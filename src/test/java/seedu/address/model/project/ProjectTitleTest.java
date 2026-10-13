@@ -2,9 +2,11 @@ package seedu.address.model.project;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.time.Duration;
 import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
@@ -41,6 +43,24 @@ public class ProjectTitleTest {
         ProjectTitle title = new ProjectTitle(" \u00a0Website\u2003  REDESIGN ");
         assertEquals("website redesign", title.normalizedValue());
         assertEquals("Website\u2003  REDESIGN", title.value);
+    }
+
+    @Test
+    public void constructor_unicodeSpaceSeparators_trimsEdgesOnly() {
+        String[] spaces = {" ", "\u00a0", "\u1680", "\u2000", "\u2001", "\u2002", "\u2003", "\u2004",
+            "\u2005", "\u2006", "\u2007", "\u2008", "\u2009", "\u200a", "\u202f", "\u205f", "\u3000"};
+        for (String space : spaces) {
+            ProjectTitle title = new ProjectTitle(space + "Website" + space + " redesign" + space);
+            assertEquals("Website" + space + " redesign", title.value);
+            assertEquals("website redesign", title.normalizedValue());
+            assertFalse(ProjectTitle.isValidTitle(space));
+        }
+    }
+
+    @Test
+    public void isValidTitle_largeInternalSpaceRun_rejectsWithoutExcessiveProcessing() {
+        String title = "A" + "\u00a0".repeat(200_000) + "B";
+        assertTimeoutPreemptively(Duration.ofSeconds(5), () -> assertFalse(ProjectTitle.isValidTitle(title)));
     }
 
     @Test

@@ -2,7 +2,6 @@ package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -10,7 +9,6 @@ import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.person.Person;
-import seedu.address.model.project.Project;
 
 /**
  * Displays the details of a client identified by the current list index without changing data.
@@ -43,27 +41,12 @@ public class ViewCommand extends Command {
         Person client = clients.get(targetIndex.getZeroBased());
         String tags = client.getTags().stream().map(tag -> tag.tagName).sorted()
                 .collect(Collectors.joining(", "));
-        String feedback = "Name: " + client.getName()
+        return new CommandResult("Name: " + client.getName()
                 + "\nPhone: " + client.getPhone()
                 + "\nEmail: " + client.getEmail()
                 + "\nAddress: " + client.getAddress()
                 + "\nRemark: " + client.getRemark()
-                + "\nTags: " + tags;
-        if (!client.getProjects().isEmpty()) {
-            String projects = client.getProjects().stream().sorted(Comparator.comparingInt(Project::getId))
-                    .map(ViewCommand::formatProject)
-                    .collect(Collectors.joining("\n"));
-            feedback += "\nProjects:\n" + projects;
-        }
-        return new CommandResult(feedback);
-    }
-
-    /**
-     * Formats the saved project fields for the client details result.
-     */
-    private static String formatProject(Project project) {
-        return "#" + project.getId() + " | " + project.getTitle() + " | Deadline: " + project.getDeadline()
-                + " | Status: " + project.getStatus() + " | Priority: " + project.getPriority();
+                + "\nTags: " + tags);
     }
 
     @Override

@@ -133,8 +133,8 @@ Examples:
 
 ### Adding a project: `add-project`
 
-Records work under a client and saves it immediately. The client's list card shows the project count;
-`view CLIENT_INDEX` shows the saved projects, ordered by project ID.
+Records work under a client and saves it immediately.
+Project viewing and editing are planned separately.
 
 Format: `add-project CLIENT_INDEX title/TITLE deadline/DATE [status/STATUS] [priority/PRIORITY]`
 
@@ -157,7 +157,7 @@ are case-insensitive. Use spaces between parameters. Inside a title, slash-conta
 are ordinary text; a whitespace-separated `title/`, `deadline/`, `status/` or `priority/` starts a parameter and cannot
 be used as literal title text.
 
-On success, ClientDesk reports `Added project #<id> to <client>.` and selects the updated client. Project IDs start at
+On success, ClientDesk reports `Added project #<id> to <client>.` Project IDs start at
 1 independently for each client and increase after successful saves. A past deadline is accepted and adds
 `Warning: This project is overdue.`. Today's deadline is not overdue; the comparison uses your computer's local date.
 
@@ -266,7 +266,7 @@ Format: `exit`
 
 ClientDesk automatically saves successful data changes. You do not need to save manually.
 `add-project` saves before displaying success, and projects survive restarting the application.
-`find`, `help`, `list-clients` and `view` do not write the data file.
+`find`, `help` and `list-clients` do not write the data file.
 
 ### Editing the data file
 
@@ -305,7 +305,6 @@ Action | Format, Examples
 --------|------------------
 **Add Client** | `add-client n/NAME p/PHONE e/EMAIL [t/TAG]…`<br> e.g., `add-client n/Acme Studio p/+65 8123 4567 e/hello@acme.sg`
 **Add Project** | `add-project CLIENT_INDEX title/TITLE deadline/DATE [status/STATUS] [priority/PRIORITY]`<br> e.g., `add-project 1 title/Website deadline/2026-10-15 priority/high`
-**View** | `view CLIENT_INDEX`<br> e.g., `view 1`
 **Add** | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]…​` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 t/friend t/colleague`
 **Clear** | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
@@ -324,8 +323,7 @@ Format: `view INDEX`
 
 The index is a positive integer from the currently displayed list. After a `find` command,
 use the index in the search results. Details include name, phone, email, address, remark and tags.
-An index outside the displayed list produces an error. Saved projects appear in project-ID order, with their titles,
-deadlines, status and priority. Viewing leaves the saved file unchanged.
+An index outside the displayed list produces an error.
 
 Example: `view 1` displays the first client in the current list.
 

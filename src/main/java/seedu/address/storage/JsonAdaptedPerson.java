@@ -119,9 +119,6 @@ class JsonAdaptedPerson {
         }
         final List<Tag> personTags = new ArrayList<>();
         for (JsonAdaptedTag tag : tags) {
-            if (tag == null || tag.getTagName() == null) {
-                throw new IllegalValueException(Tag.MESSAGE_CONSTRAINTS);
-            }
             personTags.add(tag.toModelType());
         }
 
@@ -167,7 +164,7 @@ class JsonAdaptedPerson {
         for (JsonAdaptedProject project : projects) {
             modelProjects.add(project.toModelType());
         }
-        final long modelNextProjectId = readNextProjectId(modelProjects);
+        final long modelNextProjectId = readNextProjectId();
         try {
             return new Person(modelName, modelPhone, modelEmail, modelAddress, modelRemark, modelTags,
                     modelProjects, modelNextProjectId);
@@ -176,9 +173,9 @@ class JsonAdaptedPerson {
         }
     }
 
-    private long readNextProjectId(List<Project> modelProjects) throws IllegalValueException {
+    private long readNextProjectId() throws IllegalValueException {
         if (nextProjectId == null) {
-            return modelProjects.stream().mapToLong(Project::getId).max().orElse(0) + 1;
+            return 1;
         }
         if (!nextProjectId.isIntegralNumber() || !nextProjectId.canConvertToLong()) {
             throw new IllegalValueException(Person.MESSAGE_PROJECT_ID_COUNTER_CONSTRAINTS);

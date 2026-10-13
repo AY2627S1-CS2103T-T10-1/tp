@@ -35,7 +35,7 @@ public class AddProjectCommandIntegrationTest {
     public Path testFolder;
 
     @Test
-    public void execute_filteredDisplayedIndex_persistsAndSelectsCorrectClientAcrossRestart() throws Exception {
+    public void execute_filteredDisplayedIndex_persistsCorrectClientAcrossRestart() throws Exception {
         ModelManager model = clients();
         JsonAddressBookStorage storage = storage();
         LogicManager logic = logic(model, storage);
@@ -44,7 +44,7 @@ public class AddProjectCommandIntegrationTest {
                 + "status/IN-PROGRESS deadline/9999-12-31");
         Person zulu = model.getFilteredPersonList().getFirst();
         assertEquals("Zulu", zulu.getName().fullName);
-        assertEquals(zulu, result.getClientToSelect().orElseThrow());
+        assertTrue(result.getClientToSelect().isEmpty());
         assertEquals("Added project #1 to Zulu.", result.getFeedbackToUser());
         assertEquals(ProjectStatus.IN_PROGRESS, zulu.getProjects().getFirst().getStatus());
         assertEquals(ProjectPriority.HIGH, zulu.getProjects().getFirst().getPriority());
@@ -125,20 +125,6 @@ public class AddProjectCommandIntegrationTest {
         assertEquals(model.getAddressBook(), storage().readAddressBook().orElseThrow());
         logic.execute("add-project 1 title/Next deadline/9999-12-30");
         assertEquals(2, model.getFilteredPersonList().getFirst().getProjects().get(1).getId());
-    }
-
-    @Test
-    public void execute_viewOnUnwritableStorage_displaysProjectsWithoutSaving() throws Exception {
-        ModelManager model = clients();
-        logic(model, storage()).execute("add-project 1 title/Website deadline/9999-12-31");
-        JsonAddressBookStorage failing = new JsonAddressBookStorage(storage().getAddressBookFilePath()) {
-            @Override
-            public void saveAddressBook(ReadOnlyAddressBook proposed) {
-                throw new AssertionError("Viewing client details must not save");
-            }
-        };
-        String feedback = logic(model, failing).execute("view 1").getFeedbackToUser();
-        assertTrue(feedback.contains("#1 | Website | Deadline: 9999-12-31 | Status: not-started | Priority: medium"));
     }
 
     @Test

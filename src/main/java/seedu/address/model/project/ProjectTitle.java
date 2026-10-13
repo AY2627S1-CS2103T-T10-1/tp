@@ -34,7 +34,7 @@ public final class ProjectTitle {
         }
         String trimmed = trimSpaces(test);
         int length = trimmed.codePointCount(0, trimmed.length());
-        return length >= 1 && length <= 100 && trimmed.codePoints().anyMatch(ProjectTitle::isLetterOrNumber);
+        return length >= 1 && length <= 100 && trimmed.matches(".*[\\p{L}\\p{N}].*");
     }
 
     /**
@@ -49,12 +49,6 @@ public final class ProjectTitle {
         return type != Character.CONTROL && type != Character.FORMAT && type != Character.UNASSIGNED
                 && type != Character.SURROGATE && type != Character.LINE_SEPARATOR
                 && type != Character.PARAGRAPH_SEPARATOR;
-    }
-
-    private static boolean isLetterOrNumber(int codePoint) {
-        int type = Character.getType(codePoint);
-        return Character.isLetter(codePoint) || type == Character.DECIMAL_DIGIT_NUMBER
-                || type == Character.LETTER_NUMBER || type == Character.OTHER_NUMBER;
     }
 
     private static String trimSpaces(String title) {

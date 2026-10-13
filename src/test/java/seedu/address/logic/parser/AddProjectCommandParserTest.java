@@ -1,9 +1,11 @@
 package seedu.address.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.util.Locale;
 
@@ -143,7 +145,8 @@ public class AddProjectCommandParserTest {
     public void parse_printableTitlesAndCodePointBoundaries_success() {
         for (String title : new String[] {"A", "7", "A".repeat(100), "𐐀".repeat(100),
             "Résumé – 更新 🛠", "A&B (Phase 2): 'Launch'!", "UI/UX refresh", "Review https://example.com",
-            "Review foo/bar", "Alpha\u00a0Beta", "Full  spacing"}) {
+            "Review foo/bar", "subtitle/Review", "title/Website", "Budget/deadline/report",
+            "Docs https://example.com/status/in-progress", "Alpha\u00a0Beta", "Full  spacing"}) {
             assertParseSuccess(parser, "1 title/" + title + " deadline/2026-10-15",
                     expectedCommand(1, title, DEADLINE, ProjectStatus.NOT_STARTED, ProjectPriority.MEDIUM));
         }
@@ -152,10 +155,28 @@ public class AddProjectCommandParserTest {
     @Test
     public void parse_invalidTitles_reportTitleConstraint() {
         for (String title : new String[] {"A".repeat(101), "𐐀".repeat(101), "--- !!!", "🛠", "\u00a0",
-            "Web\tsite", "Web\nsite", "Web\rsite", "Web\u0000site", "Web\u007fsite",
+            "Web\tsite", "Web\nsite", "Web\rsite", "Web\u0000site", "Website\u0000", "Web\u007fsite",
             "Web\u0085site", "Web\u200bsite", "Web\u2028site", "Web\u2029site", "Web\ud800site"}) {
             assertParseFailure(parser, "1 title/" + title + " deadline/2026-10-15", ProjectTitle.MESSAGE_CONSTRAINTS);
         }
+    }
+
+    @Test
+    public void parse_largeInternalAsciiSpaceRun_rejectsWithoutExcessiveProcessing() {
+        String title = "A" + " ".repeat(200_000) + "B";
+        assertTimeoutPreemptively(Duration.ofSeconds(5), () -> {
+            assertParseFailure(parser, "1 title/" + title + " deadline/2026-10-15", ProjectTitle.MESSAGE_CONSTRAINTS);
+            assertParseFailure(parser, "1 deadline/2026-10-15 title/" + title, ProjectTitle.MESSAGE_CONSTRAINTS);
+        });
+    }
+
+    @Test
+    public void parse_largeInternalNonBreakingSpaceRun_rejectsWithoutExcessiveProcessing() {
+        String title = "A" + "\u00a0".repeat(200_000) + "B";
+        assertTimeoutPreemptively(Duration.ofSeconds(5), () -> {
+            assertParseFailure(parser, "1 title/" + title + " deadline/2026-10-15", ProjectTitle.MESSAGE_CONSTRAINTS);
+            assertParseFailure(parser, "1 deadline/2026-10-15 title/" + title, ProjectTitle.MESSAGE_CONSTRAINTS);
+        });
     }
 
     @Test

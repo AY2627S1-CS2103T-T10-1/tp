@@ -13,7 +13,7 @@ public final class ProjectDeadline {
 
     public static final String MESSAGE_CONSTRAINTS = "Deadline must be a real date in yyyy-MM-dd format.";
 
-    public final LocalDate date;
+    private final LocalDate date;
 
     /**
      * Constructs a deadline from an exact yyyy-MM-dd date with year 0001–9999.
@@ -22,15 +22,6 @@ public final class ProjectDeadline {
         requireNonNull(deadline);
         checkArgument(isValidDeadline(deadline), MESSAGE_CONSTRAINTS);
         date = LocalDate.parse(deadline);
-    }
-
-    /**
-     * Constructs a deadline from a date with year 0001–9999.
-     */
-    public ProjectDeadline(LocalDate deadline) {
-        requireNonNull(deadline);
-        checkArgument(deadline.getYear() >= 1 && deadline.getYear() <= 9999, MESSAGE_CONSTRAINTS);
-        date = deadline;
     }
 
     /**

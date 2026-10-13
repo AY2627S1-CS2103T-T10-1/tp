@@ -108,8 +108,7 @@ public class ClientDeskHelp {
                 + "DATE: real yyyy-MM-dd date in years 0001–9999; past dates are allowed with an overdue warning.\n"
                 + "STATUS: not-started (default) or in-progress. PRIORITY: low, medium (default) or high.\n"
                 + "Duplicate: the same client, normalized title and deadline, regardless of status or priority.\n"
-                + "Projects are saved before success; a failed save leaves data and the proposed ID unchanged. "
-                + "Use view CLIENT_INDEX to inspect saved projects.",
+                + "Projects are saved before success; a failed save leaves data and the proposed ID unchanged.",
                 "add-project 1 title/Website redesign deadline/2026-10-15"));
         commands.put("edit-project", new CommandHelp(
                 "Update a project, including marking it completed.",

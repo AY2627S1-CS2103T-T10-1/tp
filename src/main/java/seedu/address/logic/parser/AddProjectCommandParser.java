@@ -7,7 +7,6 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TITLE;
 
 import java.util.Locale;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,10 +23,8 @@ import seedu.address.model.project.ProjectTitle;
  */
 public class AddProjectCommandParser implements Parser<AddProjectCommand> {
 
-    private static final Pattern PARAMETER_PREFIX = Pattern.compile("(?<!\\S)([^\\s/]+/)");
-    private static final Map<String, Prefix> SUPPORTED_PREFIXES = Map.of(
-            "title/", PREFIX_TITLE, "deadline/", PREFIX_DEADLINE,
-            "status/", PREFIX_STATUS, "priority/", PREFIX_PRIORITY);
+    private static final Pattern PARAMETER_PREFIX = Pattern.compile(
+            "(?<!\\S)(title/|deadline/|status/|priority/)", Pattern.CASE_INSENSITIVE);
 
     @Override
     public AddProjectCommand parse(String args) throws ParseException {
@@ -41,11 +38,16 @@ public class AddProjectCommandParser implements Parser<AddProjectCommand> {
         arguments.verifyNoDuplicatePrefixesFor(PREFIX_TITLE, PREFIX_DEADLINE, PREFIX_STATUS, PREFIX_PRIORITY);
 
         Index index = parseClientIndex(preamble);
-        ProjectTitle title = parseTitle(arguments.getValue(PREFIX_TITLE).get());
-        ProjectDeadline deadline = parseDeadline(arguments.getValue(PREFIX_DEADLINE).get());
-        ProjectStatus status = parseStatus(arguments.getValue(PREFIX_STATUS).orElse("not-started"));
-        ProjectPriority priority = parsePriority(arguments.getValue(PREFIX_PRIORITY).orElse("medium"));
-        return new AddProjectCommand(index, title, deadline, status, priority);
+        try {
+            ProjectTitle title = new ProjectTitle(arguments.getValue(PREFIX_TITLE).get());
+            ProjectDeadline deadline = new ProjectDeadline(arguments.getValue(PREFIX_DEADLINE).get());
+            ProjectStatus status = parseStatus(arguments.getValue(PREFIX_STATUS).orElse("not-started"));
+            ProjectPriority priority = ProjectPriority.fromString(
+                    arguments.getValue(PREFIX_PRIORITY).orElse("medium").toLowerCase(Locale.ROOT));
+            return new AddProjectCommand(index, title, deadline, status, priority);
+        } catch (IllegalArgumentException exception) {
+            throw new ParseException(exception.getMessage(), exception);
+        }
     }
 
     /**
@@ -58,14 +60,9 @@ public class AddProjectCommandParser implements Parser<AddProjectCommand> {
         Prefix previousPrefix = new Prefix("");
         int valueStart = 0;
         while (matcher.find()) {
-            String prefixText = matcher.group(1);
-            Prefix prefix = SUPPORTED_PREFIXES.get(prefixText.toLowerCase(Locale.ROOT));
-            if (prefix == null) {
-                continue;
-            }
-            String value = args.substring(valueStart, matcher.start()).replaceAll("\\s+$", "");
+            String value = trimTrailingSeparators(args.substring(valueStart, matcher.start()));
             arguments.put(previousPrefix, trimSpaces(value));
-            previousPrefix = prefix;
+            previousPrefix = new Prefix(matcher.group(1).toLowerCase(Locale.ROOT));
             valueStart = matcher.end();
         }
         arguments.put(previousPrefix, trimSpaces(args.substring(valueStart)));
@@ -73,10 +70,33 @@ public class AddProjectCommandParser implements Parser<AddProjectCommand> {
     }
 
     /**
+     * Removes ASCII whitespace immediately before a known parameter prefix.
+     */
+    private String trimTrailingSeparators(String value) {
+        int end = value.length();
+        while (end > 0) {
+            char last = value.charAt(end - 1);
+            if (last != ' ' && (last < '\t' || last > '\r')) {
+                break;
+            }
+            end--;
+        }
+        return value.substring(0, end);
+    }
+
+    /**
      * Removes ordinary spaces around values without silently discarding invalid control characters.
      */
     private String trimSpaces(String value) {
-        return value.replaceAll("^ +| +$", "");
+        int start = 0;
+        int end = value.length();
+        while (start < end && value.charAt(start) == ' ') {
+            start++;
+        }
+        while (end > start && value.charAt(end - 1) == ' ') {
+            end--;
+        }
+        return value.substring(start, end);
     }
 
     /**
@@ -98,50 +118,13 @@ public class AddProjectCommandParser implements Parser<AddProjectCommand> {
     }
 
     /**
-     * Parses a printable project title without replacing invalid characters.
-     */
-    private ProjectTitle parseTitle(String value) throws ParseException {
-        try {
-            return new ProjectTitle(value);
-        } catch (IllegalArgumentException exception) {
-            throw new ParseException(ProjectTitle.MESSAGE_CONSTRAINTS, exception);
-        }
-    }
-
-    /**
-     * Parses a real calendar date in the required ISO format, including past dates.
-     */
-    private ProjectDeadline parseDeadline(String value) throws ParseException {
-        try {
-            return new ProjectDeadline(value);
-        } catch (IllegalArgumentException exception) {
-            throw new ParseException(ProjectDeadline.MESSAGE_CONSTRAINTS, exception);
-        }
-    }
-
-    /**
      * Parses a status that is permitted when creating a project.
      */
     private ProjectStatus parseStatus(String value) throws ParseException {
-        try {
-            ProjectStatus status = ProjectStatus.fromString(value.toLowerCase(Locale.ROOT));
-            if (status == ProjectStatus.COMPLETED) {
-                throw new ParseException(AddProjectCommand.MESSAGE_NEW_STATUS);
-            }
-            return status;
-        } catch (IllegalArgumentException exception) {
-            throw new ParseException(AddProjectCommand.MESSAGE_NEW_STATUS, exception);
-        }
-    }
-
-    /**
-     * Parses one of the three supported priority levels.
-     */
-    private ProjectPriority parsePriority(String value) throws ParseException {
-        try {
-            return ProjectPriority.fromString(value.toLowerCase(Locale.ROOT));
-        } catch (IllegalArgumentException exception) {
-            throw new ParseException(ProjectPriority.MESSAGE_CONSTRAINTS, exception);
-        }
+        return switch (value.toLowerCase(Locale.ROOT)) {
+            case "not-started" -> ProjectStatus.NOT_STARTED;
+            case "in-progress" -> ProjectStatus.IN_PROGRESS;
+            default -> throw new ParseException(AddProjectCommand.MESSAGE_NEW_STATUS);
+        };
     }
 }

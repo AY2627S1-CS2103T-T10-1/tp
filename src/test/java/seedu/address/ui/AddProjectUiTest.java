@@ -28,7 +28,7 @@ public class AddProjectUiTest {
     public Path testFolder;
 
     @Test
-    public void enterAddProject_savesSelectsAndDisplaysProjectWithoutClearingFilter() throws Exception {
+    public void enterAddProject_savesAndReportsResultWithoutClearingFilter() throws Exception {
         ModelManager model = new ModelManager();
         model.addPerson(new PersonBuilder().withName("Zulu").withEmail("zulu@example.com").build());
         model.addPerson(new PersonBuilder().withName("Alpha").withEmail("alpha@example.com").build());
@@ -48,23 +48,16 @@ public class AddProjectUiTest {
                 input.setText("add-project 1 title/Website deadline/9999-12-31 priority/high");
                 input.fireEvent(new ActionEvent());
 
-                Person selected = (Person) clients.getSelectionModel().getSelectedItem();
-                assertEquals("Zulu", selected.getName().fullName);
-                assertEquals(1, selected.getProjects().size());
+                Person updated = (Person) clients.getItems().getFirst();
+                assertEquals("Zulu", updated.getName().fullName);
+                assertEquals(1, updated.getProjects().size());
                 assertEquals(1, clients.getItems().size());
                 assertEquals("Added project #1 to Zulu.", feedback.getText());
                 assertTrue(input.getText().isEmpty());
-                PersonCard card = new PersonCard(selected, 1);
-                javafx.scene.control.Label count = (javafx.scene.control.Label) card.getRoot().lookup("#projects");
-                assertEquals("Projects: 1 (use view 1 for details)", count.getText());
-
-                input.setText("view 1");
-                input.fireEvent(new ActionEvent());
-                assertTrue(feedback.getText().contains("#1 | Website | Deadline: 9999-12-31"));
                 input.setText("add-project 1 title/website deadline/9999-12-31");
                 input.fireEvent(new ActionEvent());
                 assertEquals("This project already exists for Zulu.", feedback.getText());
-                assertEquals(selected, clients.getSelectionModel().getSelectedItem());
+                assertEquals(updated, clients.getItems().getFirst());
                 assertEquals(1, model.getFilteredPersonList().getFirst().getProjects().size());
                 assertTrue(input.getStyleClass().contains("error"));
             } finally {

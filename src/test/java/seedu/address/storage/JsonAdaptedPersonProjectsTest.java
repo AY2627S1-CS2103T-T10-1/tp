@@ -24,7 +24,6 @@ import seedu.address.model.project.ProjectDeadline;
 import seedu.address.model.project.ProjectPriority;
 import seedu.address.model.project.ProjectStatus;
 import seedu.address.model.project.ProjectTitle;
-import seedu.address.model.tag.Tag;
 
 public class JsonAdaptedPersonProjectsTest {
 
@@ -41,17 +40,10 @@ public class JsonAdaptedPersonProjectsTest {
     }
 
     @Test
-    public void toModelType_missingCounter_usesMaximumIdPlusOne() throws Exception {
-        ObjectNode legacy = personJson(PERSON);
-        legacy.remove("nextProjectId");
-        Person loaded = read(legacy).toModelType();
-        assertEquals(List.of(PROJECT), loaded.getProjects());
-        assertEquals(8, loaded.getNextProjectId());
-        Project finalProject = new Project(Integer.MAX_VALUE, PROJECT.getTitle(), PROJECT.getDeadline(),
-                ProjectStatus.COMPLETED, ProjectPriority.LOW);
-        ObjectNode exhausted = personJson(ALICE.withProjects(List.of(finalProject), Person.MAX_NEXT_PROJECT_ID));
-        exhausted.remove("nextProjectId");
-        assertEquals(Person.MAX_NEXT_PROJECT_ID, read(exhausted).toModelType().getNextProjectId());
+    public void toModelType_projectsWithoutCounter_throwsIllegalValueException() throws Exception {
+        ObjectNode json = personJson(PERSON);
+        json.remove("nextProjectId");
+        assertInvalid(json);
     }
 
     @Test
@@ -150,22 +142,6 @@ public class JsonAdaptedPersonProjectsTest {
             json.set("nextProjectId", JsonUtil.fromJsonString(counter, JsonNode.class));
             assertInvalid(json);
         }
-    }
-
-    @Test
-    public void toModelType_nullTag_throwsIllegalValueException() throws Exception {
-        ObjectNode json = personJson(PERSON);
-        ArrayNode tags = (ArrayNode) json.get("tags");
-        tags.addNull();
-        assertInvalid(json);
-    }
-
-    @Test
-    public void toModelType_nullTagName_throwsIllegalValueException() {
-        JsonAdaptedPerson person = new JsonAdaptedPerson(ALICE.getName().fullName, ALICE.getPhone().value,
-                ALICE.getEmail().value, ALICE.getAddress().value, ALICE.getRemark().value,
-                List.of(new JsonAdaptedTag((String) null)));
-        assertThrows(IllegalValueException.class, Tag.MESSAGE_CONSTRAINTS, person::toModelType);
     }
 
     @Test

@@ -13,8 +13,7 @@ public class ProjectDeadlineTest {
 
     @Test
     public void constructor_invalidDeadline_throwsIllegalArgumentException() {
-        assertThrows(NullPointerException.class, () -> new ProjectDeadline((String) null));
-        assertThrows(NullPointerException.class, () -> new ProjectDeadline((LocalDate) null));
+        assertThrows(NullPointerException.class, () -> new ProjectDeadline(null));
         String[] invalidDates = {"", " ", "2026-02-29", "1900-02-29", "2026-04-31", "2026-00-10", "2026-13-01",
             "2026-10-00", "2026-10-32", "0000-01-01", "10000-01-01", "-0001-01-01", "+2026-10-15",
             "2026-1-15", "2026-10-5", "26-10-15", "２０２６-１０-１５", "2026-10-15 ", " 2026-10-15",
@@ -24,8 +23,6 @@ public class ProjectDeadlineTest {
             assertThrows(IllegalArgumentException.class, ProjectDeadline.MESSAGE_CONSTRAINTS, () ->
                     new ProjectDeadline(date));
         }
-        assertThrows(IllegalArgumentException.class, () -> new ProjectDeadline(LocalDate.of(0, 1, 1)));
-        assertThrows(IllegalArgumentException.class, () -> new ProjectDeadline(LocalDate.of(10000, 1, 1)));
     }
 
     @Test
@@ -36,7 +33,6 @@ public class ProjectDeadlineTest {
             ProjectDeadline deadline = new ProjectDeadline(date);
             assertEquals(date, deadline.toString());
             assertEquals(LocalDate.parse(date), deadline.getDate());
-            assertEquals(deadline, new ProjectDeadline(LocalDate.parse(date)));
         }
     }
 

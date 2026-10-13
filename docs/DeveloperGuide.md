@@ -175,7 +175,6 @@ share this displayed list, so editing or deleting index 1 always targets the fir
 and displays `No clients matched: <keywords>.`, preserving keyword case and joining keywords with single spaces.
 Each search considers the full address book. `LogicManager` skips saving for `FindCommand` because search only
 changes the view. `HelpCommand` also skips saving because it only displays instructions.
-`ListClientsCommand` and `ViewCommand` also bypass saving because they are read-only.
 Other commands keep their existing saving behavior.
 
 ### Add project
@@ -203,7 +202,7 @@ IDs are independent between clients. The counter can reach `Integer.MAX_VALUE + 
 the command then reports exhaustion instead of overflowing. Removing a project through a future feature must
 retain the counter. Existing client edit and remark commands preserve both fields.
 
-#### Transaction and display
+#### Saving a project
 
 1. `LogicManager` copies the live address book into a proposed `ModelManager`.
 2. It limits the proposed displayed list to the currently visible clients. The shared name/creation-order comparator
@@ -211,24 +210,23 @@ retain the counter. Existing client edit and remark commands preserve both field
 3. `AddProjectCommand` checks the target and duplicate key, proposes the next ID, and replaces the immutable client
    in the proposed model. It uses a `Clock` to determine whether to append the overdue warning.
 4. `JsonAddressBookStorage` serializes the proposed data to a temporary file and atomically replaces the destination.
-5. Only after the save succeeds does `LogicManager` publish the proposed address book. `CommandResult` then selects
-   the updated client. The live search predicate is retained; project fields do not change client-search matching.
+5. Only after the save succeeds does `LogicManager` publish the proposed address book and return success.
+   The live search predicate is retained; project fields do not change client-search matching.
 
-An `IOException` produces the project save-failure message without publishing data, list changes, selection or ID
-allocation. Immutable values prevent the proposed transaction from mutating the live snapshot. The client card
-shows the project count, and `ViewCommand` formats projects in ID order without saving.
+An `IOException` produces the project save-failure message without publishing data, list changes or ID allocation.
+Immutable values prevent the proposed transaction from mutating the live snapshot.
 
 #### Persistence and compatibility
 
 `JsonAdaptedProject` validates the original JSON token types before constructing model values. Numeric strings,
 fractional IDs, invalid enums, impossible dates and missing/null project fields fail loading. `JsonAdaptedPerson`
 rejects malformed project collections, duplicate IDs/keys and stale counters. Omitted project fields remain valid
-for legacy files; when a counter is omitted it is derived as one greater than the largest project ID. Serialization
+for legacy files, with no projects and a next ID of 1. Nonempty project data must include its saved counter. Serialization
 writes both `projects` and `nextProjectId` for all clients. Project lists and counters must be retained by any future
 client-copy operation, including undo snapshots.
 
-The implementation adds project creation and inspection. Project editing, undo, notes, follow-ups and agenda remain
-separate features; this increment does not claim to implement them.
+This increment implements project creation. Project display, editing, undo, notes, follow-ups and agenda remain
+separate features.
 
 #### Test coverage
 
@@ -238,9 +236,9 @@ control characters, invalid dates and index overflow. Storage tests exercise leg
 JSON token types, duplicate project data and retired IDs.
 
 `AddProjectCommandIntegrationTest` exercises the real parser/logic/storage path, including filtered indexes,
-restart allocation, failed saves with unchanged file bytes and no live-list events, retry, read-only details and
+restart allocation, failed saves with unchanged file bytes and no live-list events, retry and
 existing client edits/deletion. `AddProjectUiTest` enters commands through the JavaFX command box and verifies
-feedback, selection, retained filtering, project counts and duplicate errors.
+feedback, retained filtering, saved project data and duplicate errors.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -634,18 +632,18 @@ testers are expected to do more *exploratory* testing.
 1. Enter `list-clients extra`.<br>
    Expected: A usage error is shown and the displayed list is unchanged.
 
-### Adding and inspecting projects
+### Adding projects
 
 Use a disposable data folder for these checks. Create two clients with different emails, and use `list-clients`
 to see their current indexes.
 
 1. Run `add-project 1 title/Website redesign deadline/2026-10-15`.
-   Expected: success with project ID 1; the selected client's card shows one project. Run `view 1` to inspect the
-   title, deadline, default `not-started` status and `medium` priority. A past date also shows the overdue warning.
+   Expected: success with project ID 1. After exiting, inspect the disposable data file for the title, deadline,
+   default `not-started` status and `medium` priority. A past date also shows the overdue warning.
 2. Add another project for client 1, then the same first title/date for client 2.
    Expected: client 1 receives ID 2, client 2 receives ID 1. Restart and add another project; the saved counters continue.
 3. Run `find` for the second client, then add a project at displayed index 1.
-   Expected: only that client receives the project, the filter remains active, and the success selects that client.
+   Expected: only that client receives the project and the filter remains active.
 4. Repeat a saved title/date with changed capitalization, repeated spaces, status or priority.
    Expected: duplicate error; no new project and no consumed ID. A different date is accepted.
 5. Try `deadline/2026-02-29`, `deadline/2026-04-31`, `status/completed`, an empty title, a 101-character title,
@@ -653,7 +651,7 @@ to see their current indexes.
    Expected: an actionable error with unchanged data. A valid leap day such as 2028-02-29 is accepted.
 6. In a disposable copy, make the containing data directory unwritable and attempt another addition.
    Expected: `Project could not be saved. No changes were made.`; data, filter and project count stay unchanged.
-   Restore the directory permissions and retry; the same proposed ID remains available. `view` works without saving.
+   Restore the directory permissions and retry; the same proposed ID remains available.
 7. Edit the client's email, use the inherited `edit` and `remark` commands, then restart.
    Expected: all projects and their IDs remain. Deleting a client removes its projects without affecting another client.
 
