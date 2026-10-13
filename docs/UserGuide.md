@@ -220,6 +220,54 @@ Exits the program.
 
 Format: `exit`
 
+### Editing a project: `edit-project`
+
+Updates an existing project's title, deadline, status or priority. Use this when a client revises the work, a deadline moves, or a project is completed. Editing keeps the project's ID and does not consume a new ID.
+
+Format: `edit-project CLIENT_INDEX PROJECT_ID [title/TITLE] [deadline/DATE] [status/STATUS] [priority/PRIORITY]`
+
+`CLIENT_INDEX` is the positive number beside a client in the currently displayed list. After `find`, use the number in those search results. `PROJECT_ID` is the positive ID shown by `view CLIENT_INDEX`, **not the project's position in the displayed project list**. IDs belong to individual clients, so two clients can each have project #1.
+
+Supply at least one field. Fields you omit retain their existing values. The client index and project ID come first; the prefixed fields may follow in any order. Command words, prefixes, status and priority are case-insensitive. Titles retain their capitalization and internal spacing.
+
+| Field | Accepted values |
+| --- | --- |
+| `title/TITLE` | 1–100 printable Unicode code points after removing surrounding spaces, including at least one letter or number. Control characters, invisible formatting characters and unpaired surrogates are invalid. |
+| `deadline/DATE` | A real date in `yyyy-MM-dd` format, with a year from 0001 to 9999. Past dates are allowed. For example, `2024-02-29` is valid and `2026-02-29` is invalid. |
+| `status/STATUS` | `not-started`, `in-progress` or `completed`. Completed work can be reopened with either of the first two values. |
+| `priority/PRIORITY` | `low`, `medium` or `high`. |
+
+A supplied field cannot be blank or repeated. Only `title/`, `deadline/`, `status/` and `priority/` delimit fields. Ordinary slash-containing title words such as `UX/UI` and `https://example.com` remain title text. A whitespace-separated recognized prefix starts another field, so a title cannot contain a separate token such as `status/` as ordinary text.
+
+**Example:** suppose `view 1` shows Acme Studio's project #11, “Website redesign”.
+
+```text
+view 1
+edit-project 1 11 status/completed
+edit-project 1 11 title/Website launch deadline/2026-10-30 priority/high
+```
+
+The first edit changes only the status. The second changes the title, deadline and priority; the status remains `completed`. The second success message is:
+
+```text
+Updated project #11 for Acme Studio: Website launch | Deadline: 2026-10-30 | Status: completed | Priority: high
+```
+
+The updated client is selected and the current client filter is preserved. Use `view 1` again to inspect its projects. Changes are saved automatically and survive restarting ClientDesk. Other clients and projects are unchanged.
+
+Two projects for the same client cannot have the same normalized title and deadline. Title comparison ignores case and repeated spaces, regardless of status or priority. The same title with a different deadline, or matching work under another client, is allowed.
+
+| Situation | Result |
+| --- | --- |
+| Omitted edit fields, such as `edit-project 1 11` | `Specify at least one project field to update.` |
+| No displayed client at index 99 | `No client at index 99.` |
+| No project #99 for Acme Studio | `No project with ID 99 for Acme Studio.` |
+| Edit would duplicate another project for the same client | `Update would duplicate another project for this client.` |
+| Supplied values are identical to the existing values | `No changes needed for project #11.` No save occurs. |
+| Saving fails | `Project could not be saved. No changes were made.` Previous live and saved data are retained. |
+
+Invalid identifiers, dates, statuses, priorities, repeated fields and unexpected positional text produce an error without changing project data. Editing requires an existing project; use `view` to find its ID. Older client files without projects continue to load normally, but have no projects to edit.
+
 ### Saving the data
 
 AddressBook automatically saves data after commands other than `find` and `help`. You do not need to save manually.
@@ -297,35 +345,3 @@ without saving. A save failure restores the previous record.
 
 Name and phone updates, tag additions/removals, and undo integration will be added
 in later increments. The existing `edit` command remains available.
-
-### Editing a project: `edit-project`
-
-Updates a project's title, deadline, status, or priority without changing its ID or consuming a new project ID. Use this to record revised plans or mark work as completed.
-
-Format: `edit-project CLIENT_INDEX PROJECT_ID [title/TITLE] [deadline/DATE] [status/STATUS] [priority/PRIORITY]`
-
-* Use a positive client index from the currently displayed list, including search results.
-* Use the project's **ID**, shown by `view CLIENT_INDEX`, rather than its position in the project list. IDs belong to individual clients; two clients can each have project #1.
-* Supply at least one field. Omitted fields retain their values. Field order does not matter; command words, prefixes, status and priority ignore case.
-* `TITLE`: 1–100 printable Unicode characters after trimming, including at least one letter or number. Internal spacing and capitalization are preserved. A whitespace-separated token such as `status/` is interpreted as a parameter, so avoid parameter-like tokens in titles.
-* `DATE`: a real calendar date in `yyyy-MM-dd` format, with a year between 0001 and 9999. Past dates are allowed; invalid dates such as `2026-02-29` are rejected.
-* `STATUS`: `not-started`, `in-progress`, or `completed`. You can also reopen completed work using `status/in-progress` or `status/not-started`.
-* `PRIORITY`: `low`, `medium`, or `high`.
-* Repeated parameter prefixes, blank values, and invalid identifiers are rejected. Only `title/`, `deadline/`, `status/`, and `priority/` delimit fields; ordinary slash-containing title words such as `UX/UI` remain part of the title. Unexpected positional text or unsupported values for deadline/status/priority are rejected.
-
-Examples, assuming the first displayed client has project #11:
-
-```text
-view 1
-edit-project 1 11 status/completed
-edit-project 1 11 title/Website launch deadline/2026-10-30 priority/high
-view 1
-```
-
-Success displays the client name and the updated project's ID, title, deadline, status and priority, and selects that client. The update is saved automatically and retained after restart. The displayed client filter and other clients/projects are preserved.
-
-An edit cannot give two projects for the same client the same title and deadline. This comparison ignores title case and repeated spaces, regardless of status or priority. The same title with a different deadline, or a matching project under another client, is allowed.
-
-An identical update reports `No changes needed for project #ID.` without saving. A save failure reports `Project could not be saved. No changes were made.` and retains the previous model and saved data. A missing project reports `No project with ID ID for CLIENT.`.
-
-This command edits existing projects; project creation is a separate increment. Existing client files without project data remain compatible and contain no projects to edit. Until Add Project is integrated, use an existing project-bearing data file; the Developer Guide provides an isolated fixture for manual testing.

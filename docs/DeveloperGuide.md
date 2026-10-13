@@ -187,14 +187,20 @@ Other commands keep their existing saving behavior.
 
 `LogicManager` executes this command against a staged `ModelManager` copied from the live data. The staging filter contains exactly the clients visible when the command was submitted, so the displayed index resolves consistently even after a search. Only after `Storage.saveAddressBook` succeeds does it publish the staged data to the live model; the live filter itself is retained. A save failure leaves the live model, filter and persisted data unchanged. `JsonAddressBookStorage` already uses atomic file replacement, which protects the original saved file during write failures.
 
-The sequence below shows the successful update and the save-failure alternative:
+The class diagram shows the command's dependencies and its immutable descriptor. `EditProjectDescriptor` is a nested Java record; its nullable fields represent omitted updates. Only relationships relevant to editing are shown.
+
+![Edit Project class diagram](images/EditProjectClassDiagram.svg)
+
+The sequence below starts after parsing a valid edit that changes data. `LogicManager` prepares the proposed model and its displayed-client filter before executing the command. Lookup, duplicate and no-op paths are omitted for readability; they return or throw before saving.
 
 ![Edit Project sequence](images/EditProjectSequence.svg)
 
 * **Model:** `Person` owns an immutable list of immutable `Project` values, each with `id`, `title`, `deadline`, `status` and `priority`. IDs must be positive and unique within each client. Equality includes project data so snapshots and no-op checks detect edits correctly. `withProjects` copies the contact details, remark and tags and retains the per-client `nextProjectId` allocation counter during an edit. Existing contact and remark edits preserve project lists.
 * **Storage:** `JsonAdaptedProject` validates all five stored fields through the same domain rules as parsing. `JsonAdaptedPerson` reads an absent `projects` field as an empty list for legacy compatibility and infers an omitted `nextProjectId` as the greatest existing ID plus one. Explicit null project lists, invalid fields/counters, duplicate IDs, duplicate work and null list entries fail through `IllegalValueException`/`DataLoadingException`. `view` includes project IDs and current values so users can identify the edit target.
 * **Design choice:** staging avoids showing an unsaved change or depending on a rollback after failure. It copies the client collection for each edit, trading modest allocation for a clear failure contract. Immutable values make shallow snapshots safe. Project ID allocation and project creation belong to Add Project, not this command. Editing never consumes an ID.
-* **Integration dependency:** The shared project classes and JSON schema match Add Project PR #58. Merge that dependency before this PR, then merge the updated team `master` into the feature branch to keep the review focused on Edit Project. The compatibility checkout tests both commands together without changing Anson's branch. No `add-project`, `delete-project`, `undo`, notes, follow-up or agenda command is implemented here.
+* **Shared project support:** Edit Project uses the project values, client collection/counter and JSON schema introduced by Add Project. The edit command preserves `nextProjectId`; it neither allocates a project ID nor creates a project.
+
+This feature implements user stories **16** (status and completion), **25** (updating priority) and **33** (title/deadline changes). UC04 describes its complete interaction; the manual-testing appendix covers its acceptance and failure cases.
 
 Automated tests cover partial/full edits, filtered client indexes, client-local non-consecutive IDs, completion/reopening, duplicates, invalid input, no-op saves, persistence/reload, save/permission failures, legacy JSON, invalid stored data, immutability and preservation through existing client edits.
 
@@ -500,6 +506,58 @@ professional, unless specified otherwise.)
 
     Use case resumes at step 6.
 
+#### UC04: Update an existing project
+
+**Preconditions:** The client and project are already stored in ClientDesk.
+
+**MSS**
+
+1. User requests the client's details.
+1. ClientDesk shows the client's projects and their IDs.
+1. User identifies a project and supplies changes to its title, deadline, status or priority.
+1. ClientDesk validates and saves the changes.
+1. ClientDesk confirms the updated project details.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The client cannot be found in the displayed list.
+
+  * 1a1. ClientDesk informs the user that the selected client is invalid.
+
+    Use case resumes at step 1.
+
+* 3a. The specified client or project does not exist.
+
+  * 3a1. ClientDesk reports the missing target and makes no changes.
+
+    Use case resumes at step 1.
+
+* 3b. No field is supplied, or the supplied changes are invalid.
+
+  * 3b1. ClientDesk explains the input error and makes no changes.
+
+    Use case resumes at step 3.
+
+* 4a. The changes duplicate another project's normalized title and deadline under this client.
+
+  * 4a1. ClientDesk reports the conflict and makes no changes.
+
+    Use case resumes at step 3.
+
+* 4b. All supplied values already match the stored project.
+
+  * 4b1. ClientDesk reports that no changes are needed and does not save.
+
+    Use case ends.
+
+* 4c. ClientDesk cannot save the changes.
+
+  * 4c1. ClientDesk reports the save failure and retains the previous live and saved data.
+
+    Use case resumes at step 3.
+
 ### Non-Functional Requirements
 
 1.  ClientDesk should work on any _mainstream OS_ with Java `25` or above installed.
@@ -600,14 +658,47 @@ testers are expected to do more *exploratory* testing.
 
 ### Editing a project
 
-Use an isolated test folder so your normal client data is unaffected. Copy the built JAR into it, create its `data` subfolder, and copy [`edit-project-clients.json`](files/edit-project-clients.json) to `data/addressbook.json` before launching the JAR from that test folder (for example, run `java -jar addressbook.jar` there). The fixture contains Acme Studio and Beacon Design; each has project #11, and Acme also has project #3. Do not replace a running application's data file.
+**Setup:** Use Java 25 and a freshly built JAR in an isolated test folder. Create its `data` subfolder and copy [`edit-project-clients.json`](files/edit-project-clients.json) to `data/addressbook.json` before starting the app. Launch from that folder, for example with `java -jar addressbook.jar`. Do not replace a running application's data file. This fixture provides existing projects even before Add Project is integrated. Run the following steps in order.
 
-1. Run `view 1`. Expect projects #11 (Website redesign, not-started, medium) and #3 (Logo refresh, in-progress, high), both due 2026-10-15.
-1. Run `edit-project 1 11 status/completed`. Expect project #11 to be completed, with its ID/title/deadline/priority unchanged; #3 is unchanged.
-1. Run `edit-project 1 11 title/Website launch deadline/2024-02-29 priority/high`. Expect those three changes; status stays completed. Close and reopen the app, then run `view 1`: all changes should remain.
-1. Run `find Beacon`, then `edit-project 1 11 status/in-progress`. Expect only Beacon's #11 to change. Run `list-clients`, then `view 1`: Acme's work remains unchanged.
-1. Run `edit-project 1 11 status/completed` twice. Acme's status is already completed, so expect `No changes needed for project #11.` and no save.
-1. Run `edit-project 1 11 title/ LOGO  refresh deadline/2026-10-15`. Expect the duplicate-project error and no changes.
-1. Try `edit-project 1 11 deadline/2026-02-29`, `edit-project 1 11 priority/urgent`, `edit-project 1 11 status/pending`, `edit-project 1 11`, `edit-project 1 11 status/completed status/in-progress`, and `edit-project 1 999 status/completed`. Expect validation or lookup errors with no changes.
+The fixture has two clients, Acme Studio and Beacon Design. Each has project #11; Acme also has #3. Both clients have `nextProjectId` set to 12.
 
-Permission failures are covered by automated fault injection. If testing one manually, use only an isolated data folder and an OS-appropriate way to make it unwritable. Expect `Project could not be saved. No changes were made.` and unchanged data after reopening.
+1. Run `view 1`.<br>
+   Expected: Acme Studio's projects appear in ID order: #3 (Logo refresh, in-progress, high), then #11 (Website redesign, not-started, medium). Both deadlines are 2026-10-15. This distinguishes a project ID from its displayed position.
+1. Run `edit-project 1 11 status/completed`, then `view 1`.<br>
+   Expected: `Updated project #11 for Acme Studio: Website redesign | Deadline: 2026-10-15 | Status: completed | Priority: medium`. Project #3 and #11's other fields are unchanged.
+1. Run `edit-project 1 11 title/Website launch deadline/2024-02-29 priority/high`.<br>
+   Expected: `Updated project #11 for Acme Studio: Website launch | Deadline: 2024-02-29 | Status: completed | Priority: high`. A valid leap date in the past is accepted; the omitted status stays completed. Close and reopen the app, then run `view 1`: those values remain saved.
+1. Run `find Beacon`, then `edit-project 1 11 status/in-progress`.<br>
+   Expected: `Updated project #11 for Beacon Design: Website redesign | Deadline: 2026-10-15 | Status: in-progress | Priority: medium`. Beacon remains the only displayed client. Run `list-clients`, then `view 1`: Acme's #11 is still completed, showing that client-local IDs and filtered indexes resolve correctly.
+1. Run `edit-project 1 11 status/completed` twice.<br>
+   Expected both times: `No changes needed for project #11.` Project data and `nextProjectId` stay unchanged. The automated failing-storage-stub test additionally verifies that no save is attempted.
+1. Run `edit-project 1 11 title/ LOGO  refresh deadline/2026-10-15`.<br>
+   Expected: `Update would duplicate another project for this client.` Run `view 1`: #11 remains Website launch, due 2024-02-29, completed, high. The title/deadline update is rejected together.
+1. Run `edit-project 1 11 status/in-progress`, then `edit-project 1 11 status/not-started`.<br>
+   Expected: #11 is reopened, then becomes not-started. Its ID, title, deadline and priority stay unchanged, as does #3.
+
+For each invalid-input case below, run `view 1` afterward and confirm Acme's projects remain as they were after the preceding steps.
+
+| Input | Expected feedback |
+| --- | --- |
+| `edit-project 1 11 deadline/2026-02-29` | A deadline constraint error; an impossible date is rejected. |
+| `edit-project 1 11 priority/urgent` | A priority constraint error listing low, medium and high. |
+| `edit-project 1 11 status/pending` | A status constraint error listing not-started, in-progress and completed. |
+| `edit-project 1 11 title/` | A title constraint error. |
+| `edit-project 1 11` | `Specify at least one project field to update.` |
+| `edit-project 1 11 status/completed status/in-progress` | A repeated-prefix error. |
+| `edit-project 99 11 status/completed` | `No client at index 99.` |
+| `edit-project 1 999 status/completed` | `No project with ID 999 for Acme Studio.` |
+| `edit-project 1 0 status/completed` | A project-ID constraint error. |
+
+To check the title length boundary, use the following 100-character title, then repeat with one additional `a` at the end:
+
+```text
+edit-project 1 11 title/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+```
+
+Expected: the 100-character title is accepted; the 101-character title produces the title constraint error and retains the accepted title. Restore the title with `edit-project 1 11 title/Website launch`.
+
+Close the app and inspect `data/addressbook.json`: Acme's #3 and #11 and Beacon's #11 retain their IDs, and both `nextProjectId` values remain 12. Restart and confirm the final values with `view 1` and `view 2`.
+
+**Save failures:** Automated fault-injection tests cover ordinary I/O and permission failures. They expect `Project could not be saved. No changes were made.`, unchanged live and persisted data, and the original displayed filter. These tests avoid depending on platform-specific folder-permission behavior.

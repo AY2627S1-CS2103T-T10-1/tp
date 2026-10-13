@@ -1,14 +1,20 @@
 @startuml
 hide footbox
+skinparam monochrome true
 actor User
-participant LogicManager as Logic
-participant EditProjectCommand as Command
+participant ":LogicManager" as Logic
+participant ":EditProjectCommand" as Command
 participant "proposed:Model" as Proposed
-participant Storage
+participant ":Storage" as Storage
 participant "live:Model" as Live
 User -> Logic : execute(edit-project ...)
+note over Logic, Proposed : Prepare a staged model with the current displayed clients
 Logic -> Command : execute(proposed)
-Command -> Proposed : resolve client/project and apply edit
+Command -> Proposed : getFilteredPersonList()
+Proposed --> Command : displayed clients
+note right of Command : Resolve project by ID, apply descriptor\nand check for duplicates
+Command -> Proposed : setPerson(client, updatedClient)
+Proposed --> Command
 Command --> Logic : CommandResult
 Logic -> Storage : saveAddressBook(proposed data)
 alt save fails
@@ -17,6 +23,7 @@ alt save fails
 else save succeeds
     Storage --> Logic : saved
     Logic -> Live : setAddressBook(proposed data)
+    Live --> Logic
     Logic --> User : CommandResult (updated project)
 end
 @enduml
