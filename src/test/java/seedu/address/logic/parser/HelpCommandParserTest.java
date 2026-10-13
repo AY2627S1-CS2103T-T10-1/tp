@@ -40,7 +40,7 @@ public class HelpCommandParserTest {
     @Test
     public void parse_eachMvpCommand_hasDetailedInstructions() throws Exception {
         for (String name : new String[] {"help", "add-client", "list", "view", "edit-client", "delete-client",
-            "find", "add-project", "edit-project", "undo", "add-note", "follow-up", "agenda"}) {
+            "find", "add-project", "edit-project", "delete-project", "undo", "add-note", "follow-up", "agenda"}) {
             String result = parser.parse(name).execute(new ModelManager()).getFeedbackToUser();
             assertTrue(result.contains("Format: " + name));
             assertTrue(result.contains("Rules: "));

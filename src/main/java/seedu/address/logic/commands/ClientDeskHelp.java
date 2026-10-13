@@ -117,6 +117,11 @@ public class ClientDeskHelp {
                 "Use a displayed client index and an existing positive project ID. Supply at least "
                 + "one field.\nField rules match add-project; STATUS also accepts completed.",
                 "edit-project 1 2 status/completed priority/high"));
+        commands.put("delete-project", new CommandHelp(
+                "Remove a project from a client.",
+                "delete-project CLIENT_INDEX PROJECT_ID",
+                "Use a displayed client index and a project ID belonging to that client. IDs are client-scoped.",
+                "delete-project 1 2"));
         commands.put("undo", new CommandHelp(
                 "Reverse the most recent data-changing command.",
                 "undo",

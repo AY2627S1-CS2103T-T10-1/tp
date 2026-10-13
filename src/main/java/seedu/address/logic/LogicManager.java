@@ -14,6 +14,7 @@ import seedu.address.logic.commands.AddProjectCommand;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.DeleteClientCommand;
+import seedu.address.logic.commands.DeleteProjectCommand;
 import seedu.address.logic.commands.EditClientCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
@@ -66,6 +67,9 @@ public class LogicManager implements Logic {
 
         if (command instanceof DeleteClientCommand deleteClientCommand) {
             return executeDeleteClient(deleteClientCommand);
+        }
+        if (command instanceof DeleteProjectCommand deleteProjectCommand) {
+            return executeDeleteProject(deleteProjectCommand);
         }
 
         if (command instanceof EditClientCommand editClientCommand) {
@@ -140,6 +144,21 @@ public class LogicManager implements Logic {
             throw new CommandException(DeleteClientCommand.MESSAGE_SAVE_FAILURE, exception);
         }
 
+        model.setAddressBook(proposedModel.getAddressBook());
+        return result;
+    }
+
+    /** Saves a proposed project deletion before publishing it to the live model. */
+    private CommandResult executeDeleteProject(DeleteProjectCommand command) throws CommandException {
+        Model proposedModel = new ModelManager(model.getAddressBook(), model.getUserPrefs());
+        Set<Person> displayedClients = new HashSet<>(model.getFilteredPersonList());
+        proposedModel.updateFilteredPersonList(displayedClients::contains);
+        CommandResult result = command.execute(proposedModel);
+        try {
+            storage.saveAddressBook(proposedModel.getAddressBook());
+        } catch (IOException exception) {
+            throw new CommandException(DeleteProjectCommand.MESSAGE_SAVE_FAILURE, exception);
+        }
         model.setAddressBook(proposedModel.getAddressBook());
         return result;
     }
