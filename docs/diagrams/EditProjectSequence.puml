@@ -1,0 +1,22 @@
+@startuml
+hide footbox
+actor User
+participant LogicManager as Logic
+participant EditProjectCommand as Command
+participant "proposed:Model" as Proposed
+participant Storage
+participant "live:Model" as Live
+User -> Logic : execute(edit-project ...)
+Logic -> Command : execute(proposed)
+Command -> Proposed : resolve client/project and apply edit
+Command --> Logic : CommandResult
+Logic -> Storage : saveAddressBook(proposed data)
+alt save fails
+    Storage --> Logic : IOException
+    Logic --> User : CommandException (no changes)
+else save succeeds
+    Storage --> Logic : saved
+    Logic -> Live : setAddressBook(proposed data)
+    Logic --> User : CommandResult (updated project)
+end
+@enduml

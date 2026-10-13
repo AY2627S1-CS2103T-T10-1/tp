@@ -267,6 +267,7 @@ Action | Format, Examples
 **List** | `list`
 **List Clients** | `list-clients`
 **Help** | `help [COMMAND]`
+**Edit Project** | `edit-project CLIENT_INDEX PROJECT_ID [title/TITLE] [deadline/DATE] [status/STATUS] [priority/PRIORITY]`
 
 ### Viewing client details: `view`
 
@@ -275,7 +276,7 @@ Displays the existing details of a client without modifying the client or the di
 Format: `view INDEX`
 
 The index is a positive integer from the currently displayed list. After a `find` command,
-use the index in the search results. Details include name, phone, email, address, remark and tags.
+use the index in the search results. Details include name, phone, email, address, remark and tags. When present, projects are shown with their stable IDs, titles, deadlines, statuses and priorities.
 An index outside the displayed list produces an error.
 
 Example: `view 1` displays the first client in the current list.
@@ -296,3 +297,35 @@ without saving. A save failure restores the previous record.
 
 Name and phone updates, tag additions/removals, and undo integration will be added
 in later increments. The existing `edit` command remains available.
+
+### Editing a project: `edit-project`
+
+Updates a project's title, deadline, status, or priority without changing its ID. Use this to record revised plans or mark work as completed.
+
+Format: `edit-project CLIENT_INDEX PROJECT_ID [title/TITLE] [deadline/DATE] [status/STATUS] [priority/PRIORITY]`
+
+* Use a positive client index from the currently displayed list, including search results.
+* Use the project's **ID**, shown by `view CLIENT_INDEX`, rather than its position in the project list. IDs belong to individual clients; two clients can each have project #1.
+* Supply at least one field. Omitted fields retain their values. Field order does not matter; command words, prefixes, status and priority ignore case.
+* `TITLE`: 1–100 printable Unicode characters after trimming, including at least one letter or number. Internal spacing and capitalization are preserved. A whitespace-separated token such as `status/` is interpreted as a parameter, so avoid parameter-like tokens in titles.
+* `DATE`: a real calendar date in `yyyy-MM-dd` format, with a year between 0001 and 9999. Past dates are allowed; invalid dates such as `2026-02-29` are rejected.
+* `STATUS`: `not-started`, `in-progress`, or `completed`. You can also reopen completed work using `status/in-progress` or `status/not-started`.
+* `PRIORITY`: `low`, `medium`, or `high`.
+* Unknown or repeated parameter prefixes, blank values, and invalid identifiers are rejected.
+
+Examples, assuming the first displayed client has project #11:
+
+```text
+view 1
+edit-project 1 11 status/completed
+edit-project 1 11 title/Website launch deadline/2026-10-30 priority/high
+view 1
+```
+
+Success displays the client name and the updated project's ID, title, deadline, status and priority, and selects that client. The update is saved automatically and retained after restart. The displayed client filter and other clients/projects are preserved.
+
+An edit cannot give two projects for the same client the same title and deadline. This comparison ignores title case and repeated spaces, regardless of status or priority. The same title with a different deadline, or a matching project under another client, is allowed.
+
+An identical update reports `No changes needed for project #ID.` without saving. A save failure reports `Project could not be saved. No changes were made.` and retains the previous model and saved data. A missing project reports `No project with ID ID for CLIENT.`.
+
+This command edits existing projects; project creation is a separate increment. Existing client files without project data remain compatible and contain no projects to edit. Until Add Project is integrated, use an existing project-bearing data file; the Developer Guide provides an isolated fixture for manual testing.
