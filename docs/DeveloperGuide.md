@@ -9,7 +9,7 @@ title: Developer Guide
 
 ## **Acknowledgements**
 
-* The `edit-project` implementation, shared project data/storage support, tests and documentation were developed with OpenAI Codex assistance. Its save-before-publish flow follows the existing `delete-client` staging approach.
+* The `edit-project` implementation, shared project data/storage support, tests and documentation were developed with OpenAI Codex assistance. Its save-before-publish flow follows the existing `delete-client` staging approach. The shared `Project`, title/deadline/status/priority value types, `Person` project collection/counter, JSON adapters, project display and contact-edit preservation code are reused unchanged from Anson's [Add Project commit f5e77fa](https://github.com/iians0n/tp/commit/f5e77fa407264a274d922d6fb679e7202daa3624) in [PR #58](https://github.com/AY2627S1-CS2103T-T10-1/tp/pull/58); those shared changes are credited to that contribution.
 
 * The `delete-client` command and save-before-publish flow were developed with OpenAI Codex assistance and follow the command and atomic-save structure introduced for `add-client` in [team commit 332b415](https://github.com/AY2627S1-CS2103T-T10-1/tp/commit/332b415a1e13cf5dd3f1d6b8c1eeb62451060542). No source code was copied verbatim.
 * The `list-clients` command and parser were developed with OpenAI Codex assistance, following the separate client command structure established by [team commit 332b415](https://github.com/AY2627S1-CS2103T-T10-1/tp/commit/332b415a1e13cf5dd3f1d6b8c1eeb62451060542). No source code was copied verbatim.
@@ -181,7 +181,7 @@ Other commands keep their existing saving behavior.
 
 ### Edit project
 
-`EditProjectCommandParser` reads a displayed client index and a stable, client-local project ID. It rejects unknown/repeated prefixes and creates an immutable `EditProjectDescriptor` containing only supplied fields. `Project` centralizes title/date validation; `ProjectStatus` and `ProjectPriority` provide the persisted command vocabulary. The descriptor can represent completion, reopening, and any combination of title/deadline/priority changes.
+`EditProjectCommandParser` reads a displayed client index and a stable, client-local project ID. It rejects repeated prefixes and invalid identifiers/field values and creates an immutable `EditProjectDescriptor` containing only supplied fields. `ProjectTitle` and `ProjectDeadline` centralize title/date validation; `ProjectStatus` and `ProjectPriority` provide the persisted command vocabulary. The descriptor can represent completion, reopening, and any combination of title/deadline/priority changes.
 
 `EditProjectCommand` finds the client in the displayed list and the project by ID within that client. It applies the descriptor without changing the ID or other projects, and rejects a conflicting normalized title/deadline under the same client. An exact no-op returns without mutation. Both failed lookup and duplicate validation happen before updating the proposed client.
 
@@ -191,10 +191,10 @@ The sequence below shows the successful update and the save-failure alternative:
 
 ![Edit Project sequence](images/EditProjectSequence.svg)
 
-* **Model:** `Person` owns an immutable list of immutable `Project` values, each with `id`, `title`, `deadline`, `status` and `priority`. IDs must be positive and unique within each client. Equality includes project data so snapshots and no-op checks detect edits correctly. `withProjects` copies the contact details, remark and tags. Existing contact and remark edits preserve project lists.
-* **Storage:** `JsonAdaptedProject` validates all five stored fields through the same domain rules as parsing. `JsonAdaptedPerson` reads an absent/null `projects` field as an empty list for legacy compatibility. Invalid projects, duplicate IDs and null list entries fail through `IllegalValueException`/`DataLoadingException`. `view` includes project IDs and current values so users can identify the edit target.
-* **Design choice:** staging avoids showing an unsaved change or depending on a rollback after failure. It copies the client collection for each edit, trading modest allocation for a clear failure contract. Immutable values make shallow snapshots safe. Project ID allocation and project creation belong to Add Project, not this command.
-* **Integration dependency:** Add Project issue #55 must use the same `Person` project collection and JSON schema, or this increment must be aligned with its finalized schema before merging. No `add-project`, `delete-project`, `undo`, notes, follow-up or agenda command is implemented here.
+* **Model:** `Person` owns an immutable list of immutable `Project` values, each with `id`, `title`, `deadline`, `status` and `priority`. IDs must be positive and unique within each client. Equality includes project data so snapshots and no-op checks detect edits correctly. `withProjects` copies the contact details, remark and tags and retains the per-client `nextProjectId` allocation counter during an edit. Existing contact and remark edits preserve project lists.
+* **Storage:** `JsonAdaptedProject` validates all five stored fields through the same domain rules as parsing. `JsonAdaptedPerson` reads an absent `projects` field as an empty list for legacy compatibility and infers an omitted `nextProjectId` as the greatest existing ID plus one. Explicit null project lists, invalid fields/counters, duplicate IDs, duplicate work and null list entries fail through `IllegalValueException`/`DataLoadingException`. `view` includes project IDs and current values so users can identify the edit target.
+* **Design choice:** staging avoids showing an unsaved change or depending on a rollback after failure. It copies the client collection for each edit, trading modest allocation for a clear failure contract. Immutable values make shallow snapshots safe. Project ID allocation and project creation belong to Add Project, not this command. Editing never consumes an ID.
+* **Integration dependency:** The shared project classes and JSON schema match Add Project PR #58. Merge that dependency before this PR, then merge the updated team `master` into the feature branch to keep the review focused on Edit Project. The compatibility checkout tests both commands together without changing Anson's branch. No `add-project`, `delete-project`, `undo`, notes, follow-up or agenda command is implemented here.
 
 Automated tests cover partial/full edits, filtered client indexes, client-local non-consecutive IDs, completion/reopening, duplicates, invalid input, no-op saves, persistence/reload, save/permission failures, legacy JSON, invalid stored data, immutability and preservation through existing client edits.
 
@@ -600,7 +600,7 @@ testers are expected to do more *exploratory* testing.
 
 ### Editing a project
 
-Use an isolated test folder so your normal client data is unaffected. Copy the built JAR into it, create its `data` subfolder, and copy [`edit-project-clients.json`](files/edit-project-clients.json) to `data/addressbook.json` before launching the JAR. The fixture contains Acme Studio and Beacon Design; each has project #11, and Acme also has project #3. Do not replace a running application's data file.
+Use an isolated test folder so your normal client data is unaffected. Copy the built JAR into it, create its `data` subfolder, and copy [`edit-project-clients.json`](files/edit-project-clients.json) to `data/addressbook.json` before launching the JAR from that test folder (for example, run `java -jar addressbook.jar` there). The fixture contains Acme Studio and Beacon Design; each has project #11, and Acme also has project #3. Do not replace a running application's data file.
 
 1. Run `view 1`. Expect projects #11 (Website redesign, not-started, medium) and #3 (Logo refresh, in-progress, high), both due 2026-10-15.
 1. Run `edit-project 1 11 status/completed`. Expect project #11 to be completed, with its ID/title/deadline/priority unchanged; #3 is unchanged.

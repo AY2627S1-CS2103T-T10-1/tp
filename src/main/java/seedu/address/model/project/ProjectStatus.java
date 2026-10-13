@@ -1,14 +1,18 @@
 package seedu.address.model.project;
 
+import static java.util.Objects.requireNonNull;
+
 /**
- * The persisted and user-visible stages of client work.
+ * Project progress. Completed projects can be loaded, but cannot be created by add-project.
  */
 public enum ProjectStatus {
     NOT_STARTED("not-started"),
     IN_PROGRESS("in-progress"),
     COMPLETED("completed");
 
-    public static final String MESSAGE_CONSTRAINTS = "Status must be not-started, in-progress or completed.";
+    public static final String MESSAGE_CONSTRAINTS = "Status must be not-started, in-progress, or completed.";
+    public static final String MESSAGE_NEW_PROJECT_CONSTRAINTS =
+            "New project status must be not-started or in-progress.";
 
     private final String value;
 
@@ -17,11 +21,14 @@ public enum ProjectStatus {
     }
 
     /**
-     * Parses a status without imposing creation-only restrictions on editing or loading.
+     * Parses a canonical status name.
+     *
+     * @throws IllegalArgumentException if the value is not a supported status.
      */
-    public static ProjectStatus fromValue(String value) {
+    public static ProjectStatus fromString(String value) {
+        requireNonNull(value);
         for (ProjectStatus status : values()) {
-            if (status.value.equalsIgnoreCase(value)) {
+            if (status.value.equals(value)) {
                 return status;
             }
         }

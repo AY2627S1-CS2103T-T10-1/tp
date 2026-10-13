@@ -18,8 +18,10 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.person.Person;
 import seedu.address.model.project.Project;
+import seedu.address.model.project.ProjectDeadline;
 import seedu.address.model.project.ProjectPriority;
 import seedu.address.model.project.ProjectStatus;
+import seedu.address.model.project.ProjectTitle;
 
 /**
  * Tests stable project identity, duplicate handling and displayed client indexes.
@@ -31,34 +33,35 @@ public class EditProjectCommandTest {
 
     @Test
     public void execute_partialEdit_preservesIdOtherProjectsAndClientDetails() throws Exception {
-        Person original = ALICE.withProjects(List.of(WEBSITE, LOGO));
+        Person original = ALICE.withProjects(List.of(WEBSITE, LOGO), 12);
         Model model = new ModelManager();
         model.addPerson(original);
         new EditProjectCommand(Index.fromOneBased(1), 11,
                 new EditProjectDescriptor(null, null, ProjectStatus.COMPLETED, null)).execute(model);
-        Project updated = new Project(11, "Website", DEADLINE, ProjectStatus.COMPLETED, ProjectPriority.MEDIUM);
-        assertEquals(original.withProjects(List.of(updated, LOGO)), model.getFilteredPersonList().getFirst());
+        Project updated = new Project(11, new ProjectTitle("Website"), new ProjectDeadline(DEADLINE),
+                ProjectStatus.COMPLETED, ProjectPriority.MEDIUM);
+        assertEquals(original.withProjects(List.of(updated, LOGO), 12), model.getFilteredPersonList().getFirst());
     }
 
     @Test
     public void execute_filteredClientIndex_changesOnlySelectedClientsProject() throws Exception {
         Model model = new ModelManager();
-        Person alice = ALICE.withProjects(List.of(WEBSITE));
-        Person benson = BENSON.withProjects(List.of(WEBSITE));
+        Person alice = ALICE.withProjects(List.of(WEBSITE), 12);
+        Person benson = BENSON.withProjects(List.of(WEBSITE), 12);
         model.addPerson(alice);
         model.addPerson(benson);
         model.updateFilteredPersonList(person -> person.getName().equals(BENSON.getName()));
         new EditProjectCommand(Index.fromOneBased(1), 11,
                 new EditProjectDescriptor("New work", null, null, null)).execute(model);
         assertEquals(alice, model.getAddressBook().getPersonList().getFirst());
-        assertEquals("New work", model.getFilteredPersonList().getFirst().getProjects().getFirst().getTitle());
+        assertEquals("New work", model.getFilteredPersonList().getFirst().getProjects().getFirst().getTitle().value);
         assertEquals(1, model.getFilteredPersonList().size());
     }
 
     @Test
     public void execute_duplicateTitleAndDeadline_rejectsWithoutChanges() {
         Model model = new ModelManager();
-        Person original = ALICE.withProjects(List.of(WEBSITE, LOGO));
+        Person original = ALICE.withProjects(List.of(WEBSITE, LOGO), 12);
         model.addPerson(original);
         CommandException exception = assertThrows(CommandException.class, () -> new EditProjectCommand(
                 Index.fromOneBased(1), 11, new EditProjectDescriptor(" logo ", null,
@@ -70,17 +73,17 @@ public class EditProjectCommandTest {
     @Test
     public void execute_sameTitleDifferentDeadline_succeeds() throws Exception {
         Model model = new ModelManager();
-        model.addPerson(ALICE.withProjects(List.of(WEBSITE, LOGO)));
+        model.addPerson(ALICE.withProjects(List.of(WEBSITE, LOGO), 12));
         new EditProjectCommand(Index.fromOneBased(1), 11,
                 new EditProjectDescriptor("Logo", DEADLINE.plusDays(1), null, null)).execute(model);
         assertEquals(DEADLINE.plusDays(1),
-                model.getFilteredPersonList().getFirst().getProjects().getFirst().getDeadline());
+                model.getFilteredPersonList().getFirst().getProjects().getFirst().getDeadline().date);
     }
 
     @Test
     public void execute_invalidClientOrProjectId_rejectsWithoutChanges() {
         Model model = new ModelManager();
-        Person original = ALICE.withProjects(List.of(WEBSITE));
+        Person original = ALICE.withProjects(List.of(WEBSITE), 12);
         model.addPerson(original);
         EditProjectDescriptor descriptor = new EditProjectDescriptor(null, null, ProjectStatus.COMPLETED, null);
         EditProjectCommand invalidClient = new EditProjectCommand(Index.fromOneBased(2), 11, descriptor);
@@ -109,6 +112,7 @@ public class EditProjectCommandTest {
     }
 
     private static Project project(int id, String title) {
-        return new Project(id, title, DEADLINE, ProjectStatus.NOT_STARTED, ProjectPriority.MEDIUM);
+        return new Project(id, new ProjectTitle(title), new ProjectDeadline(DEADLINE),
+                ProjectStatus.NOT_STARTED, ProjectPriority.MEDIUM);
     }
 }

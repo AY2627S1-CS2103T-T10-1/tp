@@ -1,87 +1,48 @@
 package seedu.address.model.project;
 
-import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
+import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
-import java.util.Locale;
 import java.util.Objects;
 
+import seedu.address.commons.util.ToStringBuilder;
+
 /**
- * Immutable client work identified by a stable, client-local ID.
+ * An immutable project with an ID unique to its owning client.
  */
-public class Project {
-    public static final String MESSAGE_TITLE_CONSTRAINTS =
-            "Title must contain 1–100 printable characters and at least one letter or number.";
-    public static final String MESSAGE_DEADLINE_CONSTRAINTS =
-            "Deadline must be a real date in yyyy-MM-dd format (years 0001–9999).";
+public final class Project {
+
     public static final String MESSAGE_ID_CONSTRAINTS = "Project ID must be a positive integer.";
 
     private final int id;
-    private final String title;
-    private final LocalDate deadline;
+    private final ProjectTitle title;
+    private final ProjectDeadline deadline;
     private final ProjectStatus status;
     private final ProjectPriority priority;
 
     /**
-     * Creates validated project data, preserving the supplied stable ID.
+     * Constructs a project with a positive ID and validated fields.
      */
-    public Project(int id, String title, LocalDate deadline, ProjectStatus status, ProjectPriority priority) {
-        requireNonNull(title);
-        requireNonNull(deadline);
+    public Project(int id, ProjectTitle title, ProjectDeadline deadline, ProjectStatus status,
+            ProjectPriority priority) {
+        requireAllNonNull(title, deadline, status, priority);
         checkArgument(id > 0, MESSAGE_ID_CONSTRAINTS);
-        checkArgument(isValidTitle(title), MESSAGE_TITLE_CONSTRAINTS);
-        checkArgument(deadline.getYear() >= 1 && deadline.getYear() <= 9999, MESSAGE_DEADLINE_CONSTRAINTS);
         this.id = id;
-        this.title = title.strip();
+        this.title = title;
         this.deadline = deadline;
-        this.status = requireNonNull(status);
-        this.priority = requireNonNull(priority);
-    }
-
-    /**
-     * Returns whether the trimmed title contains printable text within the length limit.
-     */
-    public static boolean isValidTitle(String title) {
-        requireNonNull(title);
-        String trimmed = title.strip();
-        return !trimmed.isEmpty() && trimmed.codePointCount(0, trimmed.length()) <= 100
-                && trimmed.codePoints().anyMatch(Character::isLetterOrDigit)
-                && trimmed.codePoints().allMatch(Project::isPrintable);
-    }
-
-    private static boolean isPrintable(int codePoint) {
-        int type = Character.getType(codePoint);
-        return !Character.isISOControl(codePoint) && type != Character.FORMAT
-                && type != Character.SURROGATE && type != Character.UNASSIGNED
-                && type != Character.LINE_SEPARATOR && type != Character.PARAGRAPH_SEPARATOR;
-    }
-
-    /**
-     * Parses a strict, real calendar date without silently correcting invalid days.
-     */
-    public static LocalDate parseDeadline(String value) {
-        requireNonNull(value);
-        checkArgument(value.matches("[0-9]{4}-[0-9]{2}-[0-9]{2}"), MESSAGE_DEADLINE_CONSTRAINTS);
-        try {
-            LocalDate date = LocalDate.parse(value);
-            checkArgument(date.getYear() >= 1, MESSAGE_DEADLINE_CONSTRAINTS);
-            return date;
-        } catch (DateTimeParseException exception) {
-            throw new IllegalArgumentException(MESSAGE_DEADLINE_CONSTRAINTS, exception);
-        }
+        this.status = status;
+        this.priority = priority;
     }
 
     public int getId() {
         return id;
     }
 
-    public String getTitle() {
+    public ProjectTitle getTitle() {
         return title;
     }
 
-    public LocalDate getDeadline() {
+    public ProjectDeadline getDeadline() {
         return deadline;
     }
 
@@ -94,20 +55,23 @@ public class Project {
     }
 
     /**
-     * Detects equivalent client work independently of its ID, status and priority.
+     * Returns whether projects have the same normalized title and deadline, independent of their IDs or progress.
      */
-    public boolean isSameWork(Project other) {
-        requireNonNull(other);
-        return title.replaceAll("\\s+", " ").toLowerCase(Locale.ROOT)
-                .equals(other.title.replaceAll("\\s+", " ").toLowerCase(Locale.ROOT))
+    public boolean isSameProject(Project other) {
+        return other != null && title.normalizedValue().equals(other.title.normalizedValue())
                 && deadline.equals(other.deadline);
     }
 
     @Override
     public boolean equals(Object other) {
-        return other == this || (other instanceof Project project && id == project.id
-                && title.equals(project.title) && deadline.equals(project.deadline)
-                && status == project.status && priority == project.priority);
+        if (other == this) {
+            return true;
+        }
+        if (!(other instanceof Project otherProject)) {
+            return false;
+        }
+        return id == otherProject.id && title.equals(otherProject.title) && deadline.equals(otherProject.deadline)
+                && status == otherProject.status && priority == otherProject.priority;
     }
 
     @Override
@@ -117,6 +81,12 @@ public class Project {
 
     @Override
     public String toString() {
-        return "#" + id + " " + title + " | Due: " + deadline + " | Status: " + status + " | Priority: " + priority;
+        return new ToStringBuilder(this)
+                .add("id", id)
+                .add("title", title)
+                .add("deadline", deadline)
+                .add("status", status)
+                .add("priority", priority)
+                .toString();
     }
 }

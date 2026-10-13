@@ -1,14 +1,16 @@
 package seedu.address.model.project;
 
+import static java.util.Objects.requireNonNull;
+
 /**
- * The persisted and user-visible priority of client work.
+ * The three supported project priorities.
  */
 public enum ProjectPriority {
     LOW("low"),
     MEDIUM("medium"),
     HIGH("high");
 
-    public static final String MESSAGE_CONSTRAINTS = "Priority must be low, medium or high.";
+    public static final String MESSAGE_CONSTRAINTS = "Priority must be low, medium, or high.";
 
     private final String value;
 
@@ -17,11 +19,14 @@ public enum ProjectPriority {
     }
 
     /**
-     * Parses a priority using the command vocabulary, ignoring case.
+     * Parses a canonical priority name.
+     *
+     * @throws IllegalArgumentException if the value is not a supported priority.
      */
-    public static ProjectPriority fromValue(String value) {
+    public static ProjectPriority fromString(String value) {
+        requireNonNull(value);
         for (ProjectPriority priority : values()) {
-            if (priority.value.equalsIgnoreCase(value)) {
+            if (priority.value.equals(value)) {
                 return priority;
             }
         }

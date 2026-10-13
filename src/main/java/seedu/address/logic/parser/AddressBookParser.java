@@ -52,7 +52,11 @@ public class AddressBookParser {
         }
 
         final String commandWord = matcher.group("commandWord").toLowerCase(Locale.ROOT);
-        final String arguments = matcher.group("arguments");
+        // Keep raw project text so trimming the whole command cannot conceal invalid title controls.
+        final String arguments = commandWord.equals(EditProjectCommand.COMMAND_WORD)
+                ? userInput.substring(userInput.indexOf(matcher.group("commandWord"))
+                        + matcher.group("commandWord").length())
+                : matcher.group("arguments");
 
         // Note to developers: Change LOG_LEVEL in LogsCenter to enable lower level (i.e., FINE, FINER and lower)
         // log messages such as the one below.

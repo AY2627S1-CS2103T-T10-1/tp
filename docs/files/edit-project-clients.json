@@ -22,7 +22,8 @@
           "status": "in-progress",
           "priority": "high"
         }
-      ]
+      ],
+      "nextProjectId": 12
     },
     {
       "name": "Beacon Design",
@@ -39,7 +40,8 @@
           "status": "not-started",
           "priority": "medium"
         }
-      ]
+      ],
+      "nextProjectId": 12
     }
   ]
 }

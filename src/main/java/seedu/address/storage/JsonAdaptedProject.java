@@ -2,29 +2,37 @@ package seedu.address.storage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.IntNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.project.Project;
+import seedu.address.model.project.ProjectDeadline;
 import seedu.address.model.project.ProjectPriority;
 import seedu.address.model.project.ProjectStatus;
+import seedu.address.model.project.ProjectTitle;
 
 /**
- * JSON representation of a project, with dates and enums in the command vocabulary.
+ * Jackson-friendly project data. JSON nodes retain the original types so invalid scalars cannot be coerced.
  */
 class JsonAdaptedProject {
-    private final Integer id;
-    private final String title;
-    private final String deadline;
-    private final String status;
-    private final String priority;
+
+    public static final String MISSING_FIELD_MESSAGE_FORMAT = "Project's %s field is missing!";
+
+    private final JsonNode id;
+    private final JsonNode title;
+    private final JsonNode deadline;
+    private final JsonNode status;
+    private final JsonNode priority;
 
     /**
-     * Creates storage data without accepting missing or invalid values into the model.
+     * Constructs an adapted project from its stored fields.
      */
     @JsonCreator
-    public JsonAdaptedProject(@JsonProperty("id") Integer id, @JsonProperty("title") String title,
-            @JsonProperty("deadline") String deadline, @JsonProperty("status") String status,
-            @JsonProperty("priority") String priority) {
+    public JsonAdaptedProject(@JsonProperty("id") JsonNode id, @JsonProperty("title") JsonNode title,
+            @JsonProperty("deadline") JsonNode deadline, @JsonProperty("status") JsonNode status,
+            @JsonProperty("priority") JsonNode priority) {
         this.id = id;
         this.title = title;
         this.deadline = deadline;
@@ -33,25 +41,47 @@ class JsonAdaptedProject {
     }
 
     /**
-     * Copies immutable model values to JSON fields.
+     * Copies a validated project for serialization.
      */
     public JsonAdaptedProject(Project source) {
-        this(source.getId(), source.getTitle(), source.getDeadline().toString(),
-                source.getStatus().toString(), source.getPriority().toString());
+        id = IntNode.valueOf(source.getId());
+        title = TextNode.valueOf(source.getTitle().value);
+        deadline = TextNode.valueOf(source.getDeadline().toString());
+        status = TextNode.valueOf(source.getStatus().toString());
+        priority = TextNode.valueOf(source.getPriority().toString());
     }
 
     /**
-     * Validates stored data through the same domain rules used by command parsing.
+     * Converts the stored fields into a project, rejecting missing fields and invalid values.
      */
     public Project toModelType() throws IllegalValueException {
-        if (id == null || title == null || deadline == null || status == null || priority == null) {
-            throw new IllegalValueException("Each project requires id, title, deadline, status and priority.");
+        requireField(id, "id");
+        if (!id.isIntegralNumber() || !id.canConvertToInt() || id.intValue() <= 0) {
+            throw new IllegalValueException(Project.MESSAGE_ID_CONSTRAINTS);
         }
+        String modelTitle = readText(title, "title");
+        String modelDeadline = readText(deadline, "deadline");
+        String modelStatus = readText(status, "status");
+        String modelPriority = readText(priority, "priority");
         try {
-            return new Project(id, title, Project.parseDeadline(deadline), ProjectStatus.fromValue(status),
-                    ProjectPriority.fromValue(priority));
-        } catch (IllegalArgumentException exception) {
-            throw new IllegalValueException(exception.getMessage());
+            return new Project(id.intValue(), new ProjectTitle(modelTitle), new ProjectDeadline(modelDeadline),
+                    ProjectStatus.fromString(modelStatus), ProjectPriority.fromString(modelPriority));
+        } catch (IllegalArgumentException e) {
+            throw new IllegalValueException(e.getMessage(), e);
+        }
+    }
+
+    private static String readText(JsonNode field, String name) throws IllegalValueException {
+        requireField(field, name);
+        if (!field.isTextual()) {
+            throw new IllegalValueException("Project's " + name + " field must be a string.");
+        }
+        return field.textValue();
+    }
+
+    private static void requireField(JsonNode field, String name) throws IllegalValueException {
+        if (field == null || field.isNull()) {
+            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, name));
         }
     }
 }

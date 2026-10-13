@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDate;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -25,8 +24,10 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.person.Person;
 import seedu.address.model.project.Project;
+import seedu.address.model.project.ProjectDeadline;
 import seedu.address.model.project.ProjectPriority;
 import seedu.address.model.project.ProjectStatus;
+import seedu.address.model.project.ProjectTitle;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -35,7 +36,8 @@ import seedu.address.storage.StorageManager;
  * Exercises edits from command text through atomic saving, reload and existing client commands.
  */
 public class EditProjectIntegrationTest {
-    private static final Project ORIGINAL = new Project(11, "Website redesign", LocalDate.of(2026, 10, 15),
+    private static final Project ORIGINAL = new Project(11, new ProjectTitle("Website redesign"),
+            new ProjectDeadline("2026-10-15"),
             ProjectStatus.NOT_STARTED, ProjectPriority.MEDIUM);
 
     @TempDir
@@ -49,18 +51,18 @@ public class EditProjectIntegrationTest {
     @BeforeEach
     public void setUp() {
         model = new ModelManager();
-        alice = ALICE.withProjects(List.of(ORIGINAL));
+        alice = ALICE.withProjects(List.of(ORIGINAL), 12);
         model.addPerson(alice);
-        model.addPerson(BENSON.withProjects(List.of(ORIGINAL)));
+        model.addPerson(BENSON.withProjects(List.of(ORIGINAL), 12));
         storage = new JsonAddressBookStorage(temporaryFolder.resolve("clients.json"));
         logic = createLogic(storage);
     }
 
     @Test
     public void execute_allFields_persistsStableIdAndSelectsUpdatedClient() throws Exception {
-        Project updated = new Project(11, "Launch", LocalDate.of(2024, 2, 29),
+        Project updated = new Project(11, new ProjectTitle("Launch"), new ProjectDeadline("2024-02-29"),
                 ProjectStatus.COMPLETED, ProjectPriority.HIGH);
-        Person expected = alice.withProjects(List.of(updated));
+        Person expected = alice.withProjects(List.of(updated), 12);
         assertEquals(expected, logic.execute("edit-project 1 11 title/Launch deadline/2024-02-29 "
                 + "status/completed priority/high").getClientToSelect().orElseThrow());
         assertEquals(expected, model.getFilteredPersonList().getFirst());
@@ -106,6 +108,14 @@ public class EditProjectIntegrationTest {
     }
 
     @Test
+    public void execute_editAndReload_preserveNextProjectIdCounter() throws Exception {
+        model.setPerson(alice, alice.withProjects(alice.getProjects(), 50));
+        logic.execute("edit-project 1 11 status/completed");
+        assertEquals(50, model.getFilteredPersonList().getFirst().getNextProjectId());
+        assertEquals(50, storage.readAddressBook().orElseThrow().getPersonList().getFirst().getNextProjectId());
+    }
+
+    @Test
     public void execute_existingContactAndRemarkEdits_preserveProjectsAndPersist() throws Exception {
         for (String command : List.of("edit-client 1 e/new@example.com", "edit 1 p/81234567", "remark 1 r/Retainer")) {
             logic.execute(command);
@@ -118,7 +128,7 @@ public class EditProjectIntegrationTest {
     public void execute_view_displaysStableProjectIdAndEditedFields() throws Exception {
         logic.execute("edit-project 1 11 status/completed priority/high");
         String feedback = logic.execute("view 1").getFeedbackToUser();
-        assertTrue(feedback.contains("#11 Website redesign | Due: 2026-10-15"
+        assertTrue(feedback.contains("#11 | Website redesign | Deadline: 2026-10-15"
                 + " | Status: completed | Priority: high"));
     }
 

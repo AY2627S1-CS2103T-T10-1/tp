@@ -12,7 +12,7 @@ import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.EditProjectCommand;
 import seedu.address.logic.commands.EditProjectCommand.EditProjectDescriptor;
 import seedu.address.logic.parser.exceptions.ParseException;
-import seedu.address.model.project.Project;
+import seedu.address.model.project.ProjectDeadline;
 import seedu.address.model.project.ProjectPriority;
 import seedu.address.model.project.ProjectStatus;
 
@@ -66,7 +66,7 @@ public class EditProjectCommandParserTest {
                 "status/not-started STATUS/completed", "priority/low priority/high")) {
             assertThrows(ParseException.class, () -> parser.parseCommand("edit-project 1 3 " + fields), fields);
         }
-        assertEquals(Project.MESSAGE_DEADLINE_CONSTRAINTS, assertThrows(
+        assertEquals(ProjectDeadline.MESSAGE_CONSTRAINTS, assertThrows(
                 ParseException.class, () -> parser.parseCommand("edit-project 1 3 deadline/2026-02-29")).getMessage());
     }
 
@@ -77,5 +77,22 @@ public class EditProjectCommandParserTest {
                     new EditProjectDescriptor(title, null, null, null)),
                     parser.parseCommand("edit-project 1 3 title/" + title));
         }
+    }
+
+    @Test
+    public void parse_slashesInTitle_preservesPrintableText() throws Exception {
+        String title = "UX/UI redesign https://example.com";
+        assertEquals(new EditProjectCommand(Index.fromOneBased(1), 3,
+                new EditProjectDescriptor(title, null, null, null)),
+                parser.parseCommand("edit-project 1 3 title/" + title));
+    }
+
+    @Test
+    public void parse_controlCharactersInTitle_rejectsWithoutNormalizingThem() {
+        EditProjectCommandParser commandParser = new EditProjectCommandParser();
+        for (String title : List.of("\tWebsite", "Website\tlaunch", "Website\u0000", "Website\nlaunch")) {
+            assertThrows(ParseException.class, () -> commandParser.parse("1 3 title/" + title));
+        }
+        assertThrows(ParseException.class, () -> parser.parseCommand("edit-project 1 3 title/Website\t"));
     }
 }

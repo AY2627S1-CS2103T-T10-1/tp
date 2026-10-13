@@ -53,7 +53,8 @@ public class EditClientCommand extends Command {
             }
         }
         Person updatedClient = new Person(client.getName(), client.getPhone(), email,
-                client.getAddress(), client.getRemark(), client.getTags(), client.getProjects());
+                client.getAddress(), client.getRemark(), client.getTags(),
+                client.getProjects(), client.getNextProjectId());
         model.setPerson(client, updatedClient);
         return new CommandResult("Updated client: " + updatedClient.getName() + ".");
     }

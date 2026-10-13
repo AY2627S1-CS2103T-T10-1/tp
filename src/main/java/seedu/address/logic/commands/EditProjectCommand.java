@@ -13,8 +13,10 @@ import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.person.Person;
 import seedu.address.model.project.Project;
+import seedu.address.model.project.ProjectDeadline;
 import seedu.address.model.project.ProjectPriority;
 import seedu.address.model.project.ProjectStatus;
+import seedu.address.model.project.ProjectTitle;
 
 /**
  * Updates one existing project while retaining its stable ID and unspecified fields.
@@ -57,14 +59,16 @@ public class EditProjectCommand extends Command {
             return new CommandResult("No changes needed for project #" + projectId + ".");
         }
         if (client.getProjects().stream()
-                .anyMatch(project -> project.getId() != projectId && project.isSameWork(updated))) {
+                .anyMatch(project -> project.getId() != projectId && project.isSameProject(updated))) {
             throw new CommandException(MESSAGE_DUPLICATE);
         }
         List<Project> projects = new ArrayList<>(client.getProjects());
         projects.set(projects.indexOf(original), updated);
-        Person updatedClient = client.withProjects(projects);
+        Person updatedClient = client.withProjects(projects, client.getNextProjectId());
         model.setPerson(client, updatedClient);
-        return new CommandResult("Updated project for " + client.getName() + ": " + updated, updatedClient);
+        return new CommandResult("Updated project #" + projectId + " for " + client.getName() + ": "
+                + updated.getTitle() + " | Deadline: " + updated.getDeadline()
+                + " | Status: " + updated.getStatus() + " | Priority: " + updated.getPriority(), updatedClient);
     }
 
     @Override
@@ -90,12 +94,12 @@ public class EditProjectCommand extends Command {
         public EditProjectDescriptor {
             checkArgument(title != null || deadline != null || status != null || priority != null, MESSAGE_NO_FIELD);
             if (title != null) {
-                checkArgument(Project.isValidTitle(title), Project.MESSAGE_TITLE_CONSTRAINTS);
-                title = title.strip();
+                checkArgument(ProjectTitle.isValidTitle(title), ProjectTitle.MESSAGE_CONSTRAINTS);
+                title = new ProjectTitle(title).value;
             }
             if (deadline != null) {
                 checkArgument(deadline.getYear() >= 1 && deadline.getYear() <= 9999,
-                        Project.MESSAGE_DEADLINE_CONSTRAINTS);
+                        ProjectDeadline.MESSAGE_CONSTRAINTS);
             }
         }
 
@@ -104,8 +108,8 @@ public class EditProjectCommand extends Command {
          */
         public Project applyTo(Project original) {
             requireNonNull(original);
-            return new Project(original.getId(), title == null ? original.getTitle() : title,
-                    deadline == null ? original.getDeadline() : deadline,
+            return new Project(original.getId(), title == null ? original.getTitle() : new ProjectTitle(title),
+                    deadline == null ? original.getDeadline() : new ProjectDeadline(deadline),
                     status == null ? original.getStatus() : status,
                     priority == null ? original.getPriority() : priority);
         }

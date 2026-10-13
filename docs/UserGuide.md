@@ -300,7 +300,7 @@ in later increments. The existing `edit` command remains available.
 
 ### Editing a project: `edit-project`
 
-Updates a project's title, deadline, status, or priority without changing its ID. Use this to record revised plans or mark work as completed.
+Updates a project's title, deadline, status, or priority without changing its ID or consuming a new project ID. Use this to record revised plans or mark work as completed.
 
 Format: `edit-project CLIENT_INDEX PROJECT_ID [title/TITLE] [deadline/DATE] [status/STATUS] [priority/PRIORITY]`
 
@@ -311,7 +311,7 @@ Format: `edit-project CLIENT_INDEX PROJECT_ID [title/TITLE] [deadline/DATE] [sta
 * `DATE`: a real calendar date in `yyyy-MM-dd` format, with a year between 0001 and 9999. Past dates are allowed; invalid dates such as `2026-02-29` are rejected.
 * `STATUS`: `not-started`, `in-progress`, or `completed`. You can also reopen completed work using `status/in-progress` or `status/not-started`.
 * `PRIORITY`: `low`, `medium`, or `high`.
-* Unknown or repeated parameter prefixes, blank values, and invalid identifiers are rejected.
+* Repeated parameter prefixes, blank values, and invalid identifiers are rejected. Only `title/`, `deadline/`, `status/`, and `priority/` delimit fields; ordinary slash-containing title words such as `UX/UI` remain part of the title. Unexpected positional text or unsupported values for deadline/status/priority are rejected.
 
 Examples, assuming the first displayed client has project #11:
 

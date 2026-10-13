@@ -7,7 +7,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.LongNode;
+import com.fasterxml.jackson.databind.node.NullNode;
 
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.person.Address;
@@ -33,23 +38,17 @@ class JsonAdaptedPerson {
     private final String remark;
     private final List<JsonAdaptedTag> tags = new ArrayList<>();
     private final List<JsonAdaptedProject> projects = new ArrayList<>();
+    private JsonNode nextProjectId;
+    @JsonIgnore
+    private boolean hasInvalidProjects;
 
     /**
-     * Constructs a {@code JsonAdaptedPerson} with the given person details.
-     */
-    public JsonAdaptedPerson(String name, String phone, String email, String address,
-            String remark, List<JsonAdaptedTag> tags) {
-        this(name, phone, email, address, remark, tags, null);
-    }
-
-    /**
-     * Loads legacy clients without projects as an empty project list.
+     * Constructs stored client data. Legacy files may omit the projects and next project ID fields.
      */
     @JsonCreator
     public JsonAdaptedPerson(@JsonProperty("name") String name, @JsonProperty("phone") String phone,
             @JsonProperty("email") String email, @JsonProperty("address") String address,
-            @JsonProperty("remark") String remark, @JsonProperty("tags") List<JsonAdaptedTag> tags,
-            @JsonProperty("projects") List<JsonAdaptedProject> projects) {
+            @JsonProperty("remark") String remark, @JsonProperty("tags") List<JsonAdaptedTag> tags) {
         this.name = name;
         this.phone = phone;
         this.email = email;
@@ -57,9 +56,6 @@ class JsonAdaptedPerson {
         this.remark = remark;
         if (tags != null) {
             this.tags.addAll(tags);
-        }
-        if (projects != null) {
-            this.projects.addAll(projects);
         }
     }
 
@@ -75,7 +71,39 @@ class JsonAdaptedPerson {
         tags.addAll(source.getTags().stream()
                 .map(JsonAdaptedTag::new)
                 .collect(Collectors.toList()));
-        projects.addAll(source.getProjects().stream().map(JsonAdaptedProject::new).toList());
+        projects.addAll(source.getProjects().stream()
+                .map(JsonAdaptedProject::new)
+                .collect(Collectors.toList()));
+        nextProjectId = LongNode.valueOf(source.getNextProjectId());
+        hasInvalidProjects = false;
+    }
+
+    /**
+     * Reads projects only when the field is present. Missing fields in legacy files keep the empty default.
+     */
+    @JsonSetter("projects")
+    private void setProjects(JsonNode storedProjects) {
+        projects.clear();
+        hasInvalidProjects = storedProjects == null || !storedProjects.isArray();
+        if (hasInvalidProjects) {
+            return;
+        }
+        for (JsonNode project : storedProjects) {
+            if (!project.isObject()) {
+                hasInvalidProjects = true;
+                continue;
+            }
+            projects.add(new JsonAdaptedProject(project.get("id"), project.get("title"),
+                    project.get("deadline"), project.get("status"), project.get("priority")));
+        }
+    }
+
+    /**
+     * Retains explicit null as invalid data while an omitted legacy counter remains absent.
+     */
+    @JsonSetter("nextProjectId")
+    private void setNextProjectId(JsonNode storedNextProjectId) {
+        nextProjectId = storedNextProjectId == null ? NullNode.getInstance() : storedNextProjectId;
     }
 
     /**
@@ -84,8 +112,14 @@ class JsonAdaptedPerson {
      * @throws IllegalValueException if there were any data constraints violated in the adapted person.
      */
     public Person toModelType() throws IllegalValueException {
+        if (hasInvalidProjects) {
+            throw new IllegalValueException("A client's projects must be an array of project objects.");
+        }
         final List<Tag> personTags = new ArrayList<>();
         for (JsonAdaptedTag tag : tags) {
+            if (tag == null || tag.getTagName() == null) {
+                throw new IllegalValueException(Tag.MESSAGE_CONSTRAINTS);
+            }
             personTags.add(tag.toModelType());
         }
 
@@ -127,18 +161,26 @@ class JsonAdaptedPerson {
         final Remark modelRemark = new Remark(remark);
 
         final Set<Tag> modelTags = new HashSet<>(personTags);
-        List<Project> modelProjects = new ArrayList<>();
+        final List<Project> modelProjects = new ArrayList<>();
         for (JsonAdaptedProject project : projects) {
-            if (project == null) {
-                throw new IllegalValueException("Projects cannot contain null entries.");
-            }
             modelProjects.add(project.toModelType());
         }
+        final long modelNextProjectId = readNextProjectId(modelProjects);
         try {
-            return new Person(modelName, modelPhone, modelEmail, modelAddress, modelRemark, modelTags, modelProjects);
-        } catch (IllegalArgumentException exception) {
-            throw new IllegalValueException(exception.getMessage());
+            return new Person(modelName, modelPhone, modelEmail, modelAddress, modelRemark, modelTags,
+                    modelProjects, modelNextProjectId);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalValueException(e.getMessage(), e);
         }
     }
 
+    private long readNextProjectId(List<Project> modelProjects) throws IllegalValueException {
+        if (nextProjectId == null) {
+            return modelProjects.stream().mapToLong(Project::getId).max().orElse(0) + 1;
+        }
+        if (!nextProjectId.isIntegralNumber() || !nextProjectId.canConvertToLong()) {
+            throw new IllegalValueException(Person.MESSAGE_PROJECT_ID_COUNTER_CONSTRAINTS);
+        }
+        return nextProjectId.longValue();
+    }
 }
