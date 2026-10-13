@@ -4,11 +4,13 @@ import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 
 import seedu.address.commons.util.ToStringBuilder;
+import seedu.address.model.project.Project;
 import seedu.address.model.tag.Tag;
 
 /**
@@ -26,11 +28,20 @@ public class Person {
     private final Address address;
     private final Remark remark;
     private final Set<Tag> tags = new HashSet<>();
+    private final List<Project> projects;
 
     /**
      * Every field must be present and not null.
      */
     public Person(Name name, Phone phone, Email email, Address address, Remark remark, Set<Tag> tags) {
+        this(name, phone, email, address, remark, tags, List.of());
+    }
+
+    /**
+     * Creates a client with immutable project data and unique client-local project IDs.
+     */
+    public Person(Name name, Phone phone, Email email, Address address, Remark remark, Set<Tag> tags,
+            List<Project> projects) {
         requireAllNonNull(name, phone, email, address, remark, tags);
         this.name = name;
         this.phone = phone;
@@ -38,6 +49,13 @@ public class Person {
         this.address = address;
         this.remark = remark;
         this.tags.addAll(tags);
+        this.projects = List.copyOf(projects);
+        Set<Integer> projectIds = new HashSet<>();
+        for (Project project : this.projects) {
+            if (!projectIds.add(project.getId())) {
+                throw new IllegalArgumentException("Project IDs must be unique within a client.");
+            }
+        }
     }
 
     public Name getName() {
@@ -66,6 +84,20 @@ public class Person {
      */
     public Set<Tag> getTags() {
         return Collections.unmodifiableSet(tags);
+    }
+
+    /**
+     * Returns the client's projects in stored order, without exposing mutable state.
+     */
+    public List<Project> getProjects() {
+        return projects;
+    }
+
+    /**
+     * Returns a copy with new project data and unchanged contact details, tags and remark.
+     */
+    public Person withProjects(List<Project> updatedProjects) {
+        return new Person(name, phone, email, address, remark, tags, updatedProjects);
     }
 
     /**
@@ -108,13 +140,14 @@ public class Person {
                 && email.equals(otherPerson.email)
                 && address.equals(otherPerson.address)
                 && remark.equals(otherPerson.remark)
-                && tags.equals(otherPerson.tags);
+                && tags.equals(otherPerson.tags)
+                && projects.equals(otherPerson.projects);
     }
 
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, phone, email, address, remark, tags);
+        return Objects.hash(name, phone, email, address, remark, tags, projects);
     }
 
     @Override

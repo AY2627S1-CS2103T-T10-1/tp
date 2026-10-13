@@ -41,12 +41,14 @@ public class ViewCommand extends Command {
         Person client = clients.get(targetIndex.getZeroBased());
         String tags = client.getTags().stream().map(tag -> tag.tagName).sorted()
                 .collect(Collectors.joining(", "));
+        String projects = client.getProjects().isEmpty() ? "" : "\nProjects:\n"
+                + client.getProjects().stream().map(Object::toString).collect(Collectors.joining("\n"));
         return new CommandResult("Name: " + client.getName()
                 + "\nPhone: " + client.getPhone()
                 + "\nEmail: " + client.getEmail()
                 + "\nAddress: " + client.getAddress()
                 + "\nRemark: " + client.getRemark()
-                + "\nTags: " + tags);
+                + "\nTags: " + tags + projects);
     }
 
     @Override
