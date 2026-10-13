@@ -112,7 +112,11 @@ public class ClientDeskHelp {
                 "edit-project CLIENT_INDEX PROJECT_ID [title/TITLE] [deadline/DATE] [status/STATUS] "
                 + "[priority/PRIORITY]",
                 "Use a displayed client index and an existing positive project ID. Supply at least "
-                + "one field.\nField rules match add-project; STATUS also accepts completed.",
+                + "one field.\nTITLE: 1–100 printable characters with a letter or number. DATE: real yyyy-MM-dd "
+                + "date, including past dates. STATUS: not-started, in-progress or completed. "
+                + "PRIORITY: low, medium or high.\nOmitted fields and the project ID are preserved. "
+                + "The same normalized title and deadline as another project for this client is rejected. "
+                + "An unchanged update skips saving; failed saves leave all data unchanged.",
                 "edit-project 1 2 status/completed priority/high"));
         commands.put("undo", new CommandHelp(
                 "Reverse the most recent data-changing command.",

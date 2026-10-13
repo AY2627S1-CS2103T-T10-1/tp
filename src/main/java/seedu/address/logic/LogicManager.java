@@ -14,6 +14,7 @@ import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.DeleteClientCommand;
 import seedu.address.logic.commands.EditClientCommand;
+import seedu.address.logic.commands.EditProjectCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListClientsCommand;
@@ -66,6 +67,9 @@ public class LogicManager implements Logic {
 
         if (command instanceof EditClientCommand editClientCommand) {
             return executeEditClient(editClientCommand);
+        }
+        if (command instanceof EditProjectCommand editProjectCommand) {
+            return executeEditProject(editProjectCommand);
         }
         commandResult = command.execute(model);
         if (command instanceof FindCommand) {
@@ -139,6 +143,26 @@ public class LogicManager implements Logic {
             model.setAddressBook(previousData);
             throw new CommandException(EditClientCommand.MESSAGE_SAVE_FAILURE, ioe);
         }
+        return result;
+    }
+
+    /**
+     * Saves a proposed project edit before publishing data, retaining the live list filter on failure.
+     */
+    private CommandResult executeEditProject(EditProjectCommand command) throws CommandException {
+        Model proposedModel = new ModelManager(model.getAddressBook(), model.getUserPrefs());
+        Set<Person> displayedClients = new HashSet<>(model.getFilteredPersonList());
+        proposedModel.updateFilteredPersonList(displayedClients::contains);
+        CommandResult result = command.execute(proposedModel);
+        if (model.getAddressBook().equals(proposedModel.getAddressBook())) {
+            return result;
+        }
+        try {
+            storage.saveAddressBook(proposedModel.getAddressBook());
+        } catch (IOException exception) {
+            throw new CommandException(EditProjectCommand.MESSAGE_SAVE_FAILURE, exception);
+        }
+        model.setAddressBook(proposedModel.getAddressBook());
         return result;
     }
 
