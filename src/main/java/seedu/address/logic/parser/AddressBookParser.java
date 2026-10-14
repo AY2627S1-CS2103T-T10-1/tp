@@ -19,6 +19,7 @@ import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.DeleteProjectCommand;
 import seedu.address.logic.commands.EditClientCommand;
 import seedu.address.logic.commands.EditCommand;
+import seedu.address.logic.commands.EditProjectCommand;
 import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
@@ -54,7 +55,8 @@ public class AddressBookParser {
 
         final String commandWord = matcher.group("commandWord").toLowerCase(Locale.ROOT);
         // Preserve raw project values: trim() would otherwise hide invalid trailing title controls.
-        final String arguments = commandWord.equals(AddProjectCommand.COMMAND_WORD)
+        final String arguments = (commandWord.equals(AddProjectCommand.COMMAND_WORD)
+                || commandWord.equals(EditProjectCommand.COMMAND_WORD))
                 ? userInput.substring(userInput.indexOf(matcher.group("commandWord"))
                         + matcher.group("commandWord").length())
                 : matcher.group("arguments");
@@ -70,6 +72,7 @@ public class AddressBookParser {
             case AddCommand.COMMAND_WORD -> new AddCommandParser().parse(arguments);
             case EditCommand.COMMAND_WORD -> new EditCommandParser().parse(arguments);
             case EditClientCommand.COMMAND_WORD -> new EditClientCommandParser().parse(arguments);
+            case EditProjectCommand.COMMAND_WORD -> new EditProjectCommandParser().parse(arguments);
             case DeleteClientCommand.COMMAND_WORD -> new DeleteClientCommandParser().parse(arguments);
             case DeleteProjectCommand.COMMAND_WORD -> new DeleteProjectCommandParser().parse(arguments);
             case DeleteCommand.COMMAND_WORD -> new DeleteCommandParser().parse(arguments);

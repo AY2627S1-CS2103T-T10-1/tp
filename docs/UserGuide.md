@@ -134,7 +134,7 @@ Examples:
 ### Adding a project: `add-project`
 
 Records work under a client and saves it immediately.
-Projects appear in the client's details. Project editing is documented separately.
+Use `view CLIENT_INDEX` to see saved projects and their IDs, and `edit-project` to update an existing project.
 
 Format: `add-project CLIENT_INDEX title/TITLE deadline/DATE [status/STATUS] [priority/PRIORITY]`
 
@@ -275,6 +275,54 @@ Exits the program.
 
 Format: `exit`
 
+### Editing a project: `edit-project`
+
+Updates an existing project's title, deadline, status or priority. Use this when a client revises the work, a deadline moves, or a project is completed. Editing keeps the project's ID and does not consume a new ID.
+
+Format: `edit-project CLIENT_INDEX PROJECT_ID [title/TITLE] [deadline/DATE] [status/STATUS] [priority/PRIORITY]`
+
+`CLIENT_INDEX` is the positive number beside a client in the currently displayed list. After `find`, use the number in those search results. `PROJECT_ID` is the positive ID shown by `view CLIENT_INDEX`, **not the project's position in the displayed project list**. Both identifiers must be unsigned ASCII integers from 1 to 2147483647, without a sign or decimal. IDs belong to individual clients, so two clients can each have project #1.
+
+Supply at least one field. Fields you omit retain their existing values. The client index and project ID come first; the prefixed fields may follow in any order. Command words, prefixes, status and priority are case-insensitive. Titles retain their capitalization and internal spacing.
+
+| Field | Accepted values |
+| --- | --- |
+| `title/TITLE` | 1–100 printable Unicode code points after removing surrounding spaces, including at least one letter or number. Control characters, invisible formatting characters and unpaired surrogates are invalid. |
+| `deadline/DATE` | A real date in `yyyy-MM-dd` format, with a year from 0001 to 9999. Past dates are allowed. For example, `2024-02-29` is valid and `2026-02-29` is invalid. |
+| `status/STATUS` | `not-started`, `in-progress` or `completed`. Completed work can be reopened with either of the first two values. |
+| `priority/PRIORITY` | `low`, `medium` or `high`. |
+
+A supplied field cannot be blank or repeated. Only `title/`, `deadline/`, `status/` and `priority/` delimit fields. Ordinary slash-containing title words such as `UX/UI` and `https://example.com` remain title text. A whitespace-separated recognized prefix starts another field, so a title cannot contain a separate token such as `status/` as ordinary text.
+
+**Example:** suppose `view 1` shows Acme Studio's project #11, “Website redesign”.
+
+```text
+view 1
+edit-project 1 11 status/completed
+edit-project 1 11 title/Website launch deadline/2026-10-30 priority/high
+```
+
+The first edit changes only the status. The second changes the title, deadline and priority; the status remains `completed`. The second success message is:
+
+```text
+Updated project #11 for Acme Studio: Website launch | Deadline: 2026-10-30 | Status: completed | Priority: high
+```
+
+The updated client is selected and the current client filter is preserved. Use `view 1` again to inspect its projects. Changes are saved automatically and survive restarting ClientDesk. Other clients and projects are unchanged.
+
+Two projects for the same client cannot have the same normalized title and deadline. Title comparison ignores case and repeated spaces, regardless of status or priority. The same title with a different deadline, or matching work under another client, is allowed.
+
+| Situation | Result |
+| --- | --- |
+| Omitted edit fields, such as `edit-project 1 11` | `Specify at least one project field to update.` |
+| No displayed client at index 99 | `No client at index 99.` |
+| No project #99 for Acme Studio | `No project with ID 99 for Acme Studio.` |
+| Edit would duplicate another project for the same client | `Update would duplicate another project for this client.` |
+| Supplied values are identical to the existing values | `No changes needed for project #11.` No save occurs. |
+| Saving fails | `Project could not be saved. No changes were made.` Previous live and saved data are retained. |
+
+Invalid identifiers, dates, statuses, priorities, repeated fields and unexpected positional text produce an error without changing project data. Editing requires an existing project; use `view` to find its ID. Older client files without projects continue to load normally, but have no projects to edit.
+
 ### Saving the data
 
 ClientDesk automatically saves successful data changes. You do not need to save manually.
@@ -328,6 +376,7 @@ Action | Format, Examples
 **List** | `list`
 **List Clients** | `list-clients`
 **Help** | `help [COMMAND]`
+**Edit Project** | `edit-project CLIENT_INDEX PROJECT_ID [title/TITLE] [deadline/DATE] [status/STATUS] [priority/PRIORITY]`
 
 ### Viewing client details: `view`
 
@@ -337,7 +386,7 @@ Format: `view INDEX`
 
 The index is a positive integer from the currently displayed list. After a `find` command,
 use the index in the search results. Details include name, phone, email, address, remark, tags and saved projects.
-Each project is shown with its ID, which you can use with `delete-project`.
+Each project is shown in project-ID order with its titles, deadlines, statuses and priorities.
 An index outside the displayed list produces an error.
 
 Example: `view 1` displays the first client in the current list.

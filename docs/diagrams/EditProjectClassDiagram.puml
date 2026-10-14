@@ -1,0 +1,48 @@
+@startuml
+!pragma layout smetana
+skinparam monochrome true
+skinparam classAttributeIconSize 0
+hide empty members
+
+abstract class Command
+class EditProjectCommand {
+    -clientIndex: Index
+    -projectId: int
+    +execute(model: Model): CommandResult
+}
+class EditProjectCommandParser {
+    +parse(args: String): EditProjectCommand
+}
+class EditProjectDescriptor <<record>> {
+    -title: String [0..1]
+    -deadline: LocalDate [0..1]
+    -status: ProjectStatus [0..1]
+    -priority: ProjectPriority [0..1]
+    +applyTo(original: Project): Project
+}
+interface Model {
+    +getFilteredPersonList(): ObservableList<Person>
+    +setPerson(target: Person, edited: Person)
+}
+class Project {
+    -id: int
+    -title: ProjectTitle
+    -deadline: ProjectDeadline
+    -status: ProjectStatus
+    -priority: ProjectPriority
+}
+
+Command <|-- EditProjectCommand
+EditProjectCommandParser ..> EditProjectCommand : creates
+EditProjectCommandParser ..> EditProjectDescriptor : creates
+EditProjectCommand --> "1" EditProjectDescriptor : descriptor
+EditProjectCommand ..> Model : updates
+EditProjectCommand ..> Project : resolves by ID
+EditProjectDescriptor ..> Project : creates updated value
+
+note bottom of EditProjectDescriptor
+    Nested in EditProjectCommand.
+    Null fields retain the existing value;
+    at least one field must be supplied.
+end note
+@enduml
