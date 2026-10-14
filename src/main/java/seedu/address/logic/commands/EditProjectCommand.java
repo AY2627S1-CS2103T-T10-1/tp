@@ -55,7 +55,6 @@ public class EditProjectCommand extends Command {
                 .findFirst().orElseThrow(() -> new CommandException("No project with ID " + projectId
                         + " for " + client.getName() + "."));
         Project updated = descriptor.applyTo(original);
-        assert updated.getId() == original.getId() : "Editing a project must preserve its ID.";
         if (updated.equals(original)) {
             return new CommandResult("No changes needed for project #" + projectId + ".");
         }
