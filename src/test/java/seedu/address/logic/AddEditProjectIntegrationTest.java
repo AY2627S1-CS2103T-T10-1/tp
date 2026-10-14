@@ -24,7 +24,7 @@ import seedu.address.storage.StorageManager;
  */
 public class AddEditProjectIntegrationTest {
     @TempDir
-    public Path temporaryFolder;
+    Path temporaryFolder;
 
     @Test
     public void execute_addEditReloadAndAdd_retainsWorkIdsAndCounter() throws Exception {

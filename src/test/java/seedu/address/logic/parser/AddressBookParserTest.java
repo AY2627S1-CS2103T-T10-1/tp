@@ -27,6 +27,7 @@ import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListClientsCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.ModelManager;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.PersonContainsKeywordsPredicate;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
@@ -102,7 +103,8 @@ public class AddressBookParserTest {
     @Test
     public void parseCommand_help() throws Exception {
         assertTrue(parser.parseCommand(HelpCommand.COMMAND_WORD) instanceof HelpCommand);
-        assertTrue(parser.parseCommand("HELP agenda") instanceof HelpCommand);
+        assertTrue(parser.parseCommand("HELP edit-client").execute(new ModelManager()).getFeedbackToUser()
+                .contains("Format: edit-client CLIENT_INDEX e/EMAIL"));
     }
 
     @Test

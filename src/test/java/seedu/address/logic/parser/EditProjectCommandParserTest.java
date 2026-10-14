@@ -140,7 +140,6 @@ public class EditProjectCommandParserTest {
         }
     }
 
-
     @Test
     public void parse_spacesAndTabSeparators_trimsEdgesAndRetainsInternalTitleSpacing() throws Exception {
         assertEquals(new EditProjectCommand(Index.fromOneBased(1), 3,
@@ -149,5 +148,4 @@ public class EditProjectCommandParserTest {
                 parser.parseCommand("  edit-project \t0001 0003 TITLE/   New  Website   \tDEADLINE/2024-02-29"
                         + "\tSTATUS/COMPLETED\tPRIORITY/HIGH  "));
     }
-
 }

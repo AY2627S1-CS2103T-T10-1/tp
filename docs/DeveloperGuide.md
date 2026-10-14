@@ -9,6 +9,8 @@ title: Developer Guide
 
 ## **Acknowledgements**
 
+* The Week 9 Help corrections, Add Client and Edit Project regression tests, and their documentation were developed with OpenAI Codex assistance. Help retains the existing ClientDesk command catalogue and AddressBook-Level3 Help window.
+
 * The `edit-project` implementation, tests and documentation were developed with OpenAI Codex assistance. Its save-before-publish flow follows the existing `delete-client` staging approach. The shared project model and JSON storage come from Anson's merged [Add Project PR #58](https://github.com/AY2627S1-CS2103T-T10-1/tp/pull/58). The Edit Project prefix scanning and whitespace trimming adapt `AddProjectCommandParser` from [commit d64842b](https://github.com/iians0n/tp/commit/d64842b07ad207b1b264f44461af6a2ba1a763ed), and its JavaFX test follows `AddProjectUiTest` from that commit. Project display in `view` retains the implementation reused from Anson's earlier [commit f5e77fa](https://github.com/iians0n/tp/commit/f5e77fa407264a274d922d6fb679e7202daa3624). These reused contributions are credited to Anson.
 
 * The `delete-client` command and save-before-publish flow were developed with OpenAI Codex assistance and follow the command and atomic-save structure introduced for `add-client` in [team commit 332b415](https://github.com/AY2627S1-CS2103T-T10-1/tp/commit/332b415a1e13cf5dd3f1d6b8c1eeb62451060542). No source code was copied verbatim.
@@ -160,6 +162,32 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Help
+
+`ClientDeskHelp` stores the supported ClientDesk client and project command instructions in an ordered,
+unmodifiable map. It supplies the overview and detailed instructions to `HelpCommand`. Each entry describes
+an implemented command; planned commands have no entry. The catalogue includes the existing `remark` command.
+
+`HelpCommandParser` accepts zero or one command name and matches names case-insensitively. An unknown name
+produces an error; multiple names produce `Usage: help [COMMAND]`. `HelpCommand` returns a result that opens
+`HelpWindow`, whose scrollable text displays the instructions. The Help menu and `F1` open the overview.
+`LogicManager` skips saving for Help, so viewing instructions preserves client data and the displayed filter.
+
+### Add client
+
+`AddClientCommandParser` requires name, phone and email, accepts repeated tags, and rejects repeated required
+prefixes or unknown prefixes. It validates the creation rules before building a `Person`. Phone formatting is
+removed and tags are lowercase. The new client has the address `Not provided`, no projects and next project ID 1.
+
+`AddClientCommand` checks duplicates against all stored clients, including clients hidden by the current filter.
+A duplicate has the same email ignoring case, or the same normalized name and phone. A matching name alone
+does not prevent creation.
+
+`LogicManager` runs Add Client on a staged model and saves that model before publishing it to the live model.
+If saving fails, the live data and displayed filter stay unchanged. A successful save publishes the new client,
+restores the full list and selects the new entry. Copying the existing address book into the staged model retains
+each existing client's projects and next project ID.
+
 ### Find clients
 
 `FindCommandParser` splits the input into keywords and rejects empty input or keywords longer than 50 Unicode
@@ -235,8 +263,8 @@ for legacy files, with no projects and a next ID of 1. Nonempty project data mus
 writes both `projects` and `nextProjectId` for all clients. Project lists and counters must be retained by any future
 client-copy operation, including undo snapshots.
 
-This increment implements project creation and deletion. Project editing, undo, notes, follow-ups and agenda
-remain separate features.
+This subsection describes project creation and deletion. Project editing is described in the Edit project
+subsection below. Undo, notes, follow-ups and agenda are planned.
 
 #### Test coverage
 
@@ -686,6 +714,38 @@ testers are expected to do more *exploratory* testing.
        Expected: The most recent window size and location are retained.
 
 1. _{ more test cases …​ }_
+
+### Viewing help
+
+1. Enter `help`, then `help edit-project`.<br>
+   Expected: A scrollable Help window shows the supported ClientDesk client and project command overview,
+   then Edit Project's format, rules and examples.
+1. Enter `help EDIT-CLIENT` and `help remark`.<br>
+   Expected: Edit Client describes email editing. Remark describes setting or clearing a client's remark.
+1. Enter `help undo`, `help agenda` and `help add-client edit-project` separately.<br>
+   Expected: The first two report an unknown command. The last reports `Usage: help [COMMAND]`.
+1. Enter `find alex`, note the displayed clients, then open Help through the command, Help menu and `F1`.<br>
+   Expected: Each route opens Help. Closing it leaves the displayed clients and their data unchanged.
+
+### Adding a client
+
+Run these cases in a disposable folder containing the JAR, using Java 25. Keep that folder separate from your
+normal ClientDesk data. Start the application with `java -jar addressbook.jar` from that folder.
+
+1. Enter `add-client n/Weeknine Studio p/+65 8123 4567 e/studio@weeknine.sg t/web-design`.<br>
+   Expected: The client is saved and selected. Its phone is `6581234567`, address is `Not provided`, and it has no projects.
+1. Enter `find Weeknine Studio`, then `add-project 1 title/Website deadline/2026-12-01`.<br>
+   Expected: The studio receives project ID 1.
+1. Enter `add-client n/Weeknine Partner p/92345678 e/partner@weeknine.sg`, then `find Weeknine Studio` and `view 1`.<br>
+   Expected: The partner is added. The studio still has its Website project with ID 1.
+1. Close and restart the application in the same folder. Enter `find Weeknine Studio`,
+   then `add-project 1 title/Support deadline/2026-12-02`.<br>
+   Expected: The Website project remains and the Support project receives ID 2.
+1. Enter `find Weeknine Partner`, then
+   `add-client n/Another Studio p/93456789 e/STUDIO@weeknine.sg`.<br>
+   Expected: A duplicate-client error appears even though the studio is hidden by the filter. No client is added.
+1. Enter `add-client n/Invalid Client p/123 e/invalid@weeknine.sg`.<br>
+   Expected: A phone-validation error appears and no client is added.
 
 ### Deleting a person
 

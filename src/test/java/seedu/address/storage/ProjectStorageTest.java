@@ -39,7 +39,7 @@ public class ProjectStorageTest {
             ProjectStatus.COMPLETED, ProjectPriority.HIGH);
 
     @TempDir
-    public Path temporaryFolder;
+    Path temporaryFolder;
 
     @Test
     public void saveAndLoad_projectsAndIds_roundTrip() throws Exception {
@@ -64,18 +64,18 @@ public class ProjectStorageTest {
 
     @Test
     public void toModelType_invalidProjectFields_reportIllegalValue() {
-        List<JsonAdaptedProject> invalid = Arrays.asList(
-                adaptedProject(null, "Website", "2026-10-15", "completed", "high"),
-                adaptedProject(0, "Website", "2026-10-15", "completed", "high"),
-                adaptedProject(1, null, "2026-10-15", "completed", "high"),
-                adaptedProject(1, " ", "2026-10-15", "completed", "high"),
-                adaptedProject(1, "Website", null, "completed", "high"),
-                adaptedProject(1, "Website", "2026-02-29", "completed", "high"),
-                adaptedProject(1, "Website", "2026-10-15", null, "high"),
-                adaptedProject(1, "Website", "2026-10-15", "pending", "high"),
-                adaptedProject(1, "Website", "2026-10-15", "completed", null),
-                adaptedProject(1, "Website", "2026-10-15", "completed", "urgent"));
-        for (JsonAdaptedProject project : invalid) {
+        List<JsonAdaptedProject> invalidProjects = Arrays.asList(
+                createAdaptedProject(null, "Website", "2026-10-15", "completed", "high"),
+                createAdaptedProject(0, "Website", "2026-10-15", "completed", "high"),
+                createAdaptedProject(1, null, "2026-10-15", "completed", "high"),
+                createAdaptedProject(1, " ", "2026-10-15", "completed", "high"),
+                createAdaptedProject(1, "Website", null, "completed", "high"),
+                createAdaptedProject(1, "Website", "2026-02-29", "completed", "high"),
+                createAdaptedProject(1, "Website", "2026-10-15", null, "high"),
+                createAdaptedProject(1, "Website", "2026-10-15", "pending", "high"),
+                createAdaptedProject(1, "Website", "2026-10-15", "completed", null),
+                createAdaptedProject(1, "Website", "2026-10-15", "completed", "urgent"));
+        for (JsonAdaptedProject project : invalidProjects) {
             assertThrows(IllegalValueException.class, project::toModelType);
         }
     }
@@ -84,9 +84,9 @@ public class ProjectStorageTest {
     public void toModelType_duplicateIdsOrNullProjects_rejects() {
         List<JsonAdaptedProject> duplicateIds = List.of(
                 new JsonAdaptedProject(PROJECT), new JsonAdaptedProject(PROJECT));
-        assertThrows(IllegalValueException.class, () -> adaptedClient(duplicateIds).toModelType());
-        List<JsonAdaptedProject> nullProject = Arrays.asList((JsonAdaptedProject) null);
-        assertThrows(IllegalValueException.class, () -> adaptedClient(nullProject).toModelType());
+        assertThrows(IllegalValueException.class, () -> createAdaptedClient(duplicateIds).toModelType());
+        List<JsonAdaptedProject> nullProjects = Arrays.asList((JsonAdaptedProject) null);
+        assertThrows(IllegalValueException.class, () -> createAdaptedClient(nullProjects).toModelType());
     }
 
     @Test
@@ -115,7 +115,7 @@ public class ProjectStorageTest {
         assertEquals(client.hashCode(), ALICE.withProjects(List.of(PROJECT), 12).hashCode());
     }
 
-    private JsonAdaptedPerson adaptedClient(List<JsonAdaptedProject> projects) throws Exception {
+    private JsonAdaptedPerson createAdaptedClient(List<JsonAdaptedProject> projects) throws Exception {
         ObjectNode client = JsonUtil.fromJsonString(JsonUtil.toJsonString(new JsonAdaptedPerson(ALICE)),
                 ObjectNode.class);
         client.set("projects", JsonUtil.fromJsonString(JsonUtil.toJsonString(projects), JsonNode.class));
@@ -123,13 +123,13 @@ public class ProjectStorageTest {
         return JsonUtil.fromJsonString(client.toString(), JsonAdaptedPerson.class);
     }
 
-    private JsonAdaptedProject adaptedProject(Integer id, String title, String deadline, String status,
+    private JsonAdaptedProject createAdaptedProject(Integer id, String title, String deadline, String status,
             String priority) {
-        return new JsonAdaptedProject(id == null ? null : IntNode.valueOf(id), text(title), text(deadline),
-                text(status), text(priority));
+        return new JsonAdaptedProject(id == null ? null : IntNode.valueOf(id), toTextNode(title), toTextNode(deadline),
+                toTextNode(status), toTextNode(priority));
     }
 
-    private JsonNode text(String value) {
+    private JsonNode toTextNode(String value) {
         return value == null ? null : TextNode.valueOf(value);
     }
 }

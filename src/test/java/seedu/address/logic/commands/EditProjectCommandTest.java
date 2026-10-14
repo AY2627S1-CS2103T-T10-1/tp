@@ -28,8 +28,8 @@ import seedu.address.model.project.ProjectTitle;
  */
 public class EditProjectCommandTest {
     private static final LocalDate DEADLINE = LocalDate.of(2026, 10, 15);
-    private static final Project WEBSITE = project(11, "Website");
-    private static final Project LOGO = project(3, "Logo");
+    private static final Project WEBSITE = createProject(11, "Website");
+    private static final Project LOGO = createProject(3, "Logo");
 
     @Test
     public void execute_partialEdit_preservesIdOtherProjectsAndClientDetails() throws Exception {
@@ -68,6 +68,23 @@ public class EditProjectCommandTest {
                         ProjectStatus.COMPLETED, ProjectPriority.HIGH)).execute(model));
         assertEquals(EditProjectCommand.MESSAGE_DUPLICATE, exception.getMessage());
         assertEquals(original, model.getFilteredPersonList().getFirst());
+    }
+
+    @Test
+    public void execute_matchingProjectUnderAnotherClient_succeeds() throws Exception {
+        Model model = new ModelManager();
+        Person alice = ALICE.withProjects(List.of(WEBSITE), 12);
+        Person benson = BENSON.withProjects(List.of(LOGO), 4);
+        model.addPerson(alice);
+        model.addPerson(benson);
+
+        new EditProjectCommand(Index.fromOneBased(1), 11,
+                new EditProjectDescriptor("Logo", DEADLINE, null, null)).execute(model);
+
+        Project updated = new Project(11, new ProjectTitle("Logo"), new ProjectDeadline(DEADLINE.toString()),
+                ProjectStatus.NOT_STARTED, ProjectPriority.MEDIUM);
+        assertEquals(List.of(alice.withProjects(List.of(updated), 12), benson),
+                model.getAddressBook().getPersonList());
     }
 
     @Test
@@ -111,7 +128,7 @@ public class EditProjectCommandTest {
                 new EditProjectDescriptor("Website", null, null, null)));
     }
 
-    private static Project project(int id, String title) {
+    private static Project createProject(int id, String title) {
         return new Project(id, new ProjectTitle(title), new ProjectDeadline(DEADLINE.toString()),
                 ProjectStatus.NOT_STARTED, ProjectPriority.MEDIUM);
     }

@@ -68,16 +68,17 @@ and records their projects, deadlines, status and priority, with a graphical cli
 
 ### Viewing help: `help`
 
-Lists the MVP commands and short descriptions in a scrollable help window. Supply one
-command name to view its purpose, format, parameter rules and examples. Command names
-are case-insensitive. Help does not change client data.
+Lists the supported ClientDesk client and project commands with short descriptions in a scrollable help window.
+Supply one command name to view its purpose, format, parameter rules and examples.
+Command names are case-insensitive. Help does not change client data.
 
 Format: `help [COMMAND]`
 
 Examples:
 * `help`
 * `help add-client`
-* `help agenda`
+* `help edit-project`
+* `help remark`
 
 An unknown command reports `Unknown command '<value>'. Type help to see all commands.`
 More than one command name reports `Usage: help [COMMAND]`.
@@ -116,6 +117,8 @@ and keeps the existing data and displayed list.
 
 The inherited address field displays `Not provided` for a new client because
 `add-client` does not require an address.
+Adding a client preserves existing clients' projects and their next project IDs.
+The new client starts with no projects; its first project receives ID 1.
 
 ### Adding a person: `add`
 

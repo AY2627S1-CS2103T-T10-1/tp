@@ -13,17 +13,22 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import javafx.event.ActionEvent;
+import javafx.scene.control.MenuBar;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import seedu.address.logic.LogicManager;
+import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
 import seedu.address.testutil.JavaFxTestUtil;
+import seedu.address.testutil.PersonBuilder;
 
 public class HelpUiTest {
 
@@ -33,6 +38,12 @@ public class HelpUiTest {
     @Test
     public void enterHelp_showsInstructionsAndOverviewWithoutSavingData() throws Exception {
         ModelManager model = new ModelManager();
+        model.addPerson(new PersonBuilder().withName("Acme Studio").build());
+        model.addPerson(new PersonBuilder().withName("Northstar Labs").withPhone("91234567")
+                .withEmail("alex@northstar.io").build());
+        model.updateFilteredPersonList(client -> client.getName().fullName.equals("Northstar Labs"));
+        AddressBook originalData = new AddressBook(model.getAddressBook());
+        List<?> originalDisplay = List.copyOf(model.getFilteredPersonList());
         AtomicInteger saveAttempts = new AtomicInteger();
         JsonAddressBookStorage storage = new JsonAddressBookStorage(testFolder.resolve("clients.json")) {
             @Override
@@ -61,19 +72,38 @@ public class HelpUiTest {
                 assertFalse(instructions.isEditable());
                 assertTrue(input.getText().isEmpty());
 
-                String previous = instructions.getText();
-                input.setText("help unknown-command");
+                input.setText("help edit-client");
                 input.fireEvent(new ActionEvent());
-                assertEquals(previous, instructions.getText());
-                assertTrue(input.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
+                assertTrue(instructions.getText().contains("Format: edit-client CLIENT_INDEX e/EMAIL"));
 
-                // The Help menu/F1 action reuses and focuses the existing window with the overview.
-                window.handleHelp();
+                String previous = instructions.getText();
+                for (String name : new String[] {"unknown-command", "undo", "add-note", "follow-up", "agenda"}) {
+                    input.setText("help " + name);
+                    input.fireEvent(new ActionEvent());
+                    assertEquals(previous, instructions.getText());
+                    assertTrue(input.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
+                }
+
+                MenuBar menu = (MenuBar) window.getPrimaryStage().getScene().lookup("#menuBar");
+                menu.getMenus().get(1).getItems().getFirst().fire();
                 assertTrue(instructions.getText().contains("ClientDesk commands:"));
-                assertTrue(instructions.getText().contains("agenda - "));
+                assertTrue(instructions.getText().contains("remark - "));
+                for (String name : new String[] {"undo", "add-note", "follow-up", "agenda"}) {
+                    assertFalse(instructions.getText().contains(name + " - "));
+                }
+                String overview = instructions.getText();
+                input.setText("help remark");
+                input.fireEvent(new ActionEvent());
+                assertTrue(instructions.getText().contains("Format: remark INDEX r/[REMARK]"));
+                input.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.F1,
+                        false, false, false, false));
+                assertEquals(overview, instructions.getText());
                 assertTrue(help.isShowing());
+                assertEquals(1, Window.getWindows().stream().filter(item -> item instanceof Stage stage
+                        && stage.getTitle().equals("ClientDesk Help")).count());
                 assertEquals(0, saveAttempts.get());
-                assertTrue(model.getAddressBook().getPersonList().isEmpty());
+                assertEquals(originalData, model.getAddressBook());
+                assertEquals(originalDisplay, model.getFilteredPersonList());
             } finally {
                 List.copyOf(Window.getWindows()).forEach(Window::hide);
             }

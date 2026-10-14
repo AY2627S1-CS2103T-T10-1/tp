@@ -12,6 +12,7 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,7 +42,7 @@ public class EditProjectIntegrationTest {
             ProjectStatus.NOT_STARTED, ProjectPriority.MEDIUM);
 
     @TempDir
-    public Path temporaryFolder;
+    Path temporaryFolder;
 
     private Model model;
     private JsonAddressBookStorage storage;
@@ -89,7 +90,7 @@ public class EditProjectIntegrationTest {
         List<Person> displayed = List.copyOf(model.getFilteredPersonList());
         for (IOException exception : List.of(new IOException("Write failed"),
                 new AccessDeniedException("clients.json"))) {
-            logic = createLogic(failingStorage(exception));
+            logic = createLogic(createFailingStorage(exception));
             assertEquals(EditProjectCommand.MESSAGE_SAVE_FAILURE, assertThrows(
                     CommandException.class, () -> logic.execute("edit-project 1 11 status/completed")).getMessage());
             assertEquals(displayed, model.getFilteredPersonList());
@@ -99,8 +100,59 @@ public class EditProjectIntegrationTest {
     }
 
     @Test
+    public void execute_saveFailureAndRetry_publishesOnlySavedEditAndPreservesFilter() throws Exception {
+        Person benson = BENSON.withProjects(List.of(ORIGINAL), 50);
+        model.setPerson(model.getAddressBook().getPersonList().get(1), benson);
+        storage.saveAddressBook(model.getAddressBook());
+        String saved = Files.readString(storage.getAddressBookFilePath());
+        logic.execute("find Benson");
+        AtomicInteger changes = new AtomicInteger();
+        model.getFilteredPersonList().addListener((javafx.collections.ListChangeListener<Person>) change ->
+                changes.incrementAndGet());
+        model.getAddressBook().getPersonList().addListener((javafx.collections.ListChangeListener<Person>) change ->
+                changes.incrementAndGet());
+        logic = createLogic(createFailingStorage(new IOException("Write failed")));
+
+        assertEquals(EditProjectCommand.MESSAGE_SAVE_FAILURE, assertThrows(
+                CommandException.class, () -> logic.execute("edit-project 1 11 status/completed")).getMessage());
+        assertEquals(0, changes.get());
+        assertEquals(List.of(benson), model.getFilteredPersonList());
+        assertEquals(List.of(alice, benson), model.getAddressBook().getPersonList());
+        assertEquals(saved, Files.readString(storage.getAddressBookFilePath()));
+
+        logic = createLogic(storage);
+        Project updated = new Project(11, ORIGINAL.getTitle(), ORIGINAL.getDeadline(),
+                ProjectStatus.COMPLETED, ProjectPriority.MEDIUM);
+        Person expected = benson.withProjects(List.of(updated), 50);
+        assertEquals(expected,
+                logic.execute("edit-project 1 11 status/completed").getClientToSelect().orElseThrow());
+        assertEquals(List.of(expected), model.getFilteredPersonList());
+        assertEquals(List.of(alice, expected), model.getAddressBook().getPersonList());
+        assertEquals(List.of(alice, expected), storage.readAddressBook().orElseThrow().getPersonList());
+        assertTrue(changes.get() > 0);
+    }
+
+    @Test
+    public void execute_exhaustedIdCounter_editsAndPersistsExistingMaximumId() throws Exception {
+        Project lastProject = new Project(Integer.MAX_VALUE, ORIGINAL.getTitle(), ORIGINAL.getDeadline(),
+                ProjectStatus.NOT_STARTED, ProjectPriority.MEDIUM);
+        Person client = alice.withProjects(List.of(lastProject), (long) Integer.MAX_VALUE + 1);
+        model.setPerson(alice, client);
+
+        Project updated = new Project(Integer.MAX_VALUE, ORIGINAL.getTitle(), ORIGINAL.getDeadline(),
+                ProjectStatus.COMPLETED, ProjectPriority.MEDIUM);
+        Person expected = client.withProjects(List.of(updated), (long) Integer.MAX_VALUE + 1);
+        assertEquals(expected, logic.execute("edit-project 1 2147483647 status/completed")
+                .getClientToSelect().orElseThrow());
+        assertEquals(expected, model.getFilteredPersonList().getFirst());
+        assertEquals(expected, storage.readAddressBook().orElseThrow().getPersonList().getFirst());
+        assertEquals(BENSON.withProjects(List.of(ORIGINAL), 12),
+                storage.readAddressBook().orElseThrow().getPersonList().get(1));
+    }
+
+    @Test
     public void execute_unchangedEdit_doesNotSave() throws Exception {
-        logic = createLogic(failingStorage(new IOException("Save must not be called")));
+        logic = createLogic(createFailingStorage(new IOException("Save must not be called")));
         assertEquals("No changes needed for project #11.",
                 logic.execute("edit-project 1 11 status/not-started priority/medium").getFeedbackToUser());
         assertEquals(alice, model.getFilteredPersonList().getFirst());
@@ -166,7 +218,7 @@ public class EditProjectIntegrationTest {
                 new JsonUserPrefsStorage(temporaryFolder.resolve("prefs.json"))));
     }
 
-    private JsonAddressBookStorage failingStorage(IOException failure) {
+    private JsonAddressBookStorage createFailingStorage(IOException failure) {
         return new JsonAddressBookStorage(storage.getAddressBookFilePath()) {
             @Override
             public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
