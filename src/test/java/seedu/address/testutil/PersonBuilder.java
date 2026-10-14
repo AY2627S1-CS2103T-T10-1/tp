@@ -108,6 +108,13 @@ public class PersonBuilder {
         return this;
     }
 
+    /** Sets the projects and their next unused ID for test clients. */
+    public PersonBuilder withProjects(List<Project> projects, long nextProjectId) {
+        this.projects = List.copyOf(projects);
+        this.nextProjectId = nextProjectId;
+        return this;
+    }
+
     public Person build() {
         return new Person(name, phone, email, address, remark, tags, projects, nextProjectId);
     }

@@ -201,8 +201,8 @@ invalid or overflowing indexes and invalid scalar values. `AddressBookParser` re
 Each immutable `Person` owns an immutable list of `Project` values and a persisted `nextProjectId`. The constructor
 checks unique positive IDs, unique normalized title/deadline pairs and a counter greater than every saved ID.
 IDs are independent between clients. The counter can reach `Integer.MAX_VALUE + 1L` as an exhausted sentinel;
-the command then reports exhaustion instead of overflowing. Removing a project through a future feature must
-retain the counter. Existing client edit and remark commands preserve both fields.
+the command then reports exhaustion instead of overflowing. Deleting a project retains the counter, so a deleted
+ID is never reused. Existing client edit and remark commands preserve both fields.
 
 #### Saving a project
 
@@ -218,6 +218,14 @@ retain the counter. Existing client edit and remark commands preserve both field
 An `IOException` produces the project save-failure message without publishing data, list changes or ID allocation.
 Immutable values prevent the proposed transaction from mutating the live snapshot.
 
+#### Deleting a project
+
+`DeleteProjectCommandParser` accepts a displayed client index and a positive project ID. The command resolves the
+index against the current displayed list, then searches only that client's projects. It creates a replacement
+client with the selected project removed and the existing `nextProjectId` retained. `LogicManager` performs this
+operation in a proposed model, saves the proposed address book, and publishes it only after storage succeeds.
+An invalid index, unknown client-scoped ID or failed save leaves the live model and its filter unchanged.
+
 #### Persistence and compatibility
 
 `JsonAdaptedProject` validates the original JSON token types before constructing model values. Numeric strings,
@@ -227,8 +235,8 @@ for legacy files, with no projects and a next ID of 1. Nonempty project data mus
 writes both `projects` and `nextProjectId` for all clients. Project lists and counters must be retained by any future
 client-copy operation, including undo snapshots.
 
-This increment implements project creation. Project display, editing, undo, notes, follow-ups and agenda remain
-separate features.
+This increment implements project creation and deletion. Project editing, undo, notes, follow-ups and agenda
+remain separate features.
 
 #### Test coverage
 
@@ -242,6 +250,10 @@ restart allocation, failed saves with unchanged file bytes and no live-list even
 existing client edits/deletion. `AddProjectUiTest` enters commands through the JavaFX command box and verifies
 feedback, retained filtering, saved project data and duplicate errors.
 
+`DeleteProjectCommandIntegrationTest` verifies displayed indexes, client-scoped IDs, persisted deletion without
+counter reuse, unchanged file bytes and live-list events on save failure, retry, and preservation through client
+editing and `list-clients`. Command and parser tests cover successful deletion, invalid indexes and IDs, and
+argument validation.
 ### Edit project
 
 `EditProjectCommandParser` reads a displayed client index and a stable, client-local project ID. It rejects repeated prefixes and invalid identifiers/field values and creates an immutable `EditProjectDescriptor` containing only supplied fields. `ProjectTitle` and `ProjectDeadline` centralize title/date validation; `ProjectStatus` and `ProjectPriority` provide the persisted command vocabulary. The descriptor can represent completion, reopening, and any combination of title/deadline/priority changes. The parser shares the `CliSyntax` prefix constants and unsigned ASCII identifier form with Add Project. Known prefixes delimit fields; other slash-containing title words remain literal text. Boundary trimming uses linear scans so oversized inputs with long internal space runs are rejected promptly.
@@ -733,6 +745,20 @@ to see their current indexes.
    Restore the directory permissions and retry; the same proposed ID remains available.
 7. Edit the client's email, use the inherited `edit` and `remark` commands, then restart.
    Expected: all projects and their IDs remain. Deleting a client removes its projects without affecting another client.
+
+### Deleting projects
+
+1. Create two clients, then add project ID 1 to each. Run `delete-project 1 1`.
+   Expected: only the first displayed client's project is removed; the other client's ID 1 remains.
+2. Filter the client list and delete a project using its filtered client index. Run `list-clients` afterwards.
+   Expected: the selected project is gone, the filter remains until `list-clients`, and the full client list is intact.
+3. Try project ID 0, an unknown ID, and a client index outside the displayed list.
+   Expected: each command reports an error without changing the saved data.
+4. Delete the highest project ID from a client and add another project.
+   Expected: the new project receives the next unused ID; the deleted ID is not reused.
+5. In a disposable copy, make the containing data directory unwritable and attempt deletion.
+   Expected: `Project could not be deleted. No changes were made.`; project data, file bytes and filter remain unchanged.
+   Restore permissions and retry; the project is deleted successfully.
 
 ### Saving data
 

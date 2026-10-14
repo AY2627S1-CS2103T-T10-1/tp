@@ -250,6 +250,19 @@ Format: `delete-client CLIENT_INDEX`
 
 Example: `delete-client 3` removes the third displayed client.
 
+### Deleting a project: `delete-project`
+
+Removes one project from a client. Use `view CLIENT_INDEX` to find a project's ID.
+
+Format: `delete-project CLIENT_INDEX PROJECT_ID`
+
+* `CLIENT_INDEX` is a positive integer in the currently displayed client list, including `find` results.
+* `PROJECT_ID` is a positive integer belonging to that client. Project IDs are client-scoped.
+* A successful deletion is saved immediately. The next project ID is retained, so a deleted ID is not reused.
+* If the client index or project ID is invalid, no data changes. If saving fails, the project remains in the client record.
+
+Example: `delete-project 1 2` removes project 2 from the first displayed client.
+
 ### Clearing all entries: `clear`
 
 Clears all entries from the address book.
@@ -357,6 +370,7 @@ Action | Format, Examples
 **Clear** | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Delete Client** | `delete-client CLIENT_INDEX`<br> e.g., `delete-client 3`
+**Delete Project** | `delete-project CLIENT_INDEX PROJECT_ID`<br> e.g., `delete-project 1 2`
 **Edit** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [t/TAG]…​`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
 **Find** | `find KEYWORD [KEYWORD]...`<br> e.g., `find acme startup`
 **List** | `list`
@@ -371,7 +385,8 @@ Displays the existing details of a client without modifying the client or the di
 Format: `view INDEX`
 
 The index is a positive integer from the currently displayed list. After a `find` command,
-use the index in the search results. Details include name, phone, email, address, remark and tags. When projects exist, their IDs, titles, deadlines, statuses and priorities are shown in project-ID order.
+use the index in the search results. Details include name, phone, email, address, remark, tags and saved projects.
+Each project is shown in project-ID order with its titles, deadlines, statuses and priorities.
 An index outside the displayed list produces an error.
 
 Example: `view 1` displays the first client in the current list.
