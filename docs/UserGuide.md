@@ -3,7 +3,8 @@ layout: page
 title: User Guide
 ---
 
-AddressBook Level 3 (AB3) is a **desktop application for managing contacts, optimized for use through a Command Line Interface (CLI)** while retaining the benefits of a Graphical User Interface (GUI). If you type quickly, AB3 can help you manage contacts faster than traditional GUI applications.
+ClientDesk is a desktop application for freelancers who prefer typed commands. It manages client contact details
+and records their projects, deadlines, status and priority, with a graphical client list.
 
 * Table of Contents
 {:toc}
@@ -15,9 +16,10 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 1. Ensure that Java `25` or later is installed on your computer.<br>
    **Mac users:** Ensure you have the precise JDK version prescribed [here](https://se-education.org/guides/tutorials/javaInstallationMac.html).
 
-1. Download the latest `.jar` file from [here](https://github.com/se-edu/addressbook-level3/releases).
+1. Download the latest `.jar` file from the [ClientDesk releases page](https://github.com/AY2627S1-CS2103T-T10-1/tp/releases)
+   when a release is available. Developers can build it using the [setup instructions](SettingUp.md).
 
-1. Copy the file to the folder you want to use as the _home folder_ for your AddressBook.
+1. Copy the file to the folder you want to use as the home folder for ClientDesk.
 
 1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar addressbook.jar`.<br>
    A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.<br>
@@ -129,6 +131,46 @@ Examples:
 * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01`
 * `add n/Betsy Crowe t/friend e/betsycrowe@example.com a/Newgate Prison p/1234567 t/criminal`
 
+### Adding a project: `add-project`
+
+Records work under a client and saves it immediately.
+Project viewing and editing are planned separately.
+
+Format: `add-project CLIENT_INDEX title/TITLE deadline/DATE [status/STATUS] [priority/PRIORITY]`
+
+Examples:
+
+* `add-project 1 title/Website redesign deadline/2026-10-15`
+* `add-project 2 title/Landing page deadline/2026-09-25 status/in-progress priority/high`
+* `find acme` followed by `add-project 1 title/UI/UX refresh deadline/2026-12-01 priority/low`
+
+Parameter | Rules
+----------|------
+`CLIENT_INDEX` | A positive integer in the currently displayed client list, including `find` results; no sign or decimal.
+`TITLE` | 1–100 printable Unicode characters after surrounding spaces are removed, including at least one letter or number. Titles cannot contain control characters or invisible formatting characters.
+`DATE` | A real date in exactly `yyyy-MM-dd` form, with a year from `0001` to `9999`.
+`STATUS` | `not-started` (default) or `in-progress`. A new project cannot be `completed`.
+`PRIORITY` | `low`, `medium` (default) or `high`.
+
+Parameters may appear in any order. Each prefix must appear at most once. The command, prefixes, status and priority
+are case-insensitive. Use spaces between parameters. Inside a title, slash-containing words such as `UI/UX`
+are ordinary text; a whitespace-separated `title/`, `deadline/`, `status/` or `priority/` starts a parameter and cannot
+be used as literal title text.
+
+On success, ClientDesk reports `Added project #<id> to <client>.` Project IDs start at
+1 independently for each client and increase after successful saves. A past deadline is accepted and adds
+`Warning: This project is overdue.`. Today's deadline is not overdue; the comparison uses your computer's local date.
+
+A project is a duplicate when the same client already has its title and deadline. Title comparison ignores case,
+surrounding spaces and repeated spaces, including Unicode spaces. Status and priority do not affect duplicate
+handling. A duplicate reports `This project already exists for <client>.`; matching projects under different clients
+are allowed.
+
+Invalid input reports the relevant title, deadline, status, priority or index constraint. Missing required parameters
+report `Usage: add-project CLIENT_INDEX title/TITLE deadline/DATE [status/STATUS] [priority/PRIORITY]`.
+A failed save reports `Project could not be saved. No changes were made.`. The existing data and displayed list stay
+unchanged, and retrying can use the same project ID.
+
 ### Listing all persons: `list`
 
 Shows a list of all persons in the address book.
@@ -222,12 +264,16 @@ Format: `exit`
 
 ### Saving the data
 
-AddressBook automatically saves data after commands other than `find` and `help`. You do not need to save manually.
-The `find` command only changes the displayed list, and `help` only displays instructions; neither writes the data file.
+ClientDesk automatically saves successful data changes. You do not need to save manually.
+`add-project` saves before displaying success, and projects survive restarting the application.
+`find`, `help` and `list-clients` do not write the data file.
 
 ### Editing the data file
 
-AddressBook data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
+ClientDesk data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are
+welcome to update data directly by editing that file. Back up the file first. Each client's `projects` array stores
+project IDs, titles, deadlines, status and priority. Preserve the `nextProjectId` counter, which must be greater than
+every existing project ID. Files created before project support still load with no projects.
 
 <div markdown="span" class="alert alert-warning">:exclamation: **Caution:**
 If your changes make the data file invalid, AddressBook starts with an empty address book at the next run. The invalid file remains on disk until you run a command that saves data. Still, we recommend backing up the file before editing it.<br>
@@ -258,6 +304,7 @@ _Details coming soon ..._
 Action | Format, Examples
 --------|------------------
 **Add Client** | `add-client n/NAME p/PHONE e/EMAIL [t/TAG]…`<br> e.g., `add-client n/Acme Studio p/+65 8123 4567 e/hello@acme.sg`
+**Add Project** | `add-project CLIENT_INDEX title/TITLE deadline/DATE [status/STATUS] [priority/PRIORITY]`<br> e.g., `add-project 1 title/Website deadline/2026-10-15 priority/high`
 **Add** | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]…​` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 t/friend t/colleague`
 **Clear** | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`

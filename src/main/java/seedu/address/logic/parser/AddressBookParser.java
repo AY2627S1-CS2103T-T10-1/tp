@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.AddClientCommand;
 import seedu.address.logic.commands.AddCommand;
+import seedu.address.logic.commands.AddProjectCommand;
 import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.DeleteClientCommand;
@@ -51,7 +52,11 @@ public class AddressBookParser {
         }
 
         final String commandWord = matcher.group("commandWord").toLowerCase(Locale.ROOT);
-        final String arguments = matcher.group("arguments");
+        // Preserve raw project values: trim() would otherwise hide invalid trailing title controls.
+        final String arguments = commandWord.equals(AddProjectCommand.COMMAND_WORD)
+                ? userInput.substring(userInput.indexOf(matcher.group("commandWord"))
+                        + matcher.group("commandWord").length())
+                : matcher.group("arguments");
 
         // Note to developers: Change LOG_LEVEL in LogsCenter to enable lower level (i.e., FINE, FINER and lower)
         // log messages such as the one below.
@@ -60,6 +65,7 @@ public class AddressBookParser {
 
         return switch (commandWord) {
             case AddClientCommand.COMMAND_WORD -> new AddClientCommandParser().parse(arguments);
+            case AddProjectCommand.COMMAND_WORD -> new AddProjectCommandParser().parse(arguments);
             case AddCommand.COMMAND_WORD -> new AddCommandParser().parse(arguments);
             case EditCommand.COMMAND_WORD -> new EditCommandParser().parse(arguments);
             case EditClientCommand.COMMAND_WORD -> new EditClientCommandParser().parse(arguments);

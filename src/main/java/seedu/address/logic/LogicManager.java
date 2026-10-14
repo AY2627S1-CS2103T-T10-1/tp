@@ -10,6 +10,7 @@ import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.AddClientCommand;
+import seedu.address.logic.commands.AddProjectCommand;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.DeleteClientCommand;
@@ -59,6 +60,9 @@ public class LogicManager implements Logic {
         if (command instanceof AddClientCommand) {
             return executeAddClient(command);
         }
+        if (command instanceof AddProjectCommand addProjectCommand) {
+            return executeAddProject(addProjectCommand);
+        }
 
         if (command instanceof DeleteClientCommand deleteClientCommand) {
             return executeDeleteClient(deleteClientCommand);
@@ -101,6 +105,23 @@ public class LogicManager implements Logic {
         }
         model.setAddressBook(proposedModel.getAddressBook());
         model.updateFilteredPersonList(Model.PREDICATE_SHOW_ALL_PERSONS);
+        return result;
+    }
+
+    /**
+     * Saves a proposed project before publishing data or ID allocation to the live model.
+     */
+    private CommandResult executeAddProject(AddProjectCommand command) throws CommandException {
+        Model proposedModel = new ModelManager(model.getAddressBook(), model.getUserPrefs());
+        Set<Person> displayedClients = new HashSet<>(model.getFilteredPersonList());
+        proposedModel.updateFilteredPersonList(displayedClients::contains);
+        CommandResult result = command.execute(proposedModel);
+        try {
+            storage.saveAddressBook(proposedModel.getAddressBook());
+        } catch (IOException error) {
+            throw new CommandException(AddProjectCommand.MESSAGE_SAVE_FAILURE, error);
+        }
+        model.setAddressBook(proposedModel.getAddressBook());
         return result;
     }
 
