@@ -44,7 +44,7 @@ public class HelpCommandParserTest {
     @Test
     public void parse_eachSupportedCommand_hasDetailedInstructions() throws Exception {
         for (String name : new String[] {"help", "add-client", "list", "list-clients", "view", "edit-client",
-            "remark", "delete-client", "find", "add-project", "edit-project"}) {
+            "remark", "delete-client", "find", "add-project", "edit-project", "delete-project"}) {
             String result = parser.parse(name).execute(new ModelManager()).getFeedbackToUser();
             assertTrue(result.contains("Format: " + name));
             assertTrue(result.contains("Rules: "));

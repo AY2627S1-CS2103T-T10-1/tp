@@ -129,6 +129,11 @@ public class ClientDeskHelp {
                 + "The same normalized title and deadline as another project for this client is rejected. "
                 + "An unchanged update skips saving; failed saves leave all data unchanged.",
                 "edit-project 1 2 status/completed priority/high"));
+        commands.put("delete-project", new CommandHelp(
+                "Remove a project from a client.",
+                "delete-project CLIENT_INDEX PROJECT_ID",
+                "Use a displayed client index and a project ID belonging to that client. IDs are client-scoped.",
+                "delete-project 1 2"));
         return Collections.unmodifiableMap(commands);
     }
 

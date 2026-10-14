@@ -118,6 +118,22 @@ public class HelpCommandIntegrationTest {
     }
 
     @Test
+    public void execute_deleteProjectExample_removesProjectAndPreservesOtherClientData() throws Exception {
+        Fixture fixture = createFixture();
+        List<Person> displayedClients = fixture.model().getFilteredPersonList();
+        Person expectedClient = new PersonBuilder(displayedClients.getFirst()).withProjects(List.of(), 3).build();
+        List<Person> otherClients = List.copyOf(displayedClients.subList(1, displayedClients.size()));
+
+        CommandResult result = fixture.logic().execute(getExamples("delete-project").getFirst());
+
+        assertEquals("Deleted project #2 from Acme Fixture.", result.getFeedbackToUser());
+        assertEquals(expectedClient, fixture.model().getFilteredPersonList().getFirst());
+        List<Person> remainingClients = fixture.model().getFilteredPersonList();
+        assertEquals(otherClients, remainingClients.subList(1, remainingClients.size()));
+        assertEquals(fixture.model().getAddressBook(), fixture.storage().readAddressBook().orElseThrow());
+    }
+
+    @Test
     public void execute_listExamples_restoresSortedClientDisplay() throws Exception {
         for (String command : List.of("list", "list-clients")) {
             Fixture fixture = createFixture();
