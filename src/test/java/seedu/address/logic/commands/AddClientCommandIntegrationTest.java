@@ -19,6 +19,11 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.person.Person;
+import seedu.address.model.project.Project;
+import seedu.address.model.project.ProjectDeadline;
+import seedu.address.model.project.ProjectPriority;
+import seedu.address.model.project.ProjectStatus;
+import seedu.address.model.project.ProjectTitle;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -27,7 +32,7 @@ import seedu.address.testutil.PersonBuilder;
 public class AddClientCommandIntegrationTest {
 
     @TempDir
-    public Path testFolder;
+    Path testFolder;
 
     @Test
     public void execute_clientCommand_persistsAndReloadsClient() throws Exception {
@@ -71,6 +76,30 @@ public class AddClientCommandIntegrationTest {
         assertEquals(2, reloaded.getPersonList().size());
         assertEquals(1, reloaded.getPersonList().get(0).getTags().size());
         assertEquals(model.getAddressBook().getPersonList(), reloaded.getPersonList());
+    }
+
+    @Test
+    public void execute_existingClientProjects_retainsProjectsAndRetiredIdCounter() throws Exception {
+        Project project = new Project(3, new ProjectTitle("Website"), new ProjectDeadline("2026-10-15"),
+                ProjectStatus.IN_PROGRESS, ProjectPriority.HIGH);
+        Person existing = new PersonBuilder().build().withProjects(List.of(project), 50);
+        Model model = new ModelManager();
+        model.addPerson(existing);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(testFolder.resolve("clients.json"));
+        LogicManager logic = new LogicManager(model, new StorageManager(storage,
+                new JsonUserPrefsStorage(testFolder.resolve("preferences.json"))));
+
+        CommandResult result = logic.execute("add-client n/Acme Studio p/91234567 e/bob@acme.com");
+
+        Person expected = new PersonBuilder().withName("Acme Studio").withPhone("91234567")
+                .withEmail("bob@acme.com").withAddress(AddClientCommand.DEFAULT_ADDRESS).build();
+        ReadOnlyAddressBook reloaded = storage.readAddressBook().orElseThrow();
+        Person added = reloaded.getPersonList().get(1);
+        assertEquals(expected, result.getClientToSelect().orElseThrow());
+        assertEquals(List.of(existing, expected), model.getAddressBook().getPersonList());
+        assertEquals(List.of(existing, expected), reloaded.getPersonList());
+        assertEquals(List.of(), added.getProjects());
+        assertEquals(1, added.getNextProjectId());
     }
 
     @Test
