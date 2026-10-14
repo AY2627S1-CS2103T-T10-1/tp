@@ -2,9 +2,12 @@ package seedu.address.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +18,7 @@ import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.project.ProjectDeadline;
 import seedu.address.model.project.ProjectPriority;
 import seedu.address.model.project.ProjectStatus;
+import seedu.address.model.project.ProjectTitle;
 
 /**
  * Tests field selection, strict dates, command routing and invalid edit syntax.
@@ -95,4 +99,45 @@ public class EditProjectCommandParserTest {
         }
         assertThrows(ParseException.class, () -> parser.parseCommand("edit-project 1 3 title/Website\t"));
     }
+
+    @Test
+    public void parse_identifiers_acceptsAsciiBoundariesAndRejectsUnicodeDigits() throws Exception {
+        assertEquals(new EditProjectCommand(Index.fromOneBased(1), Integer.MAX_VALUE,
+                new EditProjectDescriptor(null, null, ProjectStatus.COMPLETED, null)),
+                parser.parseCommand("edit-project 0001 2147483647 status/completed"));
+        for (String identifiers : List.of("١ 3", "１ 3", "1 ٣", "1 ３", "2147483648 3")) {
+            assertThrows(ParseException.class, () -> parser.parseCommand(
+                    "edit-project " + identifiers + " status/completed"));
+        }
+    }
+
+    @Test
+    public void parse_largeInternalSpaceRuns_rejectsWithoutExcessiveProcessing() {
+        EditProjectCommandParser commandParser = new EditProjectCommandParser();
+        assertTimeoutPreemptively(Duration.ofSeconds(5), () -> {
+            for (String space : List.of(" ", "\u00a0")) {
+                String title = "A" + space.repeat(200_000) + "B";
+                for (String args : List.of("1 3 title/" + title + " deadline/2026-10-15",
+                        "1 3 deadline/2026-10-15 title/" + title)) {
+                    assertEquals(ProjectTitle.MESSAGE_CONSTRAINTS,
+                            assertThrows(ParseException.class, () -> commandParser.parse(args)).getMessage());
+                }
+            }
+        });
+    }
+
+    @Test
+    public void parse_mixedCaseUnderTurkishLocale_preservesSlashTextAndDelimiters() throws Exception {
+        Locale previousLocale = Locale.getDefault();
+        try {
+            Locale.setDefault(Locale.forLanguageTag("tr-TR"));
+            assertEquals(new EditProjectCommand(Index.fromOneBased(1), 3,
+                    new EditProjectDescriptor("UI/UX foo/bar", null, ProjectStatus.IN_PROGRESS,
+                            ProjectPriority.HIGH)),
+                    parser.parseCommand("EDIT-PROJECT 1 3 TITLE/UI/UX foo/bar STATUS/IN-PROGRESS PRIORITY/HIGH"));
+        } finally {
+            Locale.setDefault(previousLocale);
+        }
+    }
+
 }

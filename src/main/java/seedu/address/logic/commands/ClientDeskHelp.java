@@ -114,7 +114,8 @@ public class ClientDeskHelp {
                 "Update a project, including marking it completed.",
                 "edit-project CLIENT_INDEX PROJECT_ID [title/TITLE] [deadline/DATE] [status/STATUS] "
                 + "[priority/PRIORITY]",
-                "Use a displayed client index and an existing positive project ID. Supply at least "
+                "Use a displayed client index and an existing project ID, both unsigned ASCII integers. "
+                + "Supply at least "
                 + "one field.\nTITLE: 1–100 printable characters with a letter or number. DATE: real yyyy-MM-dd "
                 + "date, including past dates. STATUS: not-started, in-progress or completed. "
                 + "PRIORITY: low, medium or high.\nOmitted fields and the project ID are preserved. "

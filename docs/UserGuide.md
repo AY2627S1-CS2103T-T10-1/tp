@@ -134,7 +134,7 @@ Examples:
 ### Adding a project: `add-project`
 
 Records work under a client and saves it immediately.
-Project viewing and editing are planned separately.
+Use `view CLIENT_INDEX` to see saved projects and their IDs, and `edit-project` to update an existing project.
 
 Format: `add-project CLIENT_INDEX title/TITLE deadline/DATE [status/STATUS] [priority/PRIORITY]`
 
@@ -268,7 +268,7 @@ Updates an existing project's title, deadline, status or priority. Use this when
 
 Format: `edit-project CLIENT_INDEX PROJECT_ID [title/TITLE] [deadline/DATE] [status/STATUS] [priority/PRIORITY]`
 
-`CLIENT_INDEX` is the positive number beside a client in the currently displayed list. After `find`, use the number in those search results. `PROJECT_ID` is the positive ID shown by `view CLIENT_INDEX`, **not the project's position in the displayed project list**. IDs belong to individual clients, so two clients can each have project #1.
+`CLIENT_INDEX` is the positive number beside a client in the currently displayed list. After `find`, use the number in those search results. `PROJECT_ID` is the positive ID shown by `view CLIENT_INDEX`, **not the project's position in the displayed project list**. Both identifiers must be unsigned ASCII integers from 1 to 2147483647, without a sign or decimal. IDs belong to individual clients, so two clients can each have project #1.
 
 Supply at least one field. Fields you omit retain their existing values. The client index and project ID come first; the prefixed fields may follow in any order. Command words, prefixes, status and priority are case-insensitive. Titles retain their capitalization and internal spacing.
 
@@ -371,7 +371,7 @@ Displays the existing details of a client without modifying the client or the di
 Format: `view INDEX`
 
 The index is a positive integer from the currently displayed list. After a `find` command,
-use the index in the search results. Details include name, phone, email, address, remark and tags. When present, projects are shown with their stable IDs, titles, deadlines, statuses and priorities.
+use the index in the search results. Details include name, phone, email, address, remark and tags. When projects exist, their IDs, titles, deadlines, statuses and priorities are shown in project-ID order.
 An index outside the displayed list produces an error.
 
 Example: `view 1` displays the first client in the current list.
