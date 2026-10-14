@@ -56,10 +56,6 @@ public class EditProjectCommandParser implements Parser<EditProjectCommand> {
         }
     }
 
-    /**
-     * Uses the same delimiters as Add Project: recognized prefixes separate fields, while
-     * ordinary slash-containing words remain title text. Control characters are not normalized away.
-     */
     private ArgumentMultimap tokenize(String args) {
         ArgumentMultimap arguments = new ArgumentMultimap();
         Matcher matcher = PARAMETER_PREFIX.matcher(args);

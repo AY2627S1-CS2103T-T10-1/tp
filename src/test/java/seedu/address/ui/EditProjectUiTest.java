@@ -29,7 +29,7 @@ import seedu.address.testutil.PersonBuilder;
  */
 public class EditProjectUiTest {
     @TempDir
-    public Path testFolder;
+    Path testFolder;
 
     @Test
     public void enterEditProject_updatesSelectedFilteredClientAndPersists() throws Exception {

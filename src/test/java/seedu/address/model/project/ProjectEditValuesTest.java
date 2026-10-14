@@ -43,9 +43,9 @@ public class ProjectEditValuesTest {
 
     @Test
     public void constructor_validatesDomainBoundariesAndTrimsTitle() {
-        assertEquals("Logo", project(1, " Logo ").getTitle().value);
-        assertThrows(IllegalArgumentException.class, () -> project(0, "Logo"));
-        assertThrows(IllegalArgumentException.class, () -> project(1, ""));
+        assertEquals("Logo", createProject(1, " Logo ").getTitle().value);
+        assertThrows(IllegalArgumentException.class, () -> createProject(0, "Logo"));
+        assertThrows(IllegalArgumentException.class, () -> createProject(1, ""));
         assertThrows(IllegalArgumentException.class, () -> new Project(1, new ProjectTitle("Logo"),
                 new ProjectDeadline(LocalDate.of(0, 1, 1).toString()),
                 ProjectStatus.NOT_STARTED, ProjectPriority.MEDIUM));
@@ -55,13 +55,13 @@ public class ProjectEditValuesTest {
 
     @Test
     public void isSameProject_ignoresIdsStatusPriorityCaseAndRepeatedSpaces() {
-        Project original = project(3, "Logo  Refresh");
+        Project original = createProject(3, "Logo  Refresh");
         Project equivalentWork = new Project(11, new ProjectTitle("logo refresh"),
                 new ProjectDeadline(DEADLINE.toString()),
                 ProjectStatus.COMPLETED, ProjectPriority.HIGH);
         assertTrue(original.isSameProject(equivalentWork));
         assertNotEquals(original, equivalentWork);
-        assertFalse(original.isSameProject(project(3, "Different work")));
+        assertFalse(original.isSameProject(createProject(3, "Different work")));
         assertFalse(original.isSameProject(new Project(3, original.getTitle(),
                 new ProjectDeadline(DEADLINE.plusDays(1).toString()),
                 original.getStatus(), original.getPriority())));
@@ -69,14 +69,14 @@ public class ProjectEditValuesTest {
 
     @Test
     public void equalsAndHashCode_includeAllPersistedFields() {
-        Project original = project(3, "Logo");
+        Project original = createProject(3, "Logo");
         assertEquals(original, original);
-        assertEquals(original, project(3, "Logo"));
-        assertEquals(original.hashCode(), project(3, "Logo").hashCode());
+        assertEquals(original, createProject(3, "Logo"));
+        assertEquals(original.hashCode(), createProject(3, "Logo").hashCode());
         assertNotEquals(original, null);
         assertNotEquals(original, "Logo");
-        assertNotEquals(original, project(4, "Logo"));
-        assertNotEquals(original, project(3, "Website"));
+        assertNotEquals(original, createProject(4, "Logo"));
+        assertNotEquals(original, createProject(3, "Website"));
         assertNotEquals(original, new Project(3, new ProjectTitle("Logo"), new ProjectDeadline(DEADLINE.toString()),
                 ProjectStatus.COMPLETED, ProjectPriority.MEDIUM));
         assertNotEquals(original, new Project(3, new ProjectTitle("Logo"), new ProjectDeadline(DEADLINE.toString()),
@@ -92,7 +92,7 @@ public class ProjectEditValuesTest {
         assertThrows(IllegalArgumentException.class, () -> ProjectPriority.fromString("urgent"));
     }
 
-    private Project project(int id, String title) {
+    private Project createProject(int id, String title) {
         return new Project(id, new ProjectTitle(title), new ProjectDeadline(DEADLINE.toString()),
                 ProjectStatus.NOT_STARTED, ProjectPriority.MEDIUM);
     }
