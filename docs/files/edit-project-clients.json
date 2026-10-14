@@ -1,0 +1,47 @@
+{
+  "persons": [
+    {
+      "name": "Acme Studio",
+      "phone": "81234567",
+      "email": "hello@acme.sg",
+      "address": "Not provided",
+      "remark": "",
+      "tags": [],
+      "projects": [
+        {
+          "id": 11,
+          "title": "Website redesign",
+          "deadline": "2026-10-15",
+          "status": "not-started",
+          "priority": "medium"
+        },
+        {
+          "id": 3,
+          "title": "Logo refresh",
+          "deadline": "2026-10-15",
+          "status": "in-progress",
+          "priority": "high"
+        }
+      ],
+      "nextProjectId": 12
+    },
+    {
+      "name": "Beacon Design",
+      "phone": "87654321",
+      "email": "hello@beacon.sg",
+      "address": "Not provided",
+      "remark": "",
+      "tags": [],
+      "projects": [
+        {
+          "id": 11,
+          "title": "Website redesign",
+          "deadline": "2026-10-15",
+          "status": "not-started",
+          "priority": "medium"
+        }
+      ],
+      "nextProjectId": 12
+    }
+  ]
+}
