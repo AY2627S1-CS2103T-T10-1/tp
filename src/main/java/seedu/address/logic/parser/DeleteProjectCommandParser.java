@@ -24,15 +24,4 @@ public class DeleteProjectCommandParser implements Parser<DeleteProjectCommand> 
         }
         return new DeleteProjectCommand(clientIndex, projectId);
     }
-
-    private int parseProjectId(String value) throws ParseException {
-        if (!value.matches("[1-9][0-9]*")) {
-            throw new ParseException("Project ID must be a positive integer.");
-        }
-        try {
-            return Integer.parseInt(value);
-        } catch (NumberFormatException exception) {
-            throw new ParseException("Project ID must be a positive integer.", exception);
-        }
-    }
 }
