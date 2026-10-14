@@ -53,7 +53,7 @@ public class EditProjectCommandParser implements Parser<EditProjectCommand> {
         try {
             String title = arguments.getValue(PREFIX_TITLE).orElse(null);
             LocalDate deadline = arguments.getValue(PREFIX_DEADLINE)
-                    .map(value -> new ProjectDeadline(value).date).orElse(null);
+                    .map(value -> new ProjectDeadline(value).getDate()).orElse(null);
             ProjectStatus status = arguments.getValue(PREFIX_STATUS)
                     .map(value -> ProjectStatus.fromString(value.toLowerCase(Locale.ROOT))).orElse(null);
             ProjectPriority priority = arguments.getValue(PREFIX_PRIORITY)

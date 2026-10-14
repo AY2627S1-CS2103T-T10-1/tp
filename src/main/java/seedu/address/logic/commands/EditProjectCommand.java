@@ -109,7 +109,7 @@ public class EditProjectCommand extends Command {
         public Project applyTo(Project original) {
             requireNonNull(original);
             return new Project(original.getId(), title == null ? original.getTitle() : new ProjectTitle(title),
-                    deadline == null ? original.getDeadline() : new ProjectDeadline(deadline),
+                    deadline == null ? original.getDeadline() : new ProjectDeadline(deadline.toString()),
                     status == null ? original.getStatus() : status,
                     priority == null ? original.getPriority() : priority);
         }

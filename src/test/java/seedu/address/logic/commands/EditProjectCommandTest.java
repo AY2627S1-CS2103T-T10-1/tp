@@ -38,7 +38,7 @@ public class EditProjectCommandTest {
         model.addPerson(original);
         new EditProjectCommand(Index.fromOneBased(1), 11,
                 new EditProjectDescriptor(null, null, ProjectStatus.COMPLETED, null)).execute(model);
-        Project updated = new Project(11, new ProjectTitle("Website"), new ProjectDeadline(DEADLINE),
+        Project updated = new Project(11, new ProjectTitle("Website"), new ProjectDeadline(DEADLINE.toString()),
                 ProjectStatus.COMPLETED, ProjectPriority.MEDIUM);
         assertEquals(original.withProjects(List.of(updated, LOGO), 12), model.getFilteredPersonList().getFirst());
     }
@@ -77,7 +77,7 @@ public class EditProjectCommandTest {
         new EditProjectCommand(Index.fromOneBased(1), 11,
                 new EditProjectDescriptor("Logo", DEADLINE.plusDays(1), null, null)).execute(model);
         assertEquals(DEADLINE.plusDays(1),
-                model.getFilteredPersonList().getFirst().getProjects().getFirst().getDeadline().date);
+                model.getFilteredPersonList().getFirst().getProjects().getFirst().getDeadline().getDate());
     }
 
     @Test
@@ -112,7 +112,7 @@ public class EditProjectCommandTest {
     }
 
     private static Project project(int id, String title) {
-        return new Project(id, new ProjectTitle(title), new ProjectDeadline(DEADLINE),
+        return new Project(id, new ProjectTitle(title), new ProjectDeadline(DEADLINE.toString()),
                 ProjectStatus.NOT_STARTED, ProjectPriority.MEDIUM);
     }
 }

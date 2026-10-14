@@ -32,7 +32,7 @@ public class ProjectEditValuesTest {
     @Test
     public void parseDeadline_realDatesIncludingPastAndLeapDays() {
         for (String date : List.of("2024-02-29", "2000-01-01", "0001-01-01", "9999-12-31")) {
-            assertEquals(LocalDate.parse(date), new ProjectDeadline(date).date);
+            assertEquals(LocalDate.parse(date), new ProjectDeadline(date).getDate());
         }
         for (String date : List.of("2026-02-29", "2026-04-31", "2026-13-01", "2026-00-01", "2026-10-00",
                 "2026-1-01", "26-10-15", "0000-01-01", "2026-10-15 trailing", "")) {
@@ -47,22 +47,23 @@ public class ProjectEditValuesTest {
         assertThrows(IllegalArgumentException.class, () -> project(0, "Logo"));
         assertThrows(IllegalArgumentException.class, () -> project(1, ""));
         assertThrows(IllegalArgumentException.class, () -> new Project(1, new ProjectTitle("Logo"),
-                new ProjectDeadline(LocalDate.of(0, 1, 1)),
+                new ProjectDeadline(LocalDate.of(0, 1, 1).toString()),
                 ProjectStatus.NOT_STARTED, ProjectPriority.MEDIUM));
         assertThrows(NullPointerException.class, () -> new Project(1, new ProjectTitle("Logo"),
-                new ProjectDeadline(DEADLINE), null, ProjectPriority.LOW));
+                new ProjectDeadline(DEADLINE.toString()), null, ProjectPriority.LOW));
     }
 
     @Test
     public void isSameProject_ignoresIdsStatusPriorityCaseAndRepeatedSpaces() {
         Project original = project(3, "Logo  Refresh");
-        Project equivalentWork = new Project(11, new ProjectTitle("logo refresh"), new ProjectDeadline(DEADLINE),
+        Project equivalentWork = new Project(11, new ProjectTitle("logo refresh"),
+                new ProjectDeadline(DEADLINE.toString()),
                 ProjectStatus.COMPLETED, ProjectPriority.HIGH);
         assertTrue(original.isSameProject(equivalentWork));
         assertNotEquals(original, equivalentWork);
         assertFalse(original.isSameProject(project(3, "Different work")));
         assertFalse(original.isSameProject(new Project(3, original.getTitle(),
-                new ProjectDeadline(DEADLINE.plusDays(1)),
+                new ProjectDeadline(DEADLINE.plusDays(1).toString()),
                 original.getStatus(), original.getPriority())));
     }
 
@@ -76,9 +77,9 @@ public class ProjectEditValuesTest {
         assertNotEquals(original, "Logo");
         assertNotEquals(original, project(4, "Logo"));
         assertNotEquals(original, project(3, "Website"));
-        assertNotEquals(original, new Project(3, new ProjectTitle("Logo"), new ProjectDeadline(DEADLINE),
+        assertNotEquals(original, new Project(3, new ProjectTitle("Logo"), new ProjectDeadline(DEADLINE.toString()),
                 ProjectStatus.COMPLETED, ProjectPriority.MEDIUM));
-        assertNotEquals(original, new Project(3, new ProjectTitle("Logo"), new ProjectDeadline(DEADLINE),
+        assertNotEquals(original, new Project(3, new ProjectTitle("Logo"), new ProjectDeadline(DEADLINE.toString()),
                 ProjectStatus.NOT_STARTED, ProjectPriority.HIGH));
     }
 
@@ -92,7 +93,7 @@ public class ProjectEditValuesTest {
     }
 
     private Project project(int id, String title) {
-        return new Project(id, new ProjectTitle(title), new ProjectDeadline(DEADLINE),
+        return new Project(id, new ProjectTitle(title), new ProjectDeadline(DEADLINE.toString()),
                 ProjectStatus.NOT_STARTED, ProjectPriority.MEDIUM);
     }
 }

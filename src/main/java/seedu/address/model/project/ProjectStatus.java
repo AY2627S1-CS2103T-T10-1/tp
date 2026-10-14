@@ -11,8 +11,6 @@ public enum ProjectStatus {
     COMPLETED("completed");
 
     public static final String MESSAGE_CONSTRAINTS = "Status must be not-started, in-progress, or completed.";
-    public static final String MESSAGE_NEW_PROJECT_CONSTRAINTS =
-            "New project status must be not-started or in-progress.";
 
     private final String value;
 

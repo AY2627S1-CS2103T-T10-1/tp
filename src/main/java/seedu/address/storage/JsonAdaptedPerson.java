@@ -12,7 +12,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.LongNode;
-import com.fasterxml.jackson.databind.node.NullNode;
 
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.person.Address;
@@ -80,11 +79,12 @@ class JsonAdaptedPerson {
 
     /**
      * Reads projects only when the field is present. Missing fields in legacy files keep the empty default.
+     * Jackson represents an explicit JSON null with a non-null {@code NullNode}, which is rejected as non-array data.
      */
     @JsonSetter("projects")
     private void setProjects(JsonNode storedProjects) {
         projects.clear();
-        hasInvalidProjects = storedProjects == null || !storedProjects.isArray();
+        hasInvalidProjects = !storedProjects.isArray();
         if (hasInvalidProjects) {
             return;
         }
@@ -100,10 +100,12 @@ class JsonAdaptedPerson {
 
     /**
      * Retains explicit null as invalid data while an omitted legacy counter remains absent.
+     * Jackson supplies a non-null {@code NullNode} for an explicit JSON null.
+     * Omitted properties do not invoke this setter.
      */
     @JsonSetter("nextProjectId")
     private void setNextProjectId(JsonNode storedNextProjectId) {
-        nextProjectId = storedNextProjectId == null ? NullNode.getInstance() : storedNextProjectId;
+        nextProjectId = storedNextProjectId;
     }
 
     /**
@@ -117,9 +119,6 @@ class JsonAdaptedPerson {
         }
         final List<Tag> personTags = new ArrayList<>();
         for (JsonAdaptedTag tag : tags) {
-            if (tag == null || tag.getTagName() == null) {
-                throw new IllegalValueException(Tag.MESSAGE_CONSTRAINTS);
-            }
             personTags.add(tag.toModelType());
         }
 
@@ -165,7 +164,7 @@ class JsonAdaptedPerson {
         for (JsonAdaptedProject project : projects) {
             modelProjects.add(project.toModelType());
         }
-        final long modelNextProjectId = readNextProjectId(modelProjects);
+        final long modelNextProjectId = readNextProjectId();
         try {
             return new Person(modelName, modelPhone, modelEmail, modelAddress, modelRemark, modelTags,
                     modelProjects, modelNextProjectId);
@@ -174,9 +173,9 @@ class JsonAdaptedPerson {
         }
     }
 
-    private long readNextProjectId(List<Project> modelProjects) throws IllegalValueException {
+    private long readNextProjectId() throws IllegalValueException {
         if (nextProjectId == null) {
-            return modelProjects.stream().mapToLong(Project::getId).max().orElse(0) + 1;
+            return 1;
         }
         if (!nextProjectId.isIntegralNumber() || !nextProjectId.canConvertToLong()) {
             throw new IllegalValueException(Person.MESSAGE_PROJECT_ID_COUNTER_CONSTRAINTS);
