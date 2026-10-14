@@ -5,7 +5,7 @@ import java.util.Locale;
 import seedu.address.model.Model;
 
 /**
- * Formats full help instructions for every command for display.
+ * Formats help instructions for supported ClientDesk client and project commands.
  */
 public class HelpCommand extends Command {
 
@@ -13,12 +13,12 @@ public class HelpCommand extends Command {
 
     public static final String MESSAGE_USAGE = "Usage: help [COMMAND]";
 
-    public static final String SHOWING_HELP_MESSAGE = ClientDeskHelp.overview();
+    public static final String SHOWING_HELP_MESSAGE = ClientDeskHelp.getOverview();
 
     private final String command;
 
     /**
-     * Creates a command that lists all MVP commands.
+     * Creates a command that shows the supported ClientDesk command catalog.
      */
     public HelpCommand() {
         command = null;
@@ -33,7 +33,7 @@ public class HelpCommand extends Command {
 
     @Override
     public CommandResult execute(Model model) {
-        String message = command == null ? SHOWING_HELP_MESSAGE : ClientDeskHelp.details(command);
+        String message = command == null ? SHOWING_HELP_MESSAGE : ClientDeskHelp.getDetails(command);
         return new CommandResult(message, true, false);
     }
 }

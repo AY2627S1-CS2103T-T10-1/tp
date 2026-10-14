@@ -1,6 +1,7 @@
 package seedu.address.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
@@ -23,7 +24,10 @@ public class HelpCommandParserTest {
         Model expected = new ModelManager(model.getAddressBook(), model.getUserPrefs());
         String result = parser.parse("  ").execute(model).getFeedbackToUser();
         assertTrue(result.contains("add-client - "));
-        assertTrue(result.contains("agenda - "));
+        assertTrue(result.contains("remark - "));
+        for (String name : new String[] {"undo", "add-note", "follow-up", "agenda"}) {
+            assertFalse(result.contains(name + " - "));
+        }
         assertEquals(expected, model);
     }
 
@@ -33,18 +37,28 @@ public class HelpCommandParserTest {
         assertTrue(result.contains("Format: add-client n/NAME p/PHONE e/EMAIL [t/TAG]..."));
         assertTrue(result.contains("7–15 digits"));
         assertTrue(result.contains("Examples: add-client"));
-        assertTrue(parser.parse("agenda").execute(new ModelManager()).getFeedbackToUser()
-                .contains("Format: agenda [--overdue]"));
+        assertTrue(parser.parse("  ReMaRk ").execute(new ModelManager()).getFeedbackToUser()
+                .contains("Format: remark INDEX r/[REMARK]"));
     }
 
     @Test
-    public void parse_eachMvpCommand_hasDetailedInstructions() throws Exception {
-        for (String name : new String[] {"help", "add-client", "list", "view", "edit-client", "delete-client",
-            "find", "add-project", "edit-project", "undo", "add-note", "follow-up", "agenda"}) {
+    public void parse_eachSupportedCommand_hasDetailedInstructions() throws Exception {
+        for (String name : new String[] {"help", "add-client", "list", "list-clients", "view", "edit-client",
+            "remark", "delete-client", "find", "add-project", "edit-project"}) {
             String result = parser.parse(name).execute(new ModelManager()).getFeedbackToUser();
             assertTrue(result.contains("Format: " + name));
             assertTrue(result.contains("Rules: "));
             assertTrue(result.contains("Examples: "));
+        }
+    }
+
+    @Test
+    public void parse_futureCommand_reportsUnknownNameWhileCurrentCommandWorks() throws Exception {
+        assertTrue(parser.parse("edit-project").execute(new ModelManager()).getFeedbackToUser()
+                .contains("Format: edit-project CLIENT_INDEX PROJECT_ID"));
+        for (String name : new String[] {"undo", "add-note", "follow-up", "agenda"}) {
+            String expectedMessage = "Unknown command '" + name + "'. Type help to see all commands.";
+            assertThrows(ParseException.class, expectedMessage, () -> parser.parse(name));
         }
     }
 
@@ -56,6 +70,6 @@ public class HelpCommandParserTest {
 
     @Test
     public void parse_multipleArguments_reportsUsage() {
-        assertThrows(ParseException.class, HelpCommand.MESSAGE_USAGE, () -> parser.parse("add-client agenda"));
+        assertThrows(ParseException.class, HelpCommand.MESSAGE_USAGE, () -> parser.parse("add-client remark"));
     }
 }

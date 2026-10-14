@@ -5,7 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Provides command descriptions and syntax from the ClientDesk MVP specification.
+ * Provides help for supported ClientDesk client and project commands.
  */
 public class ClientDeskHelp {
 
@@ -22,9 +22,9 @@ public class ClientDeskHelp {
     }
 
     /**
-     * Returns all MVP command names and short descriptions.
+     * Returns the supported command names and short descriptions in display order.
      */
-    public static String overview() {
+    public static String getOverview() {
         StringBuilder result = new StringBuilder("ClientDesk commands:\n");
         COMMANDS.forEach((name, help) -> result.append(name).append(" - ").append(help.purpose()).append("\n"));
         return result.append("Type help COMMAND to view syntax, rules and examples.").toString();
@@ -33,7 +33,7 @@ public class ClientDeskHelp {
     /**
      * Returns the detailed help for a supported command.
      */
-    public static String details(String command) {
+    public static String getDetails(String command) {
         CommandHelp help = COMMANDS.get(command);
         return help.purpose() + "\nFormat: " + help.format() + "\nRules: " + help.rules()
                 + "\nExamples: " + help.examples();
@@ -48,7 +48,7 @@ public class ClientDeskHelp {
                 "Discover commands and view exact syntax.",
                 "help [COMMAND]",
                 "COMMAND is optional and case-insensitive. Supply at most one valid command name.",
-                "help; help add-client; help agenda"));
+                "help; help add-client; help remark"));
         commands.put("add-client", new CommandHelp(
                 "Create a client with contact information and optional tags.",
                 "add-client n/NAME p/PHONE e/EMAIL [t/TAG]...",
@@ -75,18 +75,25 @@ public class ClientDeskHelp {
                 + " The existing `list` command remains available.",
                 "list-clients"));
         commands.put("view", new CommandHelp(
-                "Show a client record, projects, notes, tags and follow-up.",
+                "Show a client's contact information, remark, tags and projects.",
                 "view CLIENT_INDEX",
                 "CLIENT_INDEX must be a displayed positive integer without a sign or decimal.",
                 "view 1; view 12"));
         commands.put("edit-client", new CommandHelp(
-                "Update client contact information or tags.",
-                "edit-client CLIENT_INDEX [n/NAME] [p/PHONE] [e/EMAIL] [t/TAG]... [remove-"
-                + "tag/TAG]...",
-                "Use a displayed client index and at least one field. Field rules match add-client.\n"
-                + "Removal wins when the same tag is both added and removed.",
-                "edit-client 1 p/+65 8777 2233; edit-client 2 e/new@northstar.io t/retainer remove-"
-                + "tag/startup"));
+                "Update a client's email while preserving the other fields.",
+                "edit-client CLIENT_INDEX e/EMAIL",
+                "Use an index from the currently displayed client list and supply one email. "
+                + "Email must be valid, at most 254 characters and have a dot in its domain.\n"
+                + "An email already used by another client, ignoring case, is rejected. "
+                + "An unchanged email skips saving. The current client filter is preserved.",
+                "edit-client 1 e/new@acme.sg; edit-client 2 e/new@northstar.io"));
+        commands.put("remark", new CommandHelp(
+                "Set, replace or clear a client's remark.",
+                "remark INDEX r/[REMARK]",
+                "INDEX is a positive integer from the currently displayed client list. "
+                + "The remark replaces any existing text; an empty r/ clears it. "
+                + "A successful update shows all clients.",
+                "remark 1 r/Prefers email contact.; remark 1 r/"));
         commands.put("delete-client", new CommandHelp(
                 "Remove a client and all their data.",
                 "delete-client CLIENT_INDEX",
@@ -122,32 +129,12 @@ public class ClientDeskHelp {
                 + "The same normalized title and deadline as another project for this client is rejected. "
                 + "An unchanged update skips saving; failed saves leave all data unchanged.",
                 "edit-project 1 2 status/completed priority/high"));
-        commands.put("undo", new CommandHelp(
-                "Reverse the most recent data-changing command.",
-                "undo",
-                "No parameters. Restored records keep their original IDs.",
-                "undo"));
-        commands.put("add-note", new CommandHelp(
-                "Record a dated note for a client.",
-                "add-note CLIENT_INDEX text/TEXT",
-                "Use a displayed client index. TEXT: 1–1000 printable characters; whitespace is "
-                + "normalized.",
-                "add-note 1 text/Discussed homepage direction."));
-        commands.put("follow-up", new CommandHelp(
-                "Set or replace a client follow-up date and detail.",
-                "follow-up CLIENT_INDEX on/DATE [details/TEXT]",
-                "Use a displayed client index. DATE: real yyyy-MM-dd date.\nOptional TEXT: 1–200 "
-                + "printable characters.",
-                "follow-up 1 on/2026-09-21 details/Ask for design approval"));
-        commands.put("agenda", new CommandHelp(
-                "View pending projects and follow-ups together.",
-                "agenda [--overdue]",
-                "No argument shows today through the next 30 days. --overdue shows items before "
-                + "today.",
-                "agenda; agenda --overdue"));
         return Collections.unmodifiableMap(commands);
     }
 
+    /**
+     * Stores the purpose, syntax, rules and examples for one supported command.
+     */
     private record CommandHelp(String purpose, String format, String rules, String examples) {
     }
 }
