@@ -41,6 +41,13 @@ public class ViewCommand extends Command {
             throw new CommandException(MESSAGE_INVALID_INDEX);
         }
         Person client = clients.get(targetIndex.getZeroBased());
+        return new CommandResult(formatDetails(client), client);
+    }
+
+    /**
+     * Formats contact information and projects for the command result and details panel.
+     */
+    public static String formatDetails(Person client) {
         String tags = client.getTags().stream().map(tag -> tag.tagName).sorted()
                 .collect(Collectors.joining(", "));
         String feedback = "Name: " + client.getName()
@@ -55,7 +62,7 @@ public class ViewCommand extends Command {
                     .collect(Collectors.joining("\n"));
             feedback += "\nProjects:\n" + projects;
         }
-        return new CommandResult(feedback);
+        return feedback;
     }
 
     /**

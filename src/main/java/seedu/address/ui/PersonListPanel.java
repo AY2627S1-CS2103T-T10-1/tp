@@ -2,6 +2,7 @@ package seedu.address.ui;
 
 import java.util.logging.Logger;
 
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.ListCell;
@@ -35,6 +36,13 @@ public class PersonListPanel extends UiPart<Region> {
     public void selectClient(Person client) {
         personListView.getSelectionModel().select(client);
         personListView.scrollTo(client);
+    }
+
+    /**
+     * Exposes selection changes so the details panel follows the displayed client.
+     */
+    public ReadOnlyObjectProperty<Person> selectedClientProperty() {
+        return personListView.getSelectionModel().selectedItemProperty();
     }
 
     /**

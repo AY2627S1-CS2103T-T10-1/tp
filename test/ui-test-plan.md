@@ -40,3 +40,21 @@ text UI runner is not available in this tP repository.
    Expect an error and unchanged data.
 9. Save failure is covered by an automated storage-failure test; expect the
    prior record and filter to remain, with `Client could not be saved. No changes were made.`
+
+## Client details panel
+
+1. Start the app: expect ClientDesk title, client list, and a right-hand details
+   panel with instructions to enter view INDEX or select a client.
+2. Enter `view 1`: expect first displayed client selected and contact details
+   in the right panel. A client without projects shows `Projects: No projects yet.`
+3. View a client with projects: expect stable IDs, titles, deadlines, statuses
+   and priorities; projects are ordered by ID. Scroll to inspect long content.
+4. Enter `find NAME`, then `view 1`: expect the first filtered client, not the
+   first client in the full list.
+5. Enter `view 999` or `view abc`: expect an error and unchanged panel content.
+6. Select a different client using the list: expect that client's details.
+7. Clear the selection: expect the initial instructions, with no stale record.
+8. Resize the window and drag the divider: both panes remain accessible.
+
+These manual GUI cases require JavaFX. The Trackie text UI runner is incompatible
+with this repository's GUI test plan; automated JavaFX tests exercise panel behavior.
