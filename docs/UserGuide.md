@@ -410,3 +410,14 @@ without saving. A save failure restores the previous record.
 
 Name and phone updates, tag additions/removals, and undo integration will be added
 in later increments. The existing `edit` command remains available.
+
+### Client details panel
+
+Enter `view INDEX` to select a client from the currently displayed list and show
+contact information and saved projects in the right-hand details panel. Projects
+are ordered by their stable IDs and include title, deadline, status and priority.
+You can also select a client directly from the list. The panel is read-only;
+scroll to read longer records and drag the divider to adjust the panel widths.
+Clients without projects show `Projects: No projects yet.` When no client is
+selected, the panel shows instructions. Invalid view commands retain the previous
+details. After changing data, use `view INDEX` to inspect the current record.
