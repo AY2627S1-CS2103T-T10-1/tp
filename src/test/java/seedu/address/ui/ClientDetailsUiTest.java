@@ -67,6 +67,7 @@ public class ClientDetailsUiTest {
             try {
                 window.fillInnerParts();
                 window.show();
+                assertEquals("ClientDesk", window.getPrimaryStage().getTitle());
                 TextArea details = (TextArea) window.getPrimaryStage().getScene().lookup("#clientDetails");
                 TextField input = (TextField) window.getPrimaryStage().getScene().lookup("#commandTextField");
                 assertEquals(ClientDetailsPanel.MESSAGE_EMPTY, details.getText());
@@ -90,6 +91,9 @@ public class ClientDetailsUiTest {
                 enter(input, "view 1");
                 assertTrue(details.getText().contains("Name: Benson Meier"));
                 assertTrue(details.getText().contains("Projects: No projects yet."));
+                assertFalse(details.getText().contains("Website launch"));
+                assertFalse(details.getText().contains("Initial draft"));
+                assertEquals(0, details.getCaretPosition());
                 enter(input, "list-clients");
                 window.getPersonListPanel().selectClient(client);
                 assertTrue(details.getText().contains("Name: Alice Pauline"));
