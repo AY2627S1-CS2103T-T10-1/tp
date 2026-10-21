@@ -77,7 +77,9 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/se-
 
 ![Structure of the UI Component](images/UiClassDiagram.png)
 
-The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
+[PlantUML source](diagrams/UiClassDiagram.puml)
+
+The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, `ClientDetailsPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
 
@@ -87,6 +89,29 @@ The `UI` component,
 * listens for changes to `Model` data so that the UI can be updated with the modified data.
 * keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
 * depends on some classes in the `Model` component because it displays `Person` objects from the model.
+
+#### Client details selection and refresh
+
+`MainWindow` observes `PersonListPanel.selectedClientProperty()` and passes the selected
+`Person` to `ClientDetailsPanel.showClient`. The read-only panel displays contact details
+and projects; a null selection shows instructions, and a client with no projects shows
+the project empty state.
+
+`view`, Add Project, Edit Project and Delete Project return a `CommandResult` containing
+the client to select. For project mutations, `LogicManager` saves the proposed data before
+publishing it to the live model. After successful execution, `MainWindow` calls
+`PersonListPanel.selectClient` with the updated client. This restores selection after the
+list replacement and refreshes the details without another `view` command. Add and delete
+use the same result mechanism as edit; the UI does not parse command text to identify them.
+
+Validation or save failures produce no successful selection result and leave the selected
+client and details unchanged. Deleting the selected client clears the selection and returns
+the panel to its instructions. The selection is based on the actual updated client, so it
+works with filtered lists and multiple clients rather than assuming the first row.
+
+`ClientDetailsUiTest` exercises add/delete refresh, remaining and empty project lists,
+invalid commands, failed saves, and selected-client deletion with both full and filtered
+lists. Manual checks are recorded in `test/ui-test-plan.md`.
 
 ### Logic component
 
