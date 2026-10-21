@@ -119,6 +119,9 @@ class JsonAdaptedPerson {
         }
         final List<Tag> personTags = new ArrayList<>();
         for (JsonAdaptedTag tag : tags) {
+            if (tag == null) {
+                throw new IllegalValueException("A client's tags cannot contain null entries.");
+            }
             personTags.add(tag.toModelType());
         }
 
