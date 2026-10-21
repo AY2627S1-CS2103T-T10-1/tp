@@ -120,14 +120,17 @@ How the parsing works:
 * All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
 
 ### Model component
-**API** : [`Model.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/model/Model.java)
+**API** : [`Model.java`](https://github.com/AY2627S1-CS2103T-T10-1/tp/blob/master/src/main/java/seedu/address/model/Model.java)
 
-<img src="images/ModelClassDiagram.png" width="450" />
+<img src="images/ModelClassDiagram.png" width="650" />
 
 
 The `Model` component,
 
 * stores the address book data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
+  Each `Person` holds contact fields, a remark and tags, plus an immutable list of projects. A `Project` has a positive
+  ID, title, deadline, status and priority. The ID belongs to that client; `Person.nextProjectId` tracks project ID
+  allocation and does not decrease when a project is removed.
 * stores the `Person` objects selected by the current filter in a `FilteredList`, wrapped in a `SortedList` for display.
   It exposes the displayed list as an unmodifiable `ObservableList<Person>` that both the UI and indexed commands use.
   Changes to the filter, ordering, or underlying records therefore update the same observable view.
@@ -143,13 +146,17 @@ The `Model` component,
 
 ### Storage component
 
-**API** : [`Storage.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/storage/Storage.java)
+**API** : [`Storage.java`](https://github.com/AY2627S1-CS2103T-T10-1/tp/blob/master/src/main/java/seedu/address/storage/Storage.java)
 
-<img src="images/StorageClassDiagram.png" width="550" />
+<img src="images/StorageClassDiagram.png" width="600" />
 
 The `Storage` component,
 * can save both address book data and user preference data in JSON format, and read them back into corresponding objects.
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
+* uses `JsonSerializableAddressBook` and `JsonAdaptedPerson` to convert clients to and from JSON.
+  `JsonAdaptedPerson` stores each client's projects and `nextProjectId`; each project is converted by
+  `JsonAdaptedProject`. Legacy client records without those fields load with no projects and the next ID set to 1.
+  Stored project fields and IDs are validated before a `Person` is created, so invalid project data is rejected on load.
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
 
 ### Common classes
