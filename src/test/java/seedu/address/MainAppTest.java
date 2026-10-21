@@ -6,9 +6,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -74,6 +76,15 @@ public class MainAppTest {
     }
 
     @Test
+    public void init_malformedUtf8_blocksCommandsAndPreservesBytes() throws Exception {
+        String contents = """
+                {"persons":[{"name":"Alice","phone":"81234567","email":"alice@example.com",
+                "address":"Not provided","remark":"café","tags":[]}]}
+                """;
+        assertFailedStartupPreservesFile("malformed-utf8.json", contents.getBytes(StandardCharsets.ISO_8859_1));
+    }
+
+    @Test
     public void init_invalidStoredValue_blocksCommandsAndPreservesBytes() throws Exception {
         assertFailedStartupPreservesFile("invalid.json", """
                 {"persons":[{"name":"Alice","phone":"81234567","email":"alice@example.com",
@@ -120,9 +131,37 @@ public class MainAppTest {
         assertEquals("Existing data", Files.readString(sentinel));
     }
 
+    @Test
+    public void init_brokenDataSymlink_blocksCommandsAndPreservesLink() throws Exception {
+        Path missingTarget = temporaryFolder.resolve("missing-target.json");
+        Path dataPath = temporaryFolder.resolve("broken-link.json");
+        try {
+            Files.createSymbolicLink(dataPath, missingTarget);
+        } catch (UnsupportedOperationException | FileSystemException e) {
+            assumeTrue(false, "Symbolic links are unavailable: " + e);
+        }
+        TestMainApp app = new TestMainApp(dataPath);
+
+        app.init();
+        assertNull(app.model);
+        assertNull(app.logic);
+        assertNull(app.ui);
+        app.start(null);
+        assertTrue(app.errorShown);
+        assertEquals(dataPath, app.errorPath);
+        app.stop();
+
+        assertTrue(Files.isSymbolicLink(dataPath));
+        assertEquals(missingTarget, Files.readSymbolicLink(dataPath));
+        assertFalse(Files.exists(missingTarget));
+    }
+
     private void assertFailedStartupPreservesFile(String fileName, String contents) throws Exception {
+        assertFailedStartupPreservesFile(fileName, contents.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private void assertFailedStartupPreservesFile(String fileName, byte[] original) throws Exception {
         Path dataFile = temporaryFolder.resolve(fileName);
-        byte[] original = contents.getBytes(StandardCharsets.UTF_8);
         Files.write(dataFile, original);
         TestMainApp app = new TestMainApp(dataFile);
 
