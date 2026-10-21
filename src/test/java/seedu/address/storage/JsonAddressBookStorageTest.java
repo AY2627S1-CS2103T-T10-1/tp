@@ -110,6 +110,24 @@ public class JsonAddressBookStorageTest {
     }
 
     @Test
+    public void read_nonStringClientFields_preservesFileAndReportsLoadingFailure() throws Exception {
+        List<String> invalidData = List.of("""
+                {"persons":[{"name":"Alice","phone":81234567,"email":"alice@example.com",
+                "address":"Not provided","remark":"","tags":[]}]}
+                """, """
+                {"persons":[{"name":"Alice","phone":"81234567","email":"alice@example.com",
+                "address":"Not provided","remark":"","tags":[123]}]}
+                """);
+        Path dataFile = testFolder.resolve("non-string-client-fields.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(dataFile);
+        for (String json : invalidData) {
+            Files.writeString(dataFile, json);
+            assertThrows(DataLoadingException.class, storage::readAddressBook);
+            assertEquals(json, Files.readString(dataFile));
+        }
+    }
+
+    @Test
     public void readAddressBook_invalidPersonAddressBook_throwDataLoadingException() {
         assertThrows(DataLoadingException.class, () -> readAddressBook("invalidPersonAddressBook.json"));
     }
