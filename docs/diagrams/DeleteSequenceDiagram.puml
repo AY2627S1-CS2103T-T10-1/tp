@@ -2,19 +2,27 @@
 !include style.puml
 skinparam ArrowFontStyle plain
 
+actor User
+
 box Logic LOGIC_COLOR_T1
 participant ":LogicManager" as LogicManager LOGIC_COLOR
 participant ":AddressBookParser" as AddressBookParser LOGIC_COLOR
 participant ":DeleteCommandParser" as DeleteCommandParser LOGIC_COLOR
 participant "d:DeleteCommand" as DeleteCommand LOGIC_COLOR
 participant "r:CommandResult" as CommandResult LOGIC_COLOR
+participant "e:CommandException" as CommandException LOGIC_COLOR
 end box
 
 box Model MODEL_COLOR_T1
-participant "m:Model" as Model MODEL_COLOR
+participant "live:Model" as LiveModel MODEL_COLOR
+participant "proposed:ModelManager" as ProposedModel MODEL_COLOR
 end box
 
-[-> LogicManager : execute("delete 1")
+box Storage STORAGE_COLOR_T1
+participant ":Storage" as Storage STORAGE_COLOR
+end box
+
+User -> LogicManager : execute("delete 1")
 activate LogicManager
 
 LogicManager -> AddressBookParser : parseCommand("delete 1")
@@ -46,14 +54,36 @@ destroy DeleteCommandParser
 AddressBookParser --> LogicManager : d
 deactivate AddressBookParser
 
-LogicManager -> DeleteCommand : execute(m)
+LogicManager -> LiveModel : getAddressBook(), getUserPrefs()
+activate LiveModel
+LiveModel --> LogicManager : live data, user preferences
+deactivate LiveModel
+
+create ProposedModel
+LogicManager -> ProposedModel : new ModelManager(live data, user preferences)
+activate ProposedModel
+ProposedModel --> LogicManager
+deactivate ProposedModel
+
+LogicManager -> LiveModel : getFilteredPersonList()
+activate LiveModel
+LiveModel --> LogicManager : displayed clients
+deactivate LiveModel
+LogicManager -> ProposedModel : updateFilteredPersonList(displayed clients)
+
+LogicManager -> DeleteCommand : execute(proposed)
 activate DeleteCommand
 
-DeleteCommand -> Model : deletePerson(1)
-activate Model
+DeleteCommand -> ProposedModel : getFilteredPersonList()
+activate ProposedModel
+ProposedModel --> DeleteCommand : displayed clients
+deactivate ProposedModel
+note right of DeleteCommand : Validate index and select\nthe displayed client
 
-Model --> DeleteCommand
-deactivate Model
+DeleteCommand -> ProposedModel : deletePerson(target)
+activate ProposedModel
+ProposedModel --> DeleteCommand
+deactivate ProposedModel
 
 create CommandResult
 DeleteCommand -> CommandResult
@@ -65,6 +95,29 @@ deactivate CommandResult
 DeleteCommand --> LogicManager : r
 deactivate DeleteCommand
 
-[<--LogicManager
+LogicManager -> Storage : saveAddressBook(proposed data)
+activate Storage
+
+alt save succeeds
+    Storage --> LogicManager : saved
+    deactivate Storage
+    LogicManager -> LiveModel : setAddressBook(proposed data)
+    activate LiveModel
+    LiveModel --> LogicManager
+    deactivate LiveModel
+    LogicManager --> User : r
+else save fails
+    Storage --> LogicManager : IOException
+    deactivate Storage
+    create CommandException
+    LogicManager -> CommandException : new CommandException(save error)
+    activate CommandException
+    CommandException --> LogicManager : e
+    deactivate CommandException
+    note over Storage : Existing saved data remains unchanged
+    note over ProposedModel, LiveModel : Discard proposed data; live data and\nthe displayed filter remain unchanged
+    LogicManager --> User : throws e
+end
+
 deactivate LogicManager
 @enduml
