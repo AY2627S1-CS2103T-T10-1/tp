@@ -34,7 +34,8 @@ public class DeleteProjectCommandTest {
         Model expectedModel = modelWith(client.withProjects(List.of(SECOND_PROJECT), 3));
 
         assertCommandSuccess(new DeleteProjectCommand(Index.fromOneBased(1), 1), model,
-                "Deleted project #1 from Amy Bee.", expectedModel);
+                new CommandResult("Deleted project #1 from Amy Bee.",
+                        expectedModel.getFilteredPersonList().getFirst()), expectedModel);
         assertEquals(List.of(SECOND_PROJECT), model.getAddressBook().getPersonList().getFirst().getProjects());
         assertEquals(3, model.getAddressBook().getPersonList().getFirst().getNextProjectId());
         assertEquals(List.of(FIRST_PROJECT, SECOND_PROJECT), client.getProjects());

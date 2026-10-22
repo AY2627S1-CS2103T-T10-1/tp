@@ -43,7 +43,7 @@ public class AddProjectCommandTest {
             assertEquals(2, updated.getNextProjectId());
             assertEquals(ProjectStatus.NOT_STARTED, updated.getProjects().getFirst().getStatus());
             assertEquals(ProjectPriority.MEDIUM, updated.getProjects().getFirst().getPriority());
-            assertTrue(result.getClientToSelect().isEmpty());
+            assertEquals(updated, result.getClientToSelect().orElseThrow());
             assertTrue(client.getProjects().isEmpty());
         }
     }

@@ -9,6 +9,7 @@ import static seedu.address.testutil.TypicalPersons.BENSON;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
@@ -102,6 +103,88 @@ public class ClientDetailsUiTest {
                 assertEquals(ClientDetailsPanel.MESSAGE_EMPTY, details.getText());
                 assertEquals(0, saveAttempts.get());
                 assertEquals(List.of(client, BENSON), model.getAddressBook().getPersonList());
+            } finally {
+                List.copyOf(Window.getWindows()).forEach(Window::hide);
+            }
+        });
+    }
+
+    @Test
+    public void projectChanges_refreshSelectedClientAndClearDeletedClient() throws Exception {
+        checkProjectRefresh(false);
+    }
+
+    @Test
+    public void projectChanges_filteredList_refreshCorrectClientAndPreserveDetailsOnFailure() throws Exception {
+        checkProjectRefresh(true);
+    }
+
+    /**
+     * Exercises successful and failed project mutations through the command box with disposable storage.
+     */
+    private void checkProjectRefresh(boolean filtered) throws Exception {
+        ModelManager model = new ModelManager();
+        model.addPerson(ALICE);
+        model.addPerson(BENSON);
+        AtomicBoolean failSave = new AtomicBoolean();
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(testFolder.resolve("refresh-clients.json")) {
+            @Override
+            public void saveAddressBook(ReadOnlyAddressBook data) throws IOException {
+                if (failSave.get()) {
+                    throw new IOException("Simulated write failure");
+                }
+                super.saveAddressBook(data);
+            }
+        };
+        LogicManager logic = new LogicManager(model, new StorageManager(storage,
+                new JsonUserPrefsStorage(testFolder.resolve("refresh-preferences.json"))));
+        JavaFxTestUtil.runOnFxThread(() -> {
+            MainWindow window = new MainWindow(new Stage(), logic, storage.getAddressBookFilePath());
+            try {
+                window.fillInnerParts();
+                window.show();
+                TextArea details = (TextArea) window.getPrimaryStage().getScene().lookup("#clientDetails");
+                TextField input = (TextField) window.getPrimaryStage().getScene().lookup("#commandTextField");
+                if (filtered) {
+                    enter(input, "find Benson");
+                }
+                int index = filtered ? 1 : 2;
+                enter(input, "view " + index);
+                enter(input, "add-project " + index + " title/Website deadline/2026-12-01");
+                assertTrue(input.getText().isEmpty());
+                assertTrue(details.getText().contains("Name: Benson Meier"));
+                assertTrue(details.getText().contains("#1 | Website"));
+                assertEquals(model.getFilteredPersonList().get(index - 1),
+                        window.getPersonListPanel().selectedClientProperty().get());
+                assertTrue(model.getAddressBook().getPersonList().getFirst().getProjects().isEmpty());
+                assertEquals(filtered ? 1 : 2, model.getFilteredPersonList().size());
+
+                String previous = details.getText();
+                for (String invalid : List.of("delete-project " + index + " 999",
+                        "add-project " + index + " title/Invalid deadline/not-a-date")) {
+                    enter(input, invalid);
+                    assertEquals(previous, details.getText());
+                }
+                failSave.set(true);
+                for (String failed : List.of("delete-project " + index + " 1",
+                        "add-project " + index + " title/Another deadline/2026-12-02")) {
+                    enter(input, failed);
+                    assertEquals(previous, details.getText());
+                    assertEquals(model.getFilteredPersonList().get(index - 1),
+                            window.getPersonListPanel().selectedClientProperty().get());
+                }
+                failSave.set(false);
+                enter(input, "add-project " + index + " title/Second deadline/2026-12-02");
+                enter(input, "delete-project " + index + " 1");
+                assertFalse(details.getText().contains("#1 | Website"));
+                assertTrue(details.getText().contains("#2 | Second"));
+                enter(input, "delete-project " + index + " 2");
+                assertTrue(details.getText().contains("Projects: No projects yet."));
+                assertTrue(details.getText().contains("Name: Benson Meier"));
+                enter(input, "delete-client " + index);
+                assertTrue(input.getText().isEmpty());
+                assertEquals(ClientDetailsPanel.MESSAGE_EMPTY, details.getText());
+                assertEquals(null, window.getPersonListPanel().selectedClientProperty().get());
             } finally {
                 List.copyOf(Window.getWindows()).forEach(Window::hide);
             }

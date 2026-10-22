@@ -44,7 +44,7 @@ public class AddProjectCommandIntegrationTest {
                 + "status/IN-PROGRESS deadline/9999-12-31");
         Person zulu = model.getFilteredPersonList().getFirst();
         assertEquals("Zulu", zulu.getName().fullName);
-        assertTrue(result.getClientToSelect().isEmpty());
+        assertEquals(zulu, result.getClientToSelect().orElseThrow());
         assertEquals("Added project #1 to Zulu.", result.getFeedbackToUser());
         assertEquals(ProjectStatus.IN_PROGRESS, zulu.getProjects().getFirst().getStatus());
         assertEquals(ProjectPriority.HIGH, zulu.getProjects().getFirst().getPriority());

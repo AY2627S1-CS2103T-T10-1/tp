@@ -12,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.LongNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.person.Address;
@@ -30,11 +31,11 @@ class JsonAdaptedPerson {
 
     public static final String MISSING_FIELD_MESSAGE_FORMAT = "Person's %s field is missing!";
 
-    private final String name;
-    private final String phone;
-    private final String email;
-    private final String address;
-    private final String remark;
+    private final JsonNode name;
+    private final JsonNode phone;
+    private final JsonNode email;
+    private final JsonNode address;
+    private final JsonNode remark;
     private final List<JsonAdaptedTag> tags = new ArrayList<>();
     private final List<JsonAdaptedProject> projects = new ArrayList<>();
     private JsonNode nextProjectId;
@@ -44,10 +45,13 @@ class JsonAdaptedPerson {
     /**
      * Constructs stored client data. Legacy files may omit the projects and next project ID fields.
      */
-    @JsonCreator
-    public JsonAdaptedPerson(@JsonProperty("name") String name, @JsonProperty("phone") String phone,
-            @JsonProperty("email") String email, @JsonProperty("address") String address,
-            @JsonProperty("remark") String remark, @JsonProperty("tags") List<JsonAdaptedTag> tags) {
+    public JsonAdaptedPerson(String name, String phone, String email, String address, String remark,
+            List<JsonAdaptedTag> tags) {
+        this(textNode(name), textNode(phone), textNode(email), textNode(address), textNode(remark), tags);
+    }
+
+    private JsonAdaptedPerson(JsonNode name, JsonNode phone, JsonNode email, JsonNode address, JsonNode remark,
+            List<JsonAdaptedTag> tags) {
         this.name = name;
         this.phone = phone;
         this.email = email;
@@ -62,11 +66,11 @@ class JsonAdaptedPerson {
      * Converts a given {@code Person} into this class for Jackson use.
      */
     public JsonAdaptedPerson(Person source) {
-        name = source.getName().fullName;
-        phone = source.getPhone().value;
-        email = source.getEmail().value;
-        address = source.getAddress().value;
-        remark = source.getRemark().value;
+        name = textNode(source.getName().fullName);
+        phone = textNode(source.getPhone().value);
+        email = textNode(source.getEmail().value);
+        address = textNode(source.getAddress().value);
+        remark = textNode(source.getRemark().value);
         tags.addAll(source.getTags().stream()
                 .map(JsonAdaptedTag::new)
                 .collect(Collectors.toList()));
@@ -75,6 +79,14 @@ class JsonAdaptedPerson {
                 .collect(Collectors.toList()));
         nextProjectId = LongNode.valueOf(source.getNextProjectId());
         hasInvalidProjects = false;
+    }
+
+    @JsonCreator
+    private static JsonAdaptedPerson fromJson(@JsonProperty("name") JsonNode name,
+            @JsonProperty("phone") JsonNode phone, @JsonProperty("email") JsonNode email,
+            @JsonProperty("address") JsonNode address, @JsonProperty("remark") JsonNode remark,
+            @JsonProperty("tags") List<JsonAdaptedTag> tags) {
+        return new JsonAdaptedPerson(name, phone, email, address, remark, tags);
     }
 
     /**
@@ -119,45 +131,37 @@ class JsonAdaptedPerson {
         }
         final List<Tag> personTags = new ArrayList<>();
         for (JsonAdaptedTag tag : tags) {
+            if (tag == null) {
+                throw new IllegalValueException("A client's tags cannot contain null entries.");
+            }
             personTags.add(tag.toModelType());
         }
 
-        if (name == null) {
-            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Name.class.getSimpleName()));
-        }
-        if (!Name.isValidName(name)) {
+        String storedName = readText(name, Name.class);
+        if (!Name.isValidName(storedName)) {
             throw new IllegalValueException(Name.MESSAGE_CONSTRAINTS);
         }
-        final Name modelName = new Name(name);
+        final Name modelName = new Name(storedName);
 
-        if (phone == null) {
-            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Phone.class.getSimpleName()));
-        }
-        if (!Phone.isValidPhone(phone)) {
+        String storedPhone = readText(phone, Phone.class);
+        if (!Phone.isValidPhone(storedPhone)) {
             throw new IllegalValueException(Phone.MESSAGE_CONSTRAINTS);
         }
-        final Phone modelPhone = new Phone(phone);
+        final Phone modelPhone = new Phone(storedPhone);
 
-        if (email == null) {
-            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Email.class.getSimpleName()));
-        }
-        if (!Email.isValidEmail(email)) {
+        String storedEmail = readText(email, Email.class);
+        if (!Email.isValidEmail(storedEmail)) {
             throw new IllegalValueException(Email.MESSAGE_CONSTRAINTS);
         }
-        final Email modelEmail = new Email(email);
+        final Email modelEmail = new Email(storedEmail);
 
-        if (address == null) {
-            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Address.class.getSimpleName()));
-        }
-        if (!Address.isValidAddress(address)) {
+        String storedAddress = readText(address, Address.class);
+        if (!Address.isValidAddress(storedAddress)) {
             throw new IllegalValueException(Address.MESSAGE_CONSTRAINTS);
         }
-        final Address modelAddress = new Address(address);
+        final Address modelAddress = new Address(storedAddress);
 
-        if (remark == null) {
-            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Remark.class.getSimpleName()));
-        }
-        final Remark modelRemark = new Remark(remark);
+        final Remark modelRemark = new Remark(readText(remark, Remark.class));
 
         final Set<Tag> modelTags = new HashSet<>(personTags);
         final List<Project> modelProjects = new ArrayList<>();
@@ -181,5 +185,19 @@ class JsonAdaptedPerson {
             throw new IllegalValueException(Person.MESSAGE_PROJECT_ID_COUNTER_CONSTRAINTS);
         }
         return nextProjectId.longValue();
+    }
+
+    private static JsonNode textNode(String value) {
+        return value == null ? null : TextNode.valueOf(value);
+    }
+
+    private static String readText(JsonNode field, Class<?> type) throws IllegalValueException {
+        if (field == null || field.isNull()) {
+            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, type.getSimpleName()));
+        }
+        if (!field.isTextual()) {
+            throw new IllegalValueException("Person's " + type.getSimpleName() + " field must be a string.");
+        }
+        return field.textValue();
     }
 }

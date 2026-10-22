@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -52,7 +53,8 @@ public class JsonUtil {
             Path filePath, Class<T> classOfObjectToDeserialize) throws DataLoadingException {
         requireNonNull(filePath);
 
-        if (!Files.exists(filePath)) {
+        // A symbolic link with an unavailable target must fail loading rather than appear to be a missing file.
+        if (Files.notExists(filePath, LinkOption.NOFOLLOW_LINKS)) {
             return Optional.empty();
         }
         logger.info("JSON file " + filePath + " found.");
@@ -66,6 +68,9 @@ public class JsonUtil {
             throw new DataLoadingException(e);
         }
 
+        if (jsonFile == null) {
+            throw new DataLoadingException(new IOException("JSON root must not be null."));
+        }
         return Optional.of(jsonFile);
     }
 
