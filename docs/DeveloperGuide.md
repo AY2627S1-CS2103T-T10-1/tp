@@ -15,7 +15,7 @@ title: Developer Guide
 
 * The `delete-client` command and save-before-publish flow follow the command and atomic-save structure introduced for `add-client` in [team commit 332b415](https://github.com/AY2627S1-CS2103T-T10-1/tp/commit/332b415a1e13cf5dd3f1d6b8c1eeb62451060542). No source code was copied verbatim.
 * The `list-clients` command and parser follow the separate client command structure established by [team commit 332b415](https://github.com/AY2627S1-CS2103T-T10-1/tp/commit/332b415a1e13cf5dd3f1d6b8c1eeb62451060542). No source code was copied verbatim.
-
+* The atomic legacy deletion explanation and sequence diagram were developed for [issue #79](https://github.com/AY2627S1-CS2103T-T10-1/tp/issues/79). They document the save-before-publish behavior introduced by [issue #77](https://github.com/AY2627S1-CS2103T-T10-1/tp/issues/77); no external source was copied.
 --------------------------------------------------------------------------------------------------------------------
 
 ## **Setting up, getting started**
@@ -77,7 +77,34 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/se-
 
 ![Structure of the UI Component](images/UiClassDiagram.png)
 
-The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
+[PlantUML source](diagrams/UiClassDiagram.puml)
+
+The first diagram shows an initialized UI, after `MainWindow.fillInnerParts()`.
+`Logic` and `Person` are outside the UI boundary because they belong to the Logic
+and Model components respectively.
+Filled diamonds indicate composition; solid arrows show navigable associations;
+and a dashed line with a hollow triangle shows interface realization. Multiplicities indicate how many target instances may be
+associated with each source. Less important UI references are shown as typed
+attributes instead of separate class boxes and arrows. `resultDisplay` and `helpWindow` are fields of `MainWindow`. `CommandBox` and
+`StatusBarFooter` are omitted from this focused view; they are initialized by
+`MainWindow.fillInnerParts()`. Methods and other implementation details
+unrelated to selection are omitted. The method parameter shows the details panel's
+use of `Person`; a separate dependency arrow is omitted to reduce clutter.
+
+Inheritance is shown separately below to avoid crossing these relationships with
+superclass arrows.
+
+![Representative UI classes inherit from the abstract UiPart class](images/UiInheritanceDiagram.png)
+
+[Inheritance diagram source](diagrams/UiInheritanceDiagram.puml)
+
+The inheritance diagram shows representative subclasses only: `MainWindow`,
+`PersonListPanel` and `ClientDetailsPanel`. `CommandBox`, `ResultDisplay`,
+`StatusBarFooter`, `HelpWindow` and `PersonCard` also extend `UiPart` but are omitted
+from this view. Generic type arguments are omitted. The superclass name is italic
+because `UiPart` is abstract; solid lines with hollow triangles point to it.
+
+The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, `ClientDetailsPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
 
@@ -87,6 +114,29 @@ The `UI` component,
 * listens for changes to `Model` data so that the UI can be updated with the modified data.
 * keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
 * depends on some classes in the `Model` component because it displays `Person` objects from the model.
+
+#### Client details selection and refresh
+
+`MainWindow` observes `PersonListPanel.selectedClientProperty()` and passes the selected
+`Person` to `ClientDetailsPanel.showClient`. The read-only panel displays contact details
+and projects; a null selection shows instructions, and a client with no projects shows
+the project empty state.
+
+`view`, Add Project, Edit Project and Delete Project return a `CommandResult` containing
+the client to select. For project mutations, `LogicManager` saves the proposed data before
+publishing it to the live model. After successful execution, `MainWindow` calls
+`PersonListPanel.selectClient` with the updated client. This restores selection after the
+list replacement and refreshes the details without another `view` command. Add and delete
+use the same result mechanism as edit; the UI does not parse command text to identify them.
+
+Validation or save failures produce no successful selection result and leave the selected
+client and details unchanged. Deleting the selected client clears the selection and returns
+the panel to its instructions. The selection is based on the actual updated client, so it
+works with filtered lists and multiple clients rather than assuming the first row.
+
+`ClientDetailsUiTest` exercises add/delete refresh, remaining and empty project lists,
+invalid commands, failed saves, and selected-client deletion with both full and filtered
+lists. Manual checks are recorded in `test/ui-test-plan.md`.
 
 ### Logic component
 
@@ -100,16 +150,16 @@ The sequence diagram below illustrates the interactions within the `Logic` compo
 
 ![Interactions Inside the Logic Component for the `delete 1` Command](images/DeleteSequenceDiagram.png)
 
-<div markdown="span" class="alert alert-info">:information_source: **Note:** The lifeline for `DeleteCommandParser` should end at the destroy marker (X), but due to a limitation of PlantUML, it continues to the end of the diagram.
-</div>
+The deletion follows a save-before-publish flow:
 
-How the `Logic` component works:
+1. `AddressBookParser` parses `delete 1` and returns a `DeleteCommand` only after the command syntax is valid.
+1. `LogicManager` recognizes `DeleteCommand` as a legacy mutation. It copies the live address book and user preferences into a proposed `ModelManager`, then gives that model the clients currently displayed by the live filter. The index therefore resolves against the same list the user saw.
+1. `DeleteCommand` validates the displayed index and deletes the selected client only from the proposed model. The live model and UI have not changed at this point.
+1. `LogicManager` asks `Storage` to save the proposed address book. `JsonAddressBookStorage` writes through a temporary file and replaces the existing file only after writing succeeds.
+1. If saving succeeds, `LogicManager` publishes the proposed address book with `Model#setAddressBook` and returns the successful `CommandResult`. The live filter remains active and now excludes the deleted client.
+1. If saving throws an `IOException`, `LogicManager` converts it to a `CommandException` and does not publish the proposal. The proposed model is discarded, while the live records, displayed filter and existing saved file remain unchanged. A later `list` command only changes the filter and does not save client data, so it cannot persist the rejected deletion.
 
-1. When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command.
-1. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand`) which is executed by the `LogicManager`.
-1. The command can communicate with the `Model` when it is executed (e.g. to delete a person).<br>
-   Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
-1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
+The same staging boundary protects the inherited `add`, `edit`, `remark` and `clear` mutations. Read-only inherited commands, including `list` and `exit`, execute without saving client data.
 
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
 
