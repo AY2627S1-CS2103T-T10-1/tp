@@ -2,6 +2,7 @@ package seedu.address.commons.util;
 
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.CodeSource;
@@ -36,7 +37,7 @@ public final class AppPaths {
             if (Files.isRegularFile(codeSource)) {
                 return codeSource.toAbsolutePath().normalize().getParent();
             }
-        } catch (URISyntaxException | IllegalArgumentException exception) {
+        } catch (URISyntaxException | IllegalArgumentException | FileSystemNotFoundException exception) {
             return normalizedWorkingDirectory;
         }
         return normalizedWorkingDirectory;

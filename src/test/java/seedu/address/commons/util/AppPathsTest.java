@@ -2,6 +2,7 @@ package seedu.address.commons.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -34,5 +35,13 @@ public class AppPathsTest {
     @Test
     public void getHome_classDirectoryLaunch_usesCurrentWorkingDirectory() {
         assertEquals(Path.of("").toAbsolutePath().normalize(), AppPaths.getHome());
+    }
+
+    @Test
+    public void resolveHome_nonFileCodeSource_usesWorkingDirectory() throws Exception {
+        Path workingDirectory = Files.createDirectory(temporaryFolder.resolve("workspace"));
+
+        assertEquals(workingDirectory, AppPaths.resolveHome(
+                URI.create("https://example.invalid/clientdesk.jar").toURL(), workingDirectory));
     }
 }

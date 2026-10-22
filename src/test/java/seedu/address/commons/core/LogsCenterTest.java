@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.FileHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
@@ -20,6 +21,27 @@ public class LogsCenterTest {
 
     @TempDir
     Path temporaryFolder;
+
+    @Test
+    public void addFileHandler_folderWithPatternCharacters_writesInsideLiteralFolder() throws Exception {
+        Path logFolder = Files.createDirectory(temporaryFolder.resolve("ClientDesk %t %h"));
+        Logger targetLogger = Logger.getAnonymousLogger();
+        targetLogger.setUseParentHandlers(false);
+        LogsCenter.addFileHandler(targetLogger, logFolder.resolve("addressbook.log"));
+
+        assertEquals(1, targetLogger.getHandlers().length);
+        assertTrue(targetLogger.getHandlers()[0] instanceof FileHandler);
+        Handler handler = targetLogger.getHandlers()[0];
+        try {
+            targetLogger.info("Stored in the literal application folder");
+            handler.flush();
+            assertTrue(Files.readString(logFolder.resolve("addressbook.log.0"))
+                    .contains("Stored in the literal application folder"));
+        } finally {
+            handler.close();
+            targetLogger.removeHandler(handler);
+        }
+    }
 
     @Test
     public void addFileHandler_unavailableLogPath_keepsExistingHandlerAvailable() throws Exception {
