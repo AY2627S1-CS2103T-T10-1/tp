@@ -13,7 +13,7 @@ and records their projects, deadlines, status and priority, with a graphical cli
 
 ## Quick start
 
-1. Ensure that Java `25` or later is installed on your computer.<br>
+1. Ensure that Java `25` is installed on your computer.<br>
    **Mac users:** Ensure you have the precise JDK version prescribed [here](https://se-education.org/guides/tutorials/javaInstallationMac.html).
 
 1. Download the latest `.jar` file from the [ClientDesk releases page](https://github.com/AY2627S1-CS2103T-T10-1/tp/releases)
@@ -30,11 +30,11 @@ and records their projects, deadlines, status and priority, with a graphical cli
 
    * `list-clients` : Lists all clients.
 
-   * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01` : Adds a contact named `John Doe` to the Address Book.
+   * `add-client n/Acme Studio p/+65 8123 4567 e/hello@acme.sg` : Creates a client.
 
-   * `delete 3` : Deletes the 3rd contact shown in the current list.
+   * `view 1` : Shows the first displayed client and their projects.
 
-   * `clear` : Deletes all contacts.
+   * `help add-project` : Explains how to record work for a client.
 
    * `exit` : Exits the app.
 
@@ -57,11 +57,15 @@ and records their projects, deadlines, status and priority, with a graphical cli
 * Items followed by `…`​ can appear zero or more times.<br>
   For example, `[t/TAG]…​` may be omitted, or written as `t/friend` or `t/friend t/family`.
 
-* Parameters can be in any order.<br>
+* Prefixed parameters can be in any order; positional indexes and project IDs must come first.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
-* Extraneous parameters for commands that take no parameters, such as `list`, `exit`, and `clear`, are ignored.<br>
+* Command words are case-insensitive. Prefixes for `add-client`, `add-project` and `edit-project` are also case-insensitive. Use lowercase prefixes for legacy `add`, `edit`, `remark` and the email-only `edit-client` command.
+
+* Extraneous parameters for legacy `list`, `exit`, and `clear` are ignored.<br>
   For example, `list 123` is interpreted as `list`.
+
+* Indexes refer to the **currently displayed client list**, including search results. Project IDs belong to individual clients and do not change when the list is reordered. ClientDesk has no undo command; deletions and clearing take effect without a confirmation dialog.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </div>
@@ -75,6 +79,7 @@ Command names are case-insensitive. Help does not change client data.
 Format: `help [COMMAND]`
 
 Examples:
+
 * `help`
 * `help add-client`
 * `help edit-project`
@@ -86,7 +91,6 @@ More than one command name reports `Usage: help [COMMAND]`.
 The Help menu and `F1` show the command overview. **Copy URL** copies the ClientDesk
 User Guide link so you can paste it into your browser.
 
-
 ### Adding a client: `add-client`
 
 Creates and saves a client, refreshes the client list and selects the new entry.
@@ -94,6 +98,7 @@ Creates and saves a client, refreshes the client list and selects the new entry.
 Format: `add-client n/NAME p/PHONE e/EMAIL [t/TAG]…`
 
 Examples:
+
 * `add-client n/Acme Studio p/+65 8123 4567 e/hello@acme.sg`
 * `add-client n/Northstar Labs p/91234567 e/alex@northstar.io t/startup t/web-design`
 
@@ -120,19 +125,98 @@ The inherited address field displays `Not provided` for a new client because
 Adding a client preserves existing clients' projects and their next project IDs.
 The new client starts with no projects; its first project receives ID 1.
 
-### Adding a person: `add`
+### Listing all clients: `list-clients`
 
-Adds a person to the address book.
+Displays all clients and resets the current search filter. Clients appear in case-insensitive name order; clients with the same name retain their creation order. The existing `list` command remains available.
 
-Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]…​`
+Format: `list-clients`
 
-<div markdown="span" class="alert alert-primary">:bulb: **Tip:**
-A person can have any number of tags, including zero.
-</div>
+Example: `find acme` followed by `list-clients` restores the full client list.
+
+This command takes no arguments. Extra text, such as `list-clients extra`, reports a usage error without changing the displayed list.
+
+### Finding clients: `find`
+
+Finds clients using partial names, phone numbers, email addresses, or tags.
+
+Format: `find KEYWORD [KEYWORD]...`
+
+* Supply at least one keyword, each containing 1 to 50 characters. Separate keywords with whitespace.
+* Matching is case-insensitive and uses substrings; for example, `cme` matches `Acme Studio`.
+* **Every keyword must match the same client** (an `AND` search). Keywords may match different fields.
+  For example, `find acme startup` matches `Acme Studio` with the tag `startup`. Each client appears once.
+* Results appear in case-insensitive name order, with ties in creation order. Indexed commands use the displayed order.
+* Matches produce `Found <number> matching clients.`. No matches produce `No clients matched: <keywords>.`
+  and restore the full client list in name order. Feedback preserves keyword case and uses single spaces.
+* Missing keywords or a keyword exceeding 50 characters produce `Usage: find KEYWORD [KEYWORD]...`.
+  The previously displayed list stays visible.
+* Searching does not change client records or write the data file.
 
 Examples:
-* `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01`
-* `add n/Betsy Crowe t/friend e/betsycrowe@example.com a/Newgate Prison p/1234567 t/criminal`
+
+* `find acme` finds clients with `acme` in any searchable field.
+* `find startup web` finds clients matching both keywords, such as clients with the tags `startup` and `webdesign`.
+* `find 8123` finds clients whose phone number contains `8123`, such as `98123456`.
+
+### Viewing client details: `view`
+
+Displays the existing details of a client without modifying the client or the displayed list. This command does not save data.
+
+Format: `view CLIENT_INDEX`
+
+The index is a positive integer from the currently displayed list. After a `find` command,
+use the index in the search results. Details include name, phone, email, address, remark, tags and saved projects.
+Each project is shown in project-ID order with its title, deadline, status and priority.
+An index outside the displayed list produces an error.
+
+Example: `view 1` displays the first client in the current list.
+
+### Client details panel
+
+Enter `view INDEX` to select a client from the currently displayed list and show
+contact information and saved projects in the right-hand details panel. Projects
+are ordered by their stable IDs and include title, deadline, status and priority.
+You can also select a client directly from the list. The panel is read-only;
+scroll to read longer records and drag the divider to adjust the panel widths.
+Clients without projects show `Projects: No projects yet.` When no client is
+selected, the panel shows instructions. Invalid view commands retain the previous
+details.
+
+Successful `add-project`, `edit-project` and `delete-project` commands select the affected client and refresh their details automatically, including when using a filtered list. Invalid project commands and failed project saves retain the previous selection and details. Deleting the last project shows `Projects: No projects yet.`; deleting the selected client clears the panel to its instructions.
+
+### Editing a client's email: `edit-client`
+
+Updates a client's email while preserving their other fields, remark, projects and the current search filter.
+
+Format: `edit-client CLIENT_INDEX e/EMAIL`
+
+Example: `edit-client 1 e/new@example.com`
+
+Use a positive index from the currently displayed list, including search results. Supply exactly one lowercase `e/` parameter. The email must be 3–254 characters, contain exactly one `@` and no spaces, and have a dotted domain whose labels do not start or end with a hyphen. Email duplicates are checked case-insensitively against all clients, including those hidden by a search.
+
+Success reports `Updated client: <name>.`; an identical email reports `No changes needed for <name>.` without saving. A save failure restores the previous record. If the updated email no longer matches your search, the client may disappear from those results; use `list-clients` to find it again.
+
+This command supports email editing only. Use the existing [Edit command](#editing-a-person-edit) to change a name, phone, address or tags. ClientDesk has no undo command.
+
+### Setting or clearing a remark: `remark`
+
+Stores one free-text remark for a client, such as contact preferences or a reminder. A new remark replaces the whole previous remark; it does not append to it.
+
+Format: `remark INDEX r/[REMARK]`
+
+* `INDEX` is a positive number from the currently displayed client list, including `find` results.
+* Use lowercase `r/`, preceded by a space. Leading and trailing spaces around the remark are removed.
+* Use an **empty `r/`** to clear the remark. The legacy shorthand `remark 1` also clears the first displayed client's remark.
+* A successful update shows all clients and preserves the client's other fields and projects. Check the displayed indexes again after the list refreshes.
+* Use `view CLIENT_INDEX` to inspect the updated remark. A missing or out-of-range client index reports an error without updating any record.
+
+Examples (each uses the first currently displayed client):
+
+* `remark 1 r/Prefers email contact.` sets the remark.
+* `remark 1 r/Call after 2 pm.` replaces it.
+* `remark 1 r/` removes it.
+
+A non-empty remark reports `Added remark to person: <details>`; clearing reports `Removed remark from person: <details>`. These legacy messages refer to the client you selected by index.
 
 ### Adding a project: `add-project`
 
@@ -173,110 +257,6 @@ Invalid input reports the relevant title, deadline, status, priority or index co
 report `Usage: add-project CLIENT_INDEX title/TITLE deadline/DATE [status/STATUS] [priority/PRIORITY]`.
 A failed save reports `Project could not be saved. No changes were made.`. The existing data and displayed list stay
 unchanged, and retrying can use the same project ID.
-
-### Listing all persons: `list`
-
-Shows a list of all persons in the address book.
-
-Format: `list`
-
-### Listing all clients: `list-clients`
-
-Displays all clients and resets the current search filter. Clients appear in case-insensitive name order; clients with the same name retain their creation order. The existing `list` command remains available.
-
-Format: `list-clients`
-
-Example: `find acme` followed by `list-clients` restores the full client list.
-
-### Editing a person: `edit`
-
-Edits an existing person in the address book.
-
-Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]…​`
-
-* Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, …​
-* At least one of the optional fields must be provided.
-* Existing values will be updated to the input values.
-* When editing tags, all of the person's existing tags are removed; adding tags is not cumulative.
-* To remove all of a person's tags, enter `t/` without a tag after it.
-
-Examples:
-*  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
-*  `edit 2 n/Betsy Crower t/` Edits the name of the 2nd person to be `Betsy Crower` and clears all existing tags.
-
-### Finding clients: `find`
-
-Finds clients using partial names, phone numbers, email addresses, or tags.
-
-Format: `find KEYWORD [KEYWORD]...`
-
-* Supply at least one keyword, each containing 1 to 50 characters. Separate keywords with whitespace.
-* Matching is case-insensitive and uses substrings; for example, `cme` matches `Acme Studio`.
-* **Every keyword must match the same client** (an `AND` search). Keywords may match different fields.
-  For example, `find acme startup` matches `Acme Studio` with the tag `startup`. Each client appears once.
-* Results appear in case-insensitive name order, with ties in creation order. Indexed commands use the displayed order.
-* Matches produce `Found <number> matching clients.`. No matches produce `No clients matched: <keywords>.`
-  and restore the full client list in name order. Feedback preserves keyword case and uses single spaces.
-* Missing keywords or a keyword exceeding 50 characters produce `Usage: find KEYWORD [KEYWORD]...`.
-  The previously displayed list stays visible.
-* Searching does not change client records or write the data file.
-
-Examples:
-
-* `find acme` finds clients with `acme` in any searchable field.
-* `find startup web` finds clients matching both keywords, such as clients with the tags `startup` and `webdesign`.
-* `find 8123` finds clients whose phone number contains `8123`, such as `98123456`.
-
-### Deleting a person: `delete`
-
-Deletes the specified person from the address book.
-
-Format: `delete INDEX`
-
-* Deletes the person at the specified `INDEX`.
-* The index refers to the index number shown in the displayed person list.
-* The index **must be a positive integer** 1, 2, 3, …​
-
-Examples:
-* `list` followed by `delete 2` deletes the 2nd person in the address book.
-* `find Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
-
-### Deleting a client: `delete-client`
-
-Removes a client from ClientDesk using the index in the currently displayed list. The command also works after `find`; use the displayed result index.
-
-Format: `delete-client CLIENT_INDEX`
-
-* `CLIENT_INDEX` must be a positive integer shown in the client list.
-* Deletion is saved immediately and cannot be undone in the app.
-* If saving fails, ClientDesk reports an error and keeps the client in the list.
-
-Example: `delete-client 3` removes the third displayed client.
-
-### Deleting a project: `delete-project`
-
-Removes one project from a client. Use `view CLIENT_INDEX` to find a project's ID.
-
-Format: `delete-project CLIENT_INDEX PROJECT_ID`
-
-* `CLIENT_INDEX` is a positive integer in the currently displayed client list, including `find` results.
-* `PROJECT_ID` is a positive integer belonging to that client. Project IDs are client-scoped.
-* A successful deletion is saved immediately. The next project ID is retained, so a deleted ID is not reused.
-* If the client index or project ID is invalid, no data changes. If saving fails, the project remains in the client record.
-
-Example: `delete-project 1 2` removes project 2 from the first displayed client.
-
-### Clearing all entries: `clear`
-
-Clears all entries from the address book.
-
-Format: `clear`
-
-### Exiting the program: `exit`
-
-Exits the program.
-
-Format: `exit`
 
 ### Editing a project: `edit-project`
 
@@ -326,6 +306,110 @@ Two projects for the same client cannot have the same normalized title and deadl
 
 Invalid identifiers, dates, statuses, priorities, repeated fields and unexpected positional text produce an error without changing project data. Editing requires an existing project; use `view` to find its ID. Older client files without projects continue to load normally, but have no projects to edit.
 
+### Deleting a project: `delete-project`
+
+Removes one project from a client. Use `view CLIENT_INDEX` to find a project's ID.
+
+Format: `delete-project CLIENT_INDEX PROJECT_ID`
+
+* `CLIENT_INDEX` is a positive integer in the currently displayed client list, including `find` results.
+* `PROJECT_ID` is a positive integer belonging to that client. Project IDs are client-scoped.
+* A successful deletion is saved immediately. The next project ID is retained, so a deleted ID is not reused.
+* If the client index or project ID is invalid, no data changes. If saving fails, the project remains in the client record.
+
+Example: `delete-project 1 2` removes project 2 from the first displayed client.
+
+### Deleting a client: `delete-client`
+
+Removes a client from ClientDesk using the index in the currently displayed list. The command also works after `find`; use the displayed result index.
+
+Format: `delete-client CLIENT_INDEX`
+
+* `CLIENT_INDEX` must be a positive integer shown in the client list.
+* Deletion is saved immediately and cannot be undone in the app.
+* If saving fails, ClientDesk reports an error and keeps the client in the list.
+
+Example: `delete-client 3` removes the third displayed client.
+
+### Adding a person: `add`
+
+Adds a client with an address using the legacy command. For formatted phone numbers and creation without an address, use [Add Client](#adding-a-client-add-client). Both commands create records in the same client list.
+
+Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]…​`
+
+<div markdown="span" class="alert alert-primary">:bulb: **Tip:**
+A client can have any number of tags, including zero.
+</div>
+
+Examples:
+
+* `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01`
+* `add n/Betsy Crowe t/friend e/betsycrowe@example.com a/Newgate Prison p/1234567 t/criminal`
+
+Name, phone, email and address are required. Tags are optional and repeatable. Use lowercase prefixes and separate parameters with spaces; repeating `n/`, `p/`, `e/` or `a/` is rejected.
+
+Field | Legacy Add/Edit rules
+------|------
+Name | 1–80 characters containing at least one letter or number; allows letters, numbers, spaces, apostrophes, hyphens, periods, ampersands and parentheses.
+Phone | At least 3 digits, with no spaces, hyphens or leading `+`. This differs from `add-client`'s 7–15-digit formatted-phone rule.
+Email | 3–254 characters, exactly one `@`, no spaces, and a dotted domain whose labels do not start or end with a hyphen.
+Address | A non-blank value.
+Tag | 1–30 letters, numbers or internal hyphens. Uppercase is accepted and preserved; `add-client` requires lowercase tags.
+
+A duplicate is a client with the same email ignoring case, or the same normalized name and phone. The same name alone is allowed. A new legacy record starts with no projects or remark.
+
+### Listing all persons: `list`
+
+Displays all clients and clears the active search filter, using the same case-insensitive name order as `list-clients`. Clients with equal names retain their creation order. Extra arguments are ignored; prefer `list-clients` if you want an error for unexpected text.
+
+Format: `list`
+
+### Editing a person: `edit`
+
+Edits an existing client's contact information or tags using the legacy command. The [legacy field rules](#adding-a-person-add) apply. Use lowercase prefixes; repeating `n/`, `p/`, `e/` or `a/` is rejected. Remarks, projects and omitted fields are preserved. A successful edit shows all clients, so check the displayed indexes before the next command.
+
+Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]…​`
+
+* Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, …​
+* At least one of the optional fields must be provided.
+* Existing values will be updated to the input values.
+* When editing tags, all of the person's existing tags are removed; adding tags is not cumulative.
+* To remove all of a person's tags, enter `t/` without a tag after it.
+
+Examples:
+
+*  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
+*  `edit 2 n/Betsy Crower t/` Edits the name of the 2nd person to be `Betsy Crower` and clears all existing tags.
+
+### Deleting a person: `delete`
+
+Deletes the specified person from the address book.
+
+Format: `delete INDEX`
+
+* Deletes the person at the specified `INDEX`.
+* The index refers to the index number shown in the displayed person list.
+* The index **must be a positive integer** 1, 2, 3, …​
+
+Examples:
+
+* `list` followed by `delete 2` deletes the 2nd person in the address book.
+* `find Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
+
+The client's remark and projects are removed with the client. There is no confirmation dialog and no undo.
+
+### Clearing all entries: `clear`
+
+Removes **every client, remark and project**, including clients hidden by a search. There is no confirmation dialog and no undo. Back up your data before clearing it. This command takes no parameters; extra text is ignored.
+
+Format: `clear`
+
+### Exiting the program: `exit`
+
+Closes ClientDesk. Successful data changes are saved automatically. No parameters are needed; extra text is ignored.
+
+Format: `exit`
+
 ### Saving the data
 
 ClientDesk automatically saves successful data changes. You do not need to save manually.
@@ -347,10 +431,6 @@ A genuinely missing data file still starts the app with sample clients. Back up 
 and keep field values within the documented limits.
 </div>
 
-### Archiving data files `[coming in v2.0]`
-
-_Details coming soon ..._
-
 --------------------------------------------------------------------------------------------------------------------
 
 ## FAQ
@@ -370,57 +450,20 @@ _Details coming soon ..._
 
 Action | Format, Examples
 --------|------------------
-**Add Client** | `add-client n/NAME p/PHONE e/EMAIL [t/TAG]…`<br> e.g., `add-client n/Acme Studio p/+65 8123 4567 e/hello@acme.sg`
-**Add Project** | `add-project CLIENT_INDEX title/TITLE deadline/DATE [status/STATUS] [priority/PRIORITY]`<br> e.g., `add-project 1 title/Website deadline/2026-10-15 priority/high`
-**Add** | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]…​` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 t/friend t/colleague`
-**Clear** | `clear`
-**Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Delete Client** | `delete-client CLIENT_INDEX`<br> e.g., `delete-client 3`
-**Delete Project** | `delete-project CLIENT_INDEX PROJECT_ID`<br> e.g., `delete-project 1 2`
-**Edit** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [t/TAG]…​`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
-**Find** | `find KEYWORD [KEYWORD]...`<br> e.g., `find acme startup`
-**List** | `list`
+**Help** | `help [COMMAND]`<br>e.g., `help remark`
+**Add Client** | `add-client n/NAME p/PHONE e/EMAIL [t/TAG]…`<br>e.g., `add-client n/Acme Studio p/+65 8123 4567 e/hello@acme.sg`
 **List Clients** | `list-clients`
-**Help** | `help [COMMAND]`
-**Edit Project** | `edit-project CLIENT_INDEX PROJECT_ID [title/TITLE] [deadline/DATE] [status/STATUS] [priority/PRIORITY]`
-
-### Viewing client details: `view`
-
-Displays the existing details of a client without modifying the client or the displayed list.
-
-Format: `view INDEX`
-
-The index is a positive integer from the currently displayed list. After a `find` command,
-use the index in the search results. Details include name, phone, email, address, remark, tags and saved projects.
-Each project is shown in project-ID order with its titles, deadlines, statuses and priorities.
-An index outside the displayed list produces an error.
-
-Example: `view 1` displays the first client in the current list.
-
-### Editing a client's email: `edit-client`
-
-The first increment supports `edit-client CLIENT_INDEX e/EMAIL`.
-For example: `edit-client 1 e/new@example.com`.
-
-Use a positive index from the currently displayed list, including search results.
-The email must satisfy the existing email validation, have a dotted domain, and
-be at most 254 characters long. Email duplicates are checked case-insensitively
-against all clients, including those hidden by a search.
-
-All other fields and the current list filter are preserved. Success reports
-`Updated client: <name>.`; an identical email reports `No changes needed for <name>.`
-without saving. A save failure restores the previous record.
-
-Name and phone updates, tag additions/removals, and undo integration will be added
-in later increments. The existing `edit` command remains available.
-
-### Client details panel
-
-Enter `view INDEX` to select a client from the currently displayed list and show
-contact information and saved projects in the right-hand details panel. Projects
-are ordered by their stable IDs and include title, deadline, status and priority.
-You can also select a client directly from the list. The panel is read-only;
-scroll to read longer records and drag the divider to adjust the panel widths.
-Clients without projects show `Projects: No projects yet.` When no client is
-selected, the panel shows instructions. Invalid view commands retain the previous
-details. After changing data, use `view INDEX` to inspect the current record.
+**Find** | `find KEYWORD [KEYWORD]...`<br>e.g., `find acme startup`
+**View** | `view CLIENT_INDEX`<br>e.g., `view 1`
+**Edit Client** | `edit-client CLIENT_INDEX e/EMAIL`<br>e.g., `edit-client 1 e/new@acme.sg`
+**Remark** | `remark INDEX r/[REMARK]`<br>e.g., `remark 1 r/Prefers email contact.`; clear with `remark 1 r/`
+**Add Project** | `add-project CLIENT_INDEX title/TITLE deadline/DATE [status/STATUS] [priority/PRIORITY]`<br>e.g., `add-project 1 title/Website deadline/2026-10-15 priority/high`
+**Edit Project** | `edit-project CLIENT_INDEX PROJECT_ID [title/TITLE] [deadline/DATE] [status/STATUS] [priority/PRIORITY]`<br>e.g., `edit-project 1 2 status/completed`
+**Delete Project** | `delete-project CLIENT_INDEX PROJECT_ID`<br>e.g., `delete-project 1 2`
+**Delete Client** | `delete-client CLIENT_INDEX`<br>e.g., `delete-client 3`
+**Add (legacy)** | `add n/NAME p/PHONE e/EMAIL a/ADDRESS [t/TAG]…`<br>e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd t/friend`
+**List (legacy)** | `list`
+**Edit (legacy)** | `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]…`<br>e.g., `edit 2 n/James Lee e/jameslee@example.com`
+**Delete (legacy)** | `delete INDEX`<br>e.g., `delete 3`
+**Clear** | `clear`
+**Exit** | `exit`
