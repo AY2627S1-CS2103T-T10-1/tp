@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -21,7 +22,6 @@ import seedu.address.model.UserPrefs;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.Storage;
-import seedu.address.storage.StorageManager;
 
 /**
  * Tests application startup when client data can or cannot be loaded.
@@ -51,6 +51,10 @@ public class MainAppTest {
         assertEquals(getTypicalAddressBook(), app.model.getAddressBook());
         assertNotNull(app.logic);
         assertNotNull(app.ui);
+        AtomicInteger uiStarts = new AtomicInteger();
+        app.ui = stage -> uiStarts.incrementAndGet();
+        app.start(null);
+        assertEquals(1, uiStarts.get());
         assertFalse(app.errorShown);
         app.stop();
     }
@@ -66,6 +70,11 @@ public class MainAppTest {
         assertFalse(app.model.getAddressBook().getPersonList().isEmpty());
         assertNotNull(app.logic);
         assertFalse(Files.exists(dataFile));
+        AtomicInteger uiStarts = new AtomicInteger();
+        app.ui = stage -> uiStarts.incrementAndGet();
+        app.start(null);
+        assertEquals(1, uiStarts.get());
+        assertFalse(app.errorShown);
         app.stop();
         assertFalse(Files.exists(dataFile));
     }
@@ -194,7 +203,7 @@ public class MainAppTest {
         @Override
         protected Storage createStorage(JsonAddressBookStorage addressBookStorage,
                 JsonUserPrefsStorage prefsStorage) {
-            return new StorageManager(new JsonAddressBookStorage(dataFile),
+            return super.createStorage(new JsonAddressBookStorage(dataFile),
                     new JsonUserPrefsStorage(dataFile.getParent().resolve("preferences.json")));
         }
 
