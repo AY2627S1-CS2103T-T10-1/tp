@@ -422,8 +422,11 @@ project IDs, titles, deadlines, status and priority. Preserve the `nextProjectId
 every existing project ID. Files created before project support still load with no projects.
 
 <div markdown="span" class="alert alert-warning">:exclamation: **Caution:**
-If your changes make the data file invalid, AddressBook starts with an empty address book at the next run. The invalid file remains on disk until you run a command that saves data. Still, we recommend backing up the file before editing it.<br>
-Furthermore, certain edits can cause the AddressBook to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
+If ClientDesk cannot read or validate an existing data file, it shows an error identifying the file and closes
+without opening the command window. The original file remains unchanged. Back it up, then restore a valid copy
+or correct the file and restart ClientDesk. The application log contains further details.<br>
+A genuinely missing data file still starts the app with sample clients. Back up existing data before editing it
+and keep field values within the documented limits.
 </div>
 
 --------------------------------------------------------------------------------------------------------------------

@@ -21,6 +21,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import seedu.address.logic.LogicManager;
+import seedu.address.logic.commands.ClientDeskHelp;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
@@ -76,6 +77,13 @@ public class HelpUiTest {
                 input.fireEvent(new ActionEvent());
                 assertTrue(instructions.getText().contains("Format: edit-client CLIENT_INDEX e/EMAIL"));
 
+                for (String name : new String[] {"add", "edit", "delete", "clear", "exit"}) {
+                    input.setText("help " + name);
+                    input.fireEvent(new ActionEvent());
+                    assertEquals(ClientDeskHelp.getDetails(name), instructions.getText());
+                    assertTrue(window.getPrimaryStage().isShowing());
+                }
+
                 String previous = instructions.getText();
                 for (String name : new String[] {"unknown-command", "undo", "add-note", "follow-up", "agenda"}) {
                     input.setText("help " + name);
@@ -86,7 +94,7 @@ public class HelpUiTest {
 
                 MenuBar menu = (MenuBar) window.getPrimaryStage().getScene().lookup("#menuBar");
                 menu.getMenus().get(1).getItems().getFirst().fire();
-                assertTrue(instructions.getText().contains("ClientDesk commands:"));
+                assertEquals(ClientDeskHelp.getOverview(), instructions.getText());
                 assertTrue(instructions.getText().contains("remark - "));
                 for (String name : new String[] {"undo", "add-note", "follow-up", "agenda"}) {
                     assertFalse(instructions.getText().contains(name + " - "));
