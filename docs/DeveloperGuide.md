@@ -9,8 +9,6 @@ title: Developer Guide
 
 ## **Acknowledgements**
 
-* Clarence Choo used OpenAI Codex to assist with Week 10 Help implementation and tests, User Guide updates, and Developer Guide text and UML diagrams.
-
 * Help retains the existing ClientDesk command catalogue and AddressBook-Level3 Help window.
 
 * The `edit-project` save-before-publish flow follows the existing `delete-client` staging approach. The shared project model and JSON storage come from Anson's merged [Add Project PR #58](https://github.com/AY2627S1-CS2103T-T10-1/tp/pull/58). The Edit Project prefix scanning and whitespace trimming adapt `AddProjectCommandParser` from [commit d64842b](https://github.com/iians0n/tp/commit/d64842b07ad207b1b264f44461af6a2ba1a763ed), and its JavaFX test follows `AddProjectUiTest` from that commit. Project display in `view` retains the implementation reused from Anson's earlier [commit f5e77fa](https://github.com/iians0n/tp/commit/f5e77fa407264a274d922d6fb679e7202daa3624). These reused contributions are credited to Anson.
