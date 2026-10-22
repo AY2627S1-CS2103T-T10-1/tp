@@ -1,0 +1,42 @@
+@startuml
+hide footbox
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+participant ":MainWindow" as Ui
+participant ":LogicManager" as Logic
+participant "h:HelpCommand" as Help
+participant "ClientDeskHelp" as Catalogue
+participant ":HelpWindow" as Window
+
+[-> Ui : help remark
+Ui -> Logic : execute("help remark")
+ref over Logic, Help
+  Help parsing
+  AddressBookParser delegates to
+  HelpCommandParser to validate the name
+  and return h:HelpCommand("remark").
+end ref
+
+Logic -> Help : execute(model)
+Help -> Catalogue : getDetails("remark")
+Catalogue --> Help : instructions
+Help --> Logic : result
+note over Logic, Help
+  Help reads the catalogue, not client data.
+  result.showHelp is true.
+  LogicManager returns before saving;
+  records and the displayed filter stay unchanged.
+end note
+Logic --> Ui : result
+
+Ui -> Window : setHelpContent(instructions)
+Ui -> Window : isShowing()
+Window --> Ui : showing
+alt window is hidden
+    Ui -> Window : show()
+else window is already visible
+    Ui -> Window : focus()
+end
+@enduml

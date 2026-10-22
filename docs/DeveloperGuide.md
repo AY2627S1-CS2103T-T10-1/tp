@@ -173,6 +173,14 @@ produces an error; multiple names produce `Usage: help [COMMAND]`. `HelpCommand`
 `HelpWindow`, whose scrollable text displays the instructions. The Help menu and `F1` open the overview.
 `LogicManager` skips saving for Help, so viewing instructions preserves client data and the displayed filter.
 
+The sequence below traces `help remark` from the command box to the Help window. The reference frame summarizes parsing by `AddressBookParser` and `HelpCommandParser` to keep the focus on the catalogue lookup and display flow. Result-display updates, logging and window layout details are omitted.
+
+![Sequence for command-specific Help](images/HelpSequenceDiagram.svg)
+
+The parser checks the requested name against `ClientDeskHelp` before creating a `HelpCommand`. Executing that command reads the instructions and returns a `CommandResult` with `showHelp` set to `true`; it does not execute `RemarkCommand` or access client records. `LogicManager` returns this result before its save path. `MainWindow` uses the result's instructions to update `HelpWindow`, then shows or focuses the window. This separation keeps Help usable when client-data saving is unavailable and preserves the displayed filter.
+
+With no command name, `help` returns the catalogue overview instead. The Help menu and `F1` call `MainWindow.handleHelp()` directly with the same overview, bypassing command parsing and storage. An unknown name or more than one argument causes a `ParseException` before a Help command is created; the command box displays the error and the Help window's content is unchanged. The existing Help parser, integration and UI tests cover these paths.
+
 ### Add client
 
 `AddClientCommandParser` requires name, phone and email, accepts repeated tags, and rejects repeated required
