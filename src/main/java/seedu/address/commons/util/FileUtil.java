@@ -1,6 +1,7 @@
 package seedu.address.commons.util;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -37,10 +38,12 @@ public class FileUtil {
     }
 
     /**
-     * Assumes file exists
+     * Reads the UTF-8 contents of an existing file.
+     *
+     * @throws IOException if the file cannot be read or contains malformed UTF-8.
      */
     public static String readFromFile(Path file) throws IOException {
-        return new String(Files.readAllBytes(file), CHARSET);
+        return Files.readString(file, StandardCharsets.UTF_8);
     }
 
     /**

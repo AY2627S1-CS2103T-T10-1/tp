@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
+import java.util.Locale;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.commands.HelpCommand;
@@ -43,12 +45,20 @@ public class HelpCommandParserTest {
 
     @Test
     public void parse_eachSupportedCommand_hasDetailedInstructions() throws Exception {
-        for (String name : new String[] {"help", "add-client", "list", "list-clients", "view", "edit-client",
-            "remark", "delete-client", "find", "add-project", "edit-project", "delete-project"}) {
-            String result = parser.parse(name).execute(new ModelManager()).getFeedbackToUser();
-            assertTrue(result.contains("Format: " + name));
-            assertTrue(result.contains("Rules: "));
-            assertTrue(result.contains("Examples: "));
+        Model model = new ModelManager();
+        String overview = parser.parse("").execute(model).getFeedbackToUser();
+        for (String name : new String[] {"help", "add-client", "add", "list", "list-clients", "view",
+            "edit-client", "edit", "remark", "delete-client", "delete", "find", "add-project", "edit-project",
+            "delete-project", "clear", "exit"}) {
+            String result = parser.parse(name).execute(model).getFeedbackToUser();
+            assertTrue(overview.contains(name + " - "), name);
+            assertTrue(result.contains("Format: " + name), name);
+            assertTrue(result.contains("Rules: "), name);
+            assertTrue(result.contains("Examples: "), name);
+            String mixedCaseName = name.substring(0, 1).toUpperCase(Locale.ROOT) + name.substring(1);
+            assertEquals(result, parser.parse("  " + mixedCaseName + "  ").execute(model).getFeedbackToUser());
+            assertEquals(result, new AddressBookParser().parseCommand("HeLp " + name.toUpperCase(Locale.ROOT))
+                    .execute(model).getFeedbackToUser());
         }
     }
 
