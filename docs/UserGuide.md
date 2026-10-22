@@ -180,7 +180,9 @@ You can also select a client directly from the list. The panel is read-only;
 scroll to read longer records and drag the divider to adjust the panel widths.
 Clients without projects show `Projects: No projects yet.` When no client is
 selected, the panel shows instructions. Invalid view commands retain the previous
-details. After changing data, use the current displayed index with `view CLIENT_INDEX` to inspect the saved record if the selection clears. In this version, adding or deleting a project may clear the selection; Edit Project selects the updated client.
+details.
+
+Successful `add-project`, `edit-project` and `delete-project` commands select the affected client and refresh their details automatically, including when using a filtered list. Invalid project commands and failed project saves retain the previous selection and details. Deleting the last project shows `Projects: No projects yet.`; deleting the selected client clears the panel to its instructions.
 
 ### Editing a client's email: `edit-client`
 
