@@ -79,6 +79,31 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/se-
 
 [PlantUML source](diagrams/UiClassDiagram.puml)
 
+The first diagram shows an initialized UI, after `MainWindow.fillInnerParts()`.
+`Logic` and `Person` are outside the UI boundary because they belong to the Logic
+and Model components respectively.
+Filled diamonds indicate composition; solid arrows show navigable associations;
+and a dashed line with a hollow triangle shows interface realization. Multiplicities indicate how many target instances may be
+associated with each source. Less important UI references are shown as typed
+attributes instead of separate class boxes and arrows. `resultDisplay` and `helpWindow` are fields of `MainWindow`. `CommandBox` and
+`StatusBarFooter` are omitted from this focused view; they are initialized by
+`MainWindow.fillInnerParts()`. Methods and other implementation details
+unrelated to selection are omitted. The method parameter shows the details panel's
+use of `Person`; a separate dependency arrow is omitted to reduce clutter.
+
+Inheritance is shown separately below to avoid crossing these relationships with
+superclass arrows.
+
+![Representative UI classes inherit from the abstract UiPart class](images/UiInheritanceDiagram.png)
+
+[Inheritance diagram source](diagrams/UiInheritanceDiagram.puml)
+
+The inheritance diagram shows representative subclasses only: `MainWindow`,
+`PersonListPanel` and `ClientDetailsPanel`. `CommandBox`, `ResultDisplay`,
+`StatusBarFooter`, `HelpWindow` and `PersonCard` also extend `UiPart` but are omitted
+from this view. Generic type arguments are omitted. The superclass name is italic
+because `UiPart` is abstract; solid lines with hollow triangles point to it.
+
 The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, `ClientDetailsPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
