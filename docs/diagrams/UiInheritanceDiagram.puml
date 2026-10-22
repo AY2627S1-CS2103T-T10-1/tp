@@ -1,0 +1,22 @@
+@startuml
+!pragma layout smetana
+hide circle
+hide empty members
+skinparam shadowing false
+skinparam dpi 160
+skinparam defaultFontSize 16
+skinparam nodesep 35
+skinparam ranksep 60
+skinparam classBackgroundColor #E8F5E9
+skinparam arrowColor #2E6B32
+
+' Generic type arguments are omitted in this focused inheritance view.
+abstract class UiPart
+class MainWindow
+class PersonListPanel
+class ClientDetailsPanel
+
+UiPart <|-- MainWindow
+UiPart <|-- PersonListPanel
+UiPart <|-- ClientDetailsPanel
+@enduml

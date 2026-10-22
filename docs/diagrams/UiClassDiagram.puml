@@ -1,44 +1,41 @@
 @startuml
-!pragma layout smetana
+!pragma layout elk
 skinparam shadowing false
+skinparam dpi 160
+skinparam defaultFontSize 16
+skinparam nodesep 90
+skinparam linetype ortho
+skinparam ranksep 90
 hide empty members
+hide circle
 skinparam classAttributeIconSize 0
-skinparam packageStyle rectangle
+skinparam packageStyle package
 skinparam classBackgroundColor #E8F5E9
 skinparam arrowColor #2E6B32
 
 package UI {
-  interface Ui
-  class UiManager
-  class MainWindow
-  class CommandBox
-  class ResultDisplay
-  class PersonListPanel {
-    selectedClientProperty()
-    selectClient(client)
+  class Ui <<interface>>
+  class UiManager {
+    - logic: Logic
   }
+  class MainWindow {
+    - resultDisplay: ResultDisplay
+    - helpWindow: HelpWindow
+  }
+  class PersonListPanel
   class ClientDetailsPanel {
-    showClient(client)
+    + showClient(client: Person): void
   }
   class PersonCard
-  class HelpWindow
-  class StatusBarFooter
 }
-class Logic
-class "Person / Project" as ClientModel
+class Logic <<interface>>
+class Person
 
-UiManager ..|> Ui
-UiManager --> MainWindow
-UiManager --> Logic
-MainWindow --> Logic : executes commands
-MainWindow *--> CommandBox
-MainWindow *--> ResultDisplay
-MainWindow *--> PersonListPanel
-MainWindow *--> ClientDetailsPanel
-MainWindow *--> StatusBarFooter
-MainWindow --> HelpWindow
-PersonListPanel --> "*" PersonCard
-ClientDetailsPanel ..> ClientModel : displays
-PersonCard ..> ClientModel
-
+UiManager .left.|> Ui
+UiManager -down-> "1" MainWindow
+MainWindow -right-> "1" Logic
+MainWindow *-down-> "1" PersonListPanel
+MainWindow *-down-> "1" ClientDetailsPanel
+PersonListPanel -down-> "0..*" PersonCard
+PersonCard -right-> "1" Person
 @enduml
