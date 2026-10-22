@@ -10,17 +10,18 @@ import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.AddClientCommand;
+import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.AddProjectCommand;
+import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.DeleteClientCommand;
+import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.DeleteProjectCommand;
 import seedu.address.logic.commands.EditClientCommand;
+import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.EditProjectCommand;
-import seedu.address.logic.commands.FindCommand;
-import seedu.address.logic.commands.HelpCommand;
-import seedu.address.logic.commands.ListClientsCommand;
-import seedu.address.logic.commands.ViewCommand;
+import seedu.address.logic.commands.RemarkCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -58,7 +59,6 @@ public class LogicManager implements Logic {
     public CommandResult execute(String commandText) throws CommandException, ParseException {
         logger.info("----------------[USER COMMAND][" + commandText + "]");
 
-        CommandResult commandResult;
         Command command = addressBookParser.parseCommand(commandText);
         if (command instanceof AddClientCommand) {
             return executeAddClient(command);
@@ -80,25 +80,43 @@ public class LogicManager implements Logic {
         if (command instanceof EditProjectCommand editProjectCommand) {
             return executeEditProject(editProjectCommand);
         }
-        commandResult = command.execute(model);
-        if (command instanceof FindCommand) {
-            // Avoid saving unchanged data or reporting a save error for a read-only search.
-            return commandResult;
+        if (isLegacyMutation(command)) {
+            return executeLegacyMutation(command);
         }
+        return command.execute(model);
+    }
 
-        if (command instanceof HelpCommand || command instanceof ListClientsCommand || command instanceof ViewCommand) {
-            return commandResult;
-        }
+    private boolean isLegacyMutation(Command command) {
+        return command instanceof AddCommand
+                || command instanceof ClearCommand
+                || command instanceof DeleteCommand
+                || command instanceof EditCommand
+                || command instanceof RemarkCommand;
+    }
+
+    /**
+     * Saves a proposed inherited-command mutation before publishing it to the live model.
+     */
+    private CommandResult executeLegacyMutation(Command command) throws CommandException {
+        Model proposedModel = new ModelManager(model.getAddressBook(), model.getUserPrefs());
+        Set<Person> displayedPeople = new HashSet<>(model.getFilteredPersonList());
+        proposedModel.updateFilteredPersonList(displayedPeople::contains);
+        CommandResult result = command.execute(proposedModel);
 
         try {
-            storage.saveAddressBook(model.getAddressBook());
-        } catch (AccessDeniedException e) {
-            throw new CommandException(String.format(FILE_OPS_PERMISSION_ERROR_FORMAT, e.getMessage()), e);
-        } catch (IOException ioe) {
-            throw new CommandException(String.format(FILE_OPS_ERROR_FORMAT, ioe.getMessage()), ioe);
+            storage.saveAddressBook(proposedModel.getAddressBook());
+        } catch (AccessDeniedException exception) {
+            throw new CommandException(String.format(FILE_OPS_PERMISSION_ERROR_FORMAT, exception.getMessage()),
+                    exception);
+        } catch (IOException exception) {
+            throw new CommandException(String.format(FILE_OPS_ERROR_FORMAT, exception.getMessage()), exception);
         }
 
-        return commandResult;
+        model.setAddressBook(proposedModel.getAddressBook());
+        if (command instanceof AddCommand || command instanceof EditCommand || command instanceof RemarkCommand) {
+            model.updateFilteredPersonList(Model.PREDICATE_SHOW_ALL_PERSONS);
+        }
+        return result;
     }
 
     /**
