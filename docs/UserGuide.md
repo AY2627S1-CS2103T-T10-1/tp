@@ -423,6 +423,11 @@ welcome to update data directly by editing that file. Back up the file first. Ea
 project IDs, titles, deadlines, status and priority. Preserve the `nextProjectId` counter, which must be greater than
 every existing project ID. Files created before project support still load with no projects.
 
+Keep the new JAR in your existing ClientDesk home folder when upgrading. If an older version was launched from
+a different working directory, back up and copy its `data` folder and `preferences.json` into the folder containing
+the new JAR before starting this version. Data, preferences and logs now use the JAR's folder regardless of the
+terminal's working directory.
+
 <div markdown="span" class="alert alert-warning">:exclamation: **Caution:**
 If ClientDesk cannot read or validate an existing data file, it shows an error identifying the file and closes
 without opening the command window. The original file remains unchanged. Back it up, then restore a valid copy
