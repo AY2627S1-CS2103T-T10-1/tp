@@ -11,7 +11,11 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import seedu.address.commons.exceptions.IllegalValueException;
+import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
@@ -119,6 +123,50 @@ public class JsonAdaptedPersonTest {
         JsonAdaptedPerson person =
                 new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS, VALID_REMARK, invalidTags);
         assertThrows(IllegalValueException.class, person::toModelType);
+    }
+
+    @Test
+    public void toModelType_nonStringTextFields_throwsIllegalValueException() throws Exception {
+        for (String field : List.of("name", "phone", "email", "address", "remark")) {
+            for (String value : List.of("123", "true", "{}", "[]")) {
+                ObjectNode json = personJson();
+                json.set(field, JsonUtil.fromJsonString(value, JsonNode.class));
+                JsonAdaptedPerson person = JsonUtil.fromJsonString(json.toString(), JsonAdaptedPerson.class);
+                String fieldType = Character.toUpperCase(field.charAt(0)) + field.substring(1);
+                assertThrows(IllegalValueException.class, "Person's " + fieldType + " field must be a string.",
+                        person::toModelType);
+            }
+        }
+    }
+
+    @Test
+    public void toModelType_missingAndNullTextFields_throwsMissingFieldException() throws Exception {
+        for (String field : List.of("name", "phone", "email", "address", "remark")) {
+            ObjectNode json = personJson();
+            json.remove(field);
+            JsonAdaptedPerson missingField = JsonUtil.fromJsonString(json.toString(), JsonAdaptedPerson.class);
+
+            String fieldType = Character.toUpperCase(field.charAt(0)) + field.substring(1);
+            String expectedMessage = String.format(MISSING_FIELD_MESSAGE_FORMAT, fieldType);
+            assertThrows(IllegalValueException.class, expectedMessage, missingField::toModelType);
+
+            json.set(field, JsonUtil.fromJsonString("null", JsonNode.class));
+            JsonAdaptedPerson nullField = JsonUtil.fromJsonString(json.toString(), JsonAdaptedPerson.class);
+            assertThrows(IllegalValueException.class, expectedMessage, nullField::toModelType);
+        }
+    }
+
+    @Test
+    public void toModelType_legacyStringFields_returnsPerson() throws Exception {
+        ObjectNode json = personJson();
+        json.remove("projects");
+        json.remove("nextProjectId");
+        JsonAdaptedPerson person = JsonUtil.fromJsonString(json.toString(), JsonAdaptedPerson.class);
+        assertEquals(BENSON, person.toModelType());
+    }
+
+    private static ObjectNode personJson() throws Exception {
+        return JsonUtil.fromJsonString(JsonUtil.toJsonString(new JsonAdaptedPerson(BENSON)), ObjectNode.class);
     }
 
 }
