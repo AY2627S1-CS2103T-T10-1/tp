@@ -68,14 +68,46 @@ public class UiManager implements Ui {
      */
     private static void showAlertDialogAndWait(Stage owner, AlertType type, String title, String headerText,
                                                String contentText) {
+        createAlert(owner, type, title, headerText, contentText).showAndWait();
+    }
+
+    private static Alert createAlert(Stage owner, AlertType type, String title, String headerText,
+            String contentText) {
         final Alert alert = new Alert(type);
         alert.getDialogPane().getStylesheets().add("view/DarkTheme.css");
-        alert.initOwner(owner);
+        if (owner != null) {
+            alert.initOwner(owner);
+        }
         alert.setTitle(title);
         alert.setHeaderText(headerText);
         alert.setContentText(contentText);
         alert.getDialogPane().setId(ALERT_DIALOG_PANE_FIELD_ID);
-        alert.showAndWait();
+        return alert;
+    }
+
+    /**
+     * Shows a client data loading error and closes the application without opening the command window.
+     */
+    public static void showDataLoadingErrorAndShutdown(Path dataFilePath) {
+        createDataLoadingErrorAlert(dataFilePath).showAndWait();
+        Platform.exit();
+    }
+
+    /**
+     * Creates the ownerless alert used before the application has opened its main window.
+     */
+    static Alert createDataLoadingErrorAlert(Path dataFilePath) {
+        return createAlert(null, AlertType.ERROR, "Unable to open client data",
+                "ClientDesk could not load its client data.", dataLoadingErrorMessage(dataFilePath));
+    }
+
+    /**
+     * Returns recovery instructions that identify the data file without changing it.
+     */
+    static String dataLoadingErrorMessage(Path dataFilePath) {
+        return "The data file could not be loaded: " + dataFilePath.toAbsolutePath() + "\n\n"
+                + "ClientDesk has not changed this file. Back it up, then restore a valid copy or correct the file "
+                + "and restart ClientDesk. Check the application log for details.";
     }
 
     /**

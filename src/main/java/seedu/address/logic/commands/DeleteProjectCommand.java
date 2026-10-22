@@ -50,7 +50,7 @@ public class DeleteProjectCommand extends Command {
         remainingProjects.remove(projectIndex);
         Person updatedClient = client.withProjects(remainingProjects, client.getNextProjectId());
         model.setPerson(client, updatedClient);
-        return new CommandResult(String.format(MESSAGE_SUCCESS, projectId, client.getName()));
+        return new CommandResult(String.format(MESSAGE_SUCCESS, projectId, client.getName()), updatedClient);
     }
 
     private int findProjectIndex(List<Project> projects) {

@@ -93,7 +93,7 @@ public class AddProjectCommand extends Command {
         if (deadline.getDate().isBefore(LocalDate.now(clock))) {
             feedback += "\n" + MESSAGE_OVERDUE;
         }
-        return new CommandResult(feedback);
+        return new CommandResult(feedback, updatedClient);
     }
 
     @Override
