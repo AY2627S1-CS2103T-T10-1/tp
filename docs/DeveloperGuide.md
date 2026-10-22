@@ -173,7 +173,11 @@ This section describes some noteworthy details on how certain features are imple
 
 `ClientDeskHelp` stores the supported ClientDesk client and project command instructions in an ordered,
 unmodifiable map. It supplies the overview and detailed instructions to `HelpCommand`. Each entry describes
-an implemented command; planned commands have no entry. The catalogue includes the existing `remark` command.
+an implemented command; planned commands have no entry. Every command routed by `AddressBookParser` has an
+entry, including the legacy `add`, `edit`, `delete`, `clear` and `exit` commands. Legacy field rules are shared
+between the Add and Edit entries; they intentionally differ from Add Client's phone and tag creation rules.
+`HelpIntegrationTest` executes the catalogue examples with disposable JSON storage and checks Help against
+unwritable storage without changing data or the displayed filter.
 
 `HelpCommandParser` accepts zero or one command name and matches names case-insensitively. An unknown name
 produces an error; multiple names produce `Usage: help [COMMAND]`. `HelpCommand` returns a result that opens
@@ -729,6 +733,11 @@ testers are expected to do more *exploratory* testing.
    then Edit Project's format, rules and examples.
 1. Enter `help EDIT-CLIENT` and `help remark`.<br>
    Expected: Edit Client describes email editing. Remark describes setting or clearing a client's remark.
+1. Enter `help add`, `help edit`, `help delete`, `help clear` and `help exit` separately, then repeat with
+   mixed-case names such as `HeLp AdD`.<br>
+   Expected: Each opens that command's format, rules and examples. `help clear` does not delete data and
+   `help exit` does not close the app. Add/Edit explain the lowercase prefixes and legacy field rules;
+   Clear warns that it removes even clients hidden by a search, without confirmation or undo.
 1. Enter `help undo`, `help agenda` and `help add-client edit-project` separately.<br>
    Expected: The first two report an unknown command. The last reports `Usage: help [COMMAND]`.
 1. Enter `find alex`, note the displayed clients, then open Help through the command, Help menu and `F1`.<br>

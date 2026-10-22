@@ -9,6 +9,15 @@ import java.util.Map;
  */
 public class ClientDeskHelp {
 
+    private static final String LEGACY_FIELD_RULES =
+            "Name: 1–80 characters with a letter or number; letters, numbers, spaces, apostrophes, "
+            + "hyphens, periods, & and parentheses are allowed.\n"
+            + "Phone: at least 3 digits, without spaces, hyphens or +. Email: 3–254 characters, "
+            + "one @, no spaces and a dotted domain whose labels do not start or end with a hyphen.\n"
+            + "Address must not be blank. Tags: 1–30 letters, numbers or internal hyphens; case is preserved.\n"
+            + "Use lowercase prefixes separated by spaces. Do not repeat n/, p/, e/ or a/. "
+            + "Duplicates: same email ignoring case, or the same normalized name and phone.";
+
     private static final Map<String, CommandHelp> COMMANDS = createCommands();
 
     private ClientDeskHelp() {
@@ -63,10 +72,17 @@ public class ClientDeskHelp {
                 + "normalized name and phone. Same name alone is allowed.",
                 "add-client n/Acme Studio p/+65 8123 4567 e/hello@acme.sg; add-client n/Northstar "
                 + "Labs p/91234567 e/alex@northstar.io t/startup t/web-design"));
+        commands.put("add", new CommandHelp(
+                "Create a client with an address using the legacy command.",
+                "add n/NAME p/PHONE e/EMAIL a/ADDRESS [t/TAG]...",
+                "Name, phone, email and address are required; tags are optional and repeatable.\n"
+                + LEGACY_FIELD_RULES + "\nUse add-client for formatted phone numbers and creation without an address.",
+                "add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01"));
         commands.put("list", new CommandHelp(
                 "Display all clients with indexes.",
                 "list",
-                "No parameters. Clients are sorted by name, ignoring case; ties use creation order.",
+                "No parameters are needed; extra text is ignored. Clears the search filter. "
+                + "Clients are sorted by name, ignoring case; ties use creation order.",
                 "list"));
         commands.put("list-clients", new CommandHelp(
                 "Display all clients with indexes.",
@@ -87,6 +103,13 @@ public class ClientDeskHelp {
                 + "An email already used by another client, ignoring case, is rejected. "
                 + "An unchanged email skips saving. The current client filter is preserved.",
                 "edit-client 1 e/new@acme.sg; edit-client 2 e/new@northstar.io"));
+        commands.put("edit", new CommandHelp(
+                "Update a client's contact fields or replace tags using the legacy command.",
+                "edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]...",
+                "INDEX is a positive integer from the currently displayed list. Supply at least one field. "
+                + "Omitted fields, remarks and projects are preserved. A successful edit shows all clients.\n"
+                + "Tags replace the entire tag set; an empty t/ clears all tags.\n" + LEGACY_FIELD_RULES,
+                "edit 1 p/91234567 e/johndoe@example.com; edit 2 n/Betsy Crower t/"));
         commands.put("remark", new CommandHelp(
                 "Set, replace or clear a client's remark.",
                 "remark INDEX r/[REMARK]",
@@ -100,6 +123,12 @@ public class ClientDeskHelp {
                 "CLIENT_INDEX must be a displayed positive integer. Deletion is saved immediately and cannot be "
                 + "undone in the app.",
                 "delete-client 3"));
+        commands.put("delete", new CommandHelp(
+                "Remove a client and their projects using the legacy command.",
+                "delete INDEX",
+                "INDEX is a positive integer from the currently displayed list, including find results. "
+                + "Supply exactly one index. Deletion cannot be undone in the app.",
+                "delete 1"));
         commands.put("find", new CommandHelp(
                 "Locate clients by partial name, phone, email or tag.",
                 "find KEYWORD [KEYWORD]...",
@@ -134,6 +163,17 @@ public class ClientDeskHelp {
                 "delete-project CLIENT_INDEX PROJECT_ID",
                 "Use a displayed client index and a project ID belonging to that client. IDs are client-scoped.",
                 "delete-project 1 2"));
+        commands.put("clear", new CommandHelp(
+                "Remove every client and project.",
+                "clear",
+                "No parameters are needed; extra text is ignored. Clears all clients, including those hidden "
+                + "by find. There is no confirmation and this cannot be undone in the app.",
+                "clear"));
+        commands.put("exit", new CommandHelp(
+                "Close ClientDesk.",
+                "exit",
+                "No parameters are needed; extra text is ignored. Successful data changes are saved automatically.",
+                "exit"));
         return Collections.unmodifiableMap(commands);
     }
 
