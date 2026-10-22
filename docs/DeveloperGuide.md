@@ -9,12 +9,12 @@ title: Developer Guide
 
 ## **Acknowledgements**
 
-* The Week 9 Help corrections, Add Client and Edit Project regression tests, and their documentation were developed with OpenAI Codex assistance. Help retains the existing ClientDesk command catalogue and AddressBook-Level3 Help window.
+* Help retains the existing ClientDesk command catalogue and AddressBook-Level3 Help window.
 
-* The `edit-project` implementation, tests and documentation were developed with OpenAI Codex assistance. Its save-before-publish flow follows the existing `delete-client` staging approach. The shared project model and JSON storage come from Anson's merged [Add Project PR #58](https://github.com/AY2627S1-CS2103T-T10-1/tp/pull/58). The Edit Project prefix scanning and whitespace trimming adapt `AddProjectCommandParser` from [commit d64842b](https://github.com/iians0n/tp/commit/d64842b07ad207b1b264f44461af6a2ba1a763ed), and its JavaFX test follows `AddProjectUiTest` from that commit. Project display in `view` retains the implementation reused from Anson's earlier [commit f5e77fa](https://github.com/iians0n/tp/commit/f5e77fa407264a274d922d6fb679e7202daa3624). These reused contributions are credited to Anson.
+* The `edit-project` save-before-publish flow follows the existing `delete-client` staging approach. The shared project model and JSON storage come from Anson's merged [Add Project PR #58](https://github.com/AY2627S1-CS2103T-T10-1/tp/pull/58). The Edit Project prefix scanning and whitespace trimming adapt `AddProjectCommandParser` from [commit d64842b](https://github.com/iians0n/tp/commit/d64842b07ad207b1b264f44461af6a2ba1a763ed), and its JavaFX test follows `AddProjectUiTest` from that commit. Project display in `view` retains the implementation reused from Anson's earlier [commit f5e77fa](https://github.com/iians0n/tp/commit/f5e77fa407264a274d922d6fb679e7202daa3624). These reused contributions are credited to Anson.
 
-* The `delete-client` command and save-before-publish flow were developed with OpenAI Codex assistance and follow the command and atomic-save structure introduced for `add-client` in [team commit 332b415](https://github.com/AY2627S1-CS2103T-T10-1/tp/commit/332b415a1e13cf5dd3f1d6b8c1eeb62451060542). No source code was copied verbatim.
-* The `list-clients` command and parser were developed with OpenAI Codex assistance, following the separate client command structure established by [team commit 332b415](https://github.com/AY2627S1-CS2103T-T10-1/tp/commit/332b415a1e13cf5dd3f1d6b8c1eeb62451060542). No source code was copied verbatim.
+* The `delete-client` command and save-before-publish flow follow the command and atomic-save structure introduced for `add-client` in [team commit 332b415](https://github.com/AY2627S1-CS2103T-T10-1/tp/commit/332b415a1e13cf5dd3f1d6b8c1eeb62451060542). No source code was copied verbatim.
+* The `list-clients` command and parser follow the separate client command structure established by [team commit 332b415](https://github.com/AY2627S1-CS2103T-T10-1/tp/commit/332b415a1e13cf5dd3f1d6b8c1eeb62451060542). No source code was copied verbatim.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -170,14 +170,17 @@ How the parsing works:
 * All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
 
 ### Model component
-**API** : [`Model.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/model/Model.java)
+**API** : [`Model.java`](https://github.com/AY2627S1-CS2103T-T10-1/tp/blob/master/src/main/java/seedu/address/model/Model.java)
 
-<img src="images/ModelClassDiagram.png" width="450" />
+<img src="images/ModelClassDiagram.png" width="650" />
 
 
 The `Model` component,
 
 * stores the address book data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
+  Each `Person` holds contact fields, a remark and tags, plus an immutable list of projects. A `Project` has a positive
+  ID, title, deadline, status and priority. The ID belongs to that client; `Person.nextProjectId` tracks project ID
+  allocation and does not decrease when a project is removed.
 * stores the `Person` objects selected by the current filter in a `FilteredList`, wrapped in a `SortedList` for display.
   It exposes the displayed list as an unmodifiable `ObservableList<Person>` that both the UI and indexed commands use.
   Changes to the filter, ordering, or underlying records therefore update the same observable view.
@@ -193,13 +196,17 @@ The `Model` component,
 
 ### Storage component
 
-**API** : [`Storage.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/storage/Storage.java)
+**API** : [`Storage.java`](https://github.com/AY2627S1-CS2103T-T10-1/tp/blob/master/src/main/java/seedu/address/storage/Storage.java)
 
-<img src="images/StorageClassDiagram.png" width="550" />
+<img src="images/StorageClassDiagram.png" width="600" />
 
 The `Storage` component,
 * can save both address book data and user preference data in JSON format, and read them back into corresponding objects.
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
+* uses `JsonSerializableAddressBook` and `JsonAdaptedPerson` to convert clients to and from JSON.
+  `JsonAdaptedPerson` stores each client's projects and `nextProjectId`; each project is converted by
+  `JsonAdaptedProject`. Legacy client records without those fields load with no projects and the next ID set to 1.
+  Stored project fields and IDs are validated before a `Person` is created, so invalid project data is rejected on load.
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
 
 ### Common classes
@@ -216,7 +223,11 @@ This section describes some noteworthy details on how certain features are imple
 
 `ClientDeskHelp` stores the supported ClientDesk client and project command instructions in an ordered,
 unmodifiable map. It supplies the overview and detailed instructions to `HelpCommand`. Each entry describes
-an implemented command; planned commands have no entry. The catalogue includes the existing `remark` command.
+an implemented command; planned commands have no entry. Every command routed by `AddressBookParser` has an
+entry, including the legacy `add`, `edit`, `delete`, `clear` and `exit` commands. Legacy field rules are shared
+between the Add and Edit entries; they intentionally differ from Add Client's phone and tag creation rules.
+`HelpIntegrationTest` executes the catalogue examples with disposable JSON storage and checks Help against
+unwritable storage without changing data or the displayed filter.
 
 `HelpCommandParser` accepts zero or one command name and matches names case-insensitively. An unknown name
 produces an error; multiple names produce `Usage: help [COMMAND]`. `HelpCommand` returns a result that opens
@@ -772,6 +783,11 @@ testers are expected to do more *exploratory* testing.
    then Edit Project's format, rules and examples.
 1. Enter `help EDIT-CLIENT` and `help remark`.<br>
    Expected: Edit Client describes email editing. Remark describes setting or clearing a client's remark.
+1. Enter `help add`, `help edit`, `help delete`, `help clear` and `help exit` separately, then repeat with
+   mixed-case names such as `HeLp AdD`.<br>
+   Expected: Each opens that command's format, rules and examples. `help clear` does not delete data and
+   `help exit` does not close the app. Add/Edit explain the lowercase prefixes and legacy field rules;
+   Clear warns that it removes even clients hidden by a search, without confirmation or undo.
 1. Enter `help undo`, `help agenda` and `help add-client edit-project` separately.<br>
    Expected: The first two report an unknown command. The last reports `Usage: help [COMMAND]`.
 1. Enter `find alex`, note the displayed clients, then open Help through the command, Help menu and `F1`.<br>
