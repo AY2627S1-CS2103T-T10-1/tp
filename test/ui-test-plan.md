@@ -58,3 +58,19 @@ text UI runner is not available in this tP repository.
 
 These manual GUI cases require JavaFX. The Trackie text UI runner is incompatible
 with this repository's GUI test plan; automated JavaFX tests exercise panel behavior.
+
+## Project changes retain client selection (Week 10 Y1)
+
+Use disposable client data with two clients. Repeat with `find` restricting the list
+before viewing the target client. Use displayed indexes, not the full-list index.
+
+1. View the client and add a project: the client stays selected and the project
+   immediately appears in the details panel without another view command.
+2. Add a second project, delete the first: only the remaining project appears.
+3. Delete the final project: keep the client selected and show No projects yet.
+4. Invalid indexes, invalid dates and missing project IDs leave selection/details unchanged.
+5. Simulate failed add/delete saves: retain the selected client and previous projects.
+6. Delete the selected client itself: clear selection and show the panel instructions.
+
+Automated coverage: ClientDetailsUiTest runs real command-box actions for both
+full and filtered client lists, using temporary JSON storage and simulated IO failures.

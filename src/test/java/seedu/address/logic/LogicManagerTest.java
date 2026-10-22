@@ -2,6 +2,7 @@ package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 import static seedu.address.logic.commands.CommandTestUtil.ADDRESS_DESC_AMY;
@@ -26,11 +27,13 @@ import org.junit.jupiter.api.io.TempDir;
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.DeleteClientCommand;
+import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.ListClientsCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
@@ -39,7 +42,6 @@ import seedu.address.model.person.Person;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
-import seedu.address.testutil.PersonBuilder;
 
 public class LogicManagerTest {
     private static final IOException DUMMY_IO_EXCEPTION = new IOException("dummy IO exception");
@@ -126,6 +128,126 @@ public class LogicManagerTest {
         assertCommandFailure(DeleteClientCommand.COMMAND_WORD + " 1", CommandException.class,
                 DeleteClientCommand.MESSAGE_SAVE_FAILURE,
                 new ModelManager(model.getAddressBook(), new UserPrefs()));
+    }
+
+    @Test
+    public void execute_deleteStorageFailure_preservesDataFileAndFilterThroughListAndReload() throws Exception {
+        model.addPerson(DANIEL);
+        model.addPerson(BENSON);
+        Path dataFile = temporaryFolder.resolve("deleteFailure.json");
+        SwitchableJsonAddressBookStorage addressBookStorage = new SwitchableJsonAddressBookStorage(dataFile);
+        addressBookStorage.saveAddressBook(model.getAddressBook());
+        logic = createLogic(addressBookStorage);
+        logic.execute("find Benson");
+        AddressBook originalData = new AddressBook(model.getAddressBook());
+        List<Person> originalFilter = List.copyOf(model.getFilteredPersonList());
+        String originalFile = Files.readString(dataFile);
+        addressBookStorage.setFailOnSave(true);
+        String expectedMessage = String.format(LogicManager.FILE_OPS_ERROR_FORMAT, DUMMY_IO_EXCEPTION.getMessage());
+
+        assertThrows(CommandException.class, expectedMessage, () -> logic.execute("delete 1"));
+
+        assertEquals(originalData, model.getAddressBook());
+        assertEquals(originalFilter, model.getFilteredPersonList());
+        assertEquals(originalFile, Files.readString(dataFile));
+        int saveAttemptsAfterFailure = addressBookStorage.getSaveAttempts();
+        addressBookStorage.setFailOnSave(false);
+        logic.execute(ListCommand.COMMAND_WORD);
+        assertEquals(saveAttemptsAfterFailure, addressBookStorage.getSaveAttempts());
+        Model reloaded = new ModelManager(addressBookStorage.readAddressBook().orElseThrow(), new UserPrefs());
+        assertEquals(originalData, reloaded.getAddressBook());
+    }
+
+    @Test
+    public void execute_clearStorageFailure_preservesDataFileAndFilter() throws Exception {
+        model.addPerson(DANIEL);
+        model.addPerson(BENSON);
+        Path dataFile = temporaryFolder.resolve("clearFailure.json");
+        SwitchableJsonAddressBookStorage addressBookStorage = new SwitchableJsonAddressBookStorage(dataFile);
+        addressBookStorage.saveAddressBook(model.getAddressBook());
+        logic = createLogic(addressBookStorage);
+        logic.execute("find Benson");
+        AddressBook originalData = new AddressBook(model.getAddressBook());
+        List<Person> originalFilter = List.copyOf(model.getFilteredPersonList());
+        String originalFile = Files.readString(dataFile);
+        addressBookStorage.setFailOnSave(true);
+        String expectedMessage = String.format(LogicManager.FILE_OPS_ERROR_FORMAT, DUMMY_IO_EXCEPTION.getMessage());
+
+        assertThrows(CommandException.class, expectedMessage, () -> logic.execute("clear"));
+
+        assertEquals(originalData, model.getAddressBook());
+        assertEquals(originalFilter, model.getFilteredPersonList());
+        assertEquals(originalFile, Files.readString(dataFile));
+        int saveAttemptsAfterFailure = addressBookStorage.getSaveAttempts();
+        addressBookStorage.setFailOnSave(false);
+        logic.execute(ListCommand.COMMAND_WORD);
+        assertEquals(saveAttemptsAfterFailure, addressBookStorage.getSaveAttempts());
+        Model reloaded = new ModelManager(addressBookStorage.readAddressBook().orElseThrow(), new UserPrefs());
+        assertEquals(originalData, reloaded.getAddressBook());
+    }
+
+    @Test
+    public void execute_addEditRemarkStorageFailures_preserveDataFileAndFilter() throws Exception {
+        model.addPerson(AMY);
+        model.addPerson(BENSON);
+        Path dataFile = temporaryFolder.resolve("legacyMutationFailure.json");
+        SwitchableJsonAddressBookStorage addressBookStorage = new SwitchableJsonAddressBookStorage(dataFile);
+        addressBookStorage.saveAddressBook(model.getAddressBook());
+        logic = createLogic(addressBookStorage);
+        logic.execute("find Amy");
+        AddressBook originalData = new AddressBook(model.getAddressBook());
+        List<Person> originalFilter = List.copyOf(model.getFilteredPersonList());
+        String originalFile = Files.readString(dataFile);
+        addressBookStorage.setFailOnSave(true);
+        String expectedMessage = String.format(LogicManager.FILE_OPS_ERROR_FORMAT, DUMMY_IO_EXCEPTION.getMessage());
+
+        for (String command : List.of(
+                "add n/New Person p/91234567 e/new@example.com a/Somewhere",
+                "edit 1 e/updated@example.com",
+                "remark 1 r/Updated contact")) {
+            assertThrows(CommandException.class, expectedMessage, () -> logic.execute(command));
+            assertEquals(originalData, model.getAddressBook());
+            assertEquals(originalFilter, model.getFilteredPersonList());
+            assertEquals(originalFile, Files.readString(dataFile));
+        }
+    }
+
+    @Test
+    public void execute_successfulLegacyMutations_persist() throws Exception {
+        JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(
+                temporaryFolder.resolve("legacyMutationSuccess.json"));
+        logic = createLogic(addressBookStorage);
+        String addCommand = AddCommand.COMMAND_WORD + NAME_DESC_AMY + PHONE_DESC_AMY
+                + EMAIL_DESC_AMY + ADDRESS_DESC_AMY;
+
+        logic.execute(addCommand);
+        assertEquals(model.getAddressBook(), addressBookStorage.readAddressBook().orElseThrow());
+        logic.execute("edit 1 e/updated@example.com");
+        assertEquals("updated@example.com", addressBookStorage.readAddressBook().orElseThrow()
+                .getPersonList().getFirst().getEmail().value);
+        logic.execute("remark 1 r/Updated contact");
+        assertEquals("Updated contact", addressBookStorage.readAddressBook().orElseThrow()
+                .getPersonList().getFirst().getRemark().value);
+        logic.execute("delete 1");
+        assertTrue(addressBookStorage.readAddressBook().orElseThrow().getPersonList().isEmpty());
+        logic.execute(addCommand);
+        logic.execute("clear");
+        assertTrue(addressBookStorage.readAddressBook().orElseThrow().getPersonList().isEmpty());
+    }
+
+    @Test
+    public void execute_listAndExit_doNotSaveAddressBook() throws Exception {
+        SwitchableJsonAddressBookStorage addressBookStorage = new SwitchableJsonAddressBookStorage(
+                temporaryFolder.resolve("readOnlyCommands.json"));
+        addressBookStorage.setFailOnSave(true);
+        logic = createLogic(addressBookStorage);
+
+        logic.execute(ListCommand.COMMAND_WORD);
+        CommandResult result = logic.execute(ExitCommand.COMMAND_WORD);
+
+        assertTrue(result.isExit());
+        assertEquals(0, addressBookStorage.getSaveAttempts());
+        assertFalse(Files.exists(addressBookStorage.getAddressBookFilePath()));
     }
 
     @Test
@@ -259,9 +381,37 @@ public class LogicManagerTest {
         // Triggers the saveAddressBook method by executing an add command
         String addCommand = AddCommand.COMMAND_WORD + NAME_DESC_AMY + PHONE_DESC_AMY
                 + EMAIL_DESC_AMY + ADDRESS_DESC_AMY;
-        Person expectedPerson = new PersonBuilder(AMY).withTags().build();
-        ModelManager expectedModel = new ModelManager();
-        expectedModel.addPerson(expectedPerson);
-        assertCommandFailure(addCommand, CommandException.class, expectedMessage, expectedModel);
+        assertCommandFailure(addCommand, CommandException.class, expectedMessage, new ModelManager());
+    }
+
+    private Logic createLogic(JsonAddressBookStorage addressBookStorage) {
+        return new LogicManager(model, new StorageManager(addressBookStorage,
+                new JsonUserPrefsStorage(temporaryFolder.resolve("sharedUserPrefs.json"))));
+    }
+
+    private static class SwitchableJsonAddressBookStorage extends JsonAddressBookStorage {
+        private boolean failOnSave;
+        private int saveAttempts;
+
+        SwitchableJsonAddressBookStorage(Path filePath) {
+            super(filePath);
+        }
+
+        @Override
+        public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
+            saveAttempts++;
+            if (failOnSave) {
+                throw DUMMY_IO_EXCEPTION;
+            }
+            super.saveAddressBook(addressBook);
+        }
+
+        void setFailOnSave(boolean failOnSave) {
+            this.failOnSave = failOnSave;
+        }
+
+        int getSaveAttempts() {
+            return saveAttempts;
+        }
     }
 }
