@@ -16,8 +16,6 @@ title: Developer Guide
 * The `delete-client` command and save-before-publish flow were developed with OpenAI Codex assistance and follow the command and atomic-save structure introduced for `add-client` in [team commit 332b415](https://github.com/AY2627S1-CS2103T-T10-1/tp/commit/332b415a1e13cf5dd3f1d6b8c1eeb62451060542). No source code was copied verbatim.
 * The `list-clients` command and parser were developed with OpenAI Codex assistance, following the separate client command structure established by [team commit 332b415](https://github.com/AY2627S1-CS2103T-T10-1/tp/commit/332b415a1e13cf5dd3f1d6b8c1eeb62451060542). No source code was copied verbatim.
 
-* Clarence Choo used OpenAI Codex to reorganize the Week 10 User Guide, document Remark and legacy command rules, and check command coverage, examples and rendered navigation.
-
 --------------------------------------------------------------------------------------------------------------------
 
 ## **Setting up, getting started**
