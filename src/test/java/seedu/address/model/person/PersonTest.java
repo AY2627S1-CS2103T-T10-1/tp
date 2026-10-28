@@ -15,6 +15,7 @@ import static seedu.address.testutil.TypicalPersons.BOB;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
 
@@ -26,6 +27,38 @@ import seedu.address.model.project.ProjectTitle;
 import seedu.address.testutil.PersonBuilder;
 
 public class PersonTest {
+
+    @Test
+    public void hasSameClientIdentity_unicodeCaseVariants_preservesContactsAndDisplayValues() {
+        Locale originalLocale = Locale.getDefault();
+        try {
+            for (Locale locale : List.of(Locale.ROOT, Locale.forLanguageTag("tr-TR"))) {
+                Locale.setDefault(locale);
+                for (List<String> names : List.of(List.of("Işık", "IŞIK"), List.of("İ", "i"),
+                        List.of("ΟΣ", "ος"), List.of("Σ", "ς"), List.of("\uD801\uDC00", "\uD801\uDC28"),
+                        List.of("Straße", "STRAẞE"), List.of("Acme Studio", " acme   STUDIO "))) {
+                    Person first = new PersonBuilder().withName(names.get(0)).withEmail("first@example.com").build();
+                    Person second = new PersonBuilder(first).withName(names.get(1))
+                            .withEmail("second@example.com").build();
+                    assertTrue(first.hasSameClientIdentity(second));
+                    assertTrue(second.hasSameClientIdentity(first));
+                    assertFalse(first.hasSameClientIdentity(new PersonBuilder(second)
+                            .withPhone("81234567").build()));
+                    assertEquals(names.get(0), first.getName().fullName);
+                    assertEquals(names.get(1), second.getName().fullName);
+                }
+            }
+        } finally {
+            Locale.setDefault(originalLocale);
+        }
+        Person first = new PersonBuilder().withName("Straße").withEmail("first@example.com").build();
+        assertFalse(first.hasSameClientIdentity(new PersonBuilder(first).withName("STRASSE")
+                .withEmail("second@example.com").build()));
+        assertFalse(first.hasSameClientIdentity(null));
+        assertTrue(first.hasSameClientIdentity(first));
+        assertTrue(first.hasSameClientIdentity(new PersonBuilder(first).withName("Other")
+                .withPhone("81234567").withEmail("FIRST@EXAMPLE.COM").build()));
+    }
 
     @Test
     public void asObservableList_modifyList_throwsUnsupportedOperationException() {
