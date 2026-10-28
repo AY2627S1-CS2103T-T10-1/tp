@@ -113,6 +113,8 @@ Phone | 7–15 digits, with an optional leading `+`, spaces or hyphens. Formatti
 Email | 3–254 characters, exactly one `@`, non-empty local and domain parts, no spaces and a dot in the domain. Domain labels cannot start or end with a hyphen.
 Tag | 1–30 lowercase letters, numbers or internal hyphens; no leading or trailing hyphen. Repeated tags are stored once.
 
+For example, `t/VIP` is rejected with `Tag must be 1–30 lowercase letters, numbers, or internal hyphens.` Use `t/vip` instead.
+
 A duplicate has the same email (ignoring case), or the same name (ignoring case,
 outer spaces and repeated internal spaces) **and** normalized phone. The same name
 alone is allowed. Duplicates report `This client already exists: <name>.`
