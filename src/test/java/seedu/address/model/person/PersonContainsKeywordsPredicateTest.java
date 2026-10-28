@@ -30,6 +30,18 @@ public class PersonContainsKeywordsPredicateTest {
     }
 
     @Test
+    public void test_formattedPhoneKeywords_matchesStoredDigitsWithoutChangingOtherFields() {
+        for (String keyword : List.of("9812-3456", "+98123456", "98-12", "+98-12")) {
+            assertTrue(new PersonContainsKeywordsPredicate(List.of(keyword)).test(client));
+        }
+        for (String keyword : List.of("+", "-", "+-", "8123-9999", "hello-acme")) {
+            assertFalse(new PersonContainsKeywordsPredicate(List.of(keyword)).test(client));
+        }
+        assertTrue(new PersonContainsKeywordsPredicate(List.of("acme", "9812-3456")).test(client));
+        assertFalse(new PersonContainsKeywordsPredicate(List.of("missing", "9812-3456")).test(client));
+    }
+
+    @Test
     public void test_missingKeywords_returnsFalse() {
         assertFalse(new PersonContainsKeywordsPredicate(List.of()).test(client));
         assertFalse(new PersonContainsKeywordsPredicate(List.of("acme", "missing")).test(client));

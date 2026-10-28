@@ -74,3 +74,11 @@ before viewing the target client. Use displayed indexes, not the full-list index
 
 Automated coverage: ClientDetailsUiTest runs real command-box actions for both
 full and filtered client lists, using temporary JSON storage and simulated IO failures.
+
+## Formatted phone search (#120)
+
+In disposable data, add Benson with `p/8123-4567` and another client with a different phone.
+`find 8123-4567`, `find 81234567` and `find +8123-4567` must each find Benson.
+`find Benson 8123-4567` must retain AND semantics; `find missing 8123-4567` must not match.
+`find +` and `find -` must not match every phone. Search must not save data.
+Automated coverage: PersonContainsKeywordsPredicateTest.

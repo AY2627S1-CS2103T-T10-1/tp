@@ -150,6 +150,9 @@ Format: `find KEYWORD [KEYWORD]...`
   and restore the full client list in name order. Feedback preserves keyword case and uses single spaces.
 * Missing keywords or a keyword exceeding 50 characters produce `Usage: find KEYWORD [KEYWORD]...`.
   The previously displayed list stays visible.
+* Phone searches also accept a leading `+` and hyphens, such as `find 8123-4567`.
+  These are ignored only when matching phone digits; names, emails and tags still match literal text.
+  Space-separated phone groups are separate keywords and must all match the same client.
 * Searching does not change client records or write the data file.
 
 Examples:
