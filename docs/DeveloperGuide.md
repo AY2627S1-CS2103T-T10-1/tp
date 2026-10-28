@@ -11,6 +11,8 @@ title: Developer Guide
 
 * Help retains the existing ClientDesk command catalogue and AddressBook-Level3 Help window.
 
+* Clarence Choo used OpenAI Codex to help implement the repeated-remark-prefix fix, its regression tests and guide updates.
+
 * The `edit-project` save-before-publish flow follows the existing `delete-client` staging approach. The shared project model and JSON storage come from Anson's merged [Add Project PR #58](https://github.com/AY2627S1-CS2103T-T10-1/tp/pull/58). The Edit Project prefix scanning and whitespace trimming adapt `AddProjectCommandParser` from [commit d64842b](https://github.com/iians0n/tp/commit/d64842b07ad207b1b264f44461af6a2ba1a763ed), and its JavaFX test follows `AddProjectUiTest` from that commit. Project display in `view` retains the implementation reused from Anson's earlier [commit f5e77fa](https://github.com/iians0n/tp/commit/f5e77fa407264a274d922d6fb679e7202daa3624). These reused contributions are credited to Anson.
 
 * The `delete-client` command and save-before-publish flow follow the command and atomic-save structure introduced for `add-client` in [team commit 332b415](https://github.com/AY2627S1-CS2103T-T10-1/tp/commit/332b415a1e13cf5dd3f1d6b8c1eeb62451060542). No source code was copied verbatim.
@@ -800,6 +802,15 @@ testers are expected to do more *exploratory* testing.
    Expected: The first two report an unknown command. The last reports `Usage: help [COMMAND]`.
 1. Enter `find alex`, note the displayed clients, then open Help through the command, Help menu and `F1`.<br>
    Expected: Each route opens Help. Closing it leaves the displayed clients and their data unchanged.
+
+### Setting a remark
+
+1. On disposable data with a displayed client, enter `remark 1 r/Keep this reminder`, then `view 1`.<br>
+   Expected: the selected client has that remark.
+1. Enter `remark 1 r/Call Monday r/Call Tuesday`, then `remark 1 r/Important reminder r/`.<br>
+   Expected: both commands report a repeated `r/` prefix; `view 1` still shows `Keep this reminder`.
+1. Enter `remark 1 r/`, then `view 1`.<br>
+   Expected: the remark is empty. The legacy `remark 1` shorthand also clears it.
 
 ### Adding a client
 
