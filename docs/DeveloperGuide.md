@@ -9,6 +9,8 @@ title: Developer Guide
 
 ## **Acknowledgements**
 
+* Clarence Choo used OpenAI Codex to help implement and test the v1.5 email-edit save-failure fix and its guide updates.
+
 * Help retains the existing ClientDesk command catalogue and AddressBook-Level3 Help window.
 
 * The `edit-project` save-before-publish flow follows the existing `delete-client` staging approach. The shared project model and JSON storage come from Anson's merged [Add Project PR #58](https://github.com/AY2627S1-CS2103T-T10-1/tp/pull/58). The Edit Project prefix scanning and whitespace trimming adapt `AddProjectCommandParser` from [commit d64842b](https://github.com/iians0n/tp/commit/d64842b07ad207b1b264f44461af6a2ba1a763ed), and its JavaFX test follows `AddProjectUiTest` from that commit. Project display in `view` retains the implementation reused from Anson's earlier [commit f5e77fa](https://github.com/iians0n/tp/commit/f5e77fa407264a274d922d6fb679e7202daa3624). These reused contributions are credited to Anson.
@@ -256,6 +258,12 @@ does not prevent creation.
 If saving fails, the live data and displayed filter stay unchanged. A successful save publishes the new client,
 restores the full list and selects the new entry. Copying the existing address book into the staged model retains
 each existing client's projects and next project ID.
+
+### Editing a client's email safely
+
+`LogicManager` executes `edit-client` against a proposed model carrying the currently displayed clients. An unchanged email skips saving. Otherwise, storage must succeed before the proposed records replace the live records. This preserves the live filter, selection and details when saving fails; successful publication re-evaluates the existing filter against the new email.
+
+`EditClientUiTest` covers a selected client found by their old email. Its failing storage stub verifies that a rejected email change cannot clear the selection or details.
 
 ### Find clients
 
