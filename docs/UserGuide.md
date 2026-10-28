@@ -441,7 +441,10 @@ and keep field values within the documented limits.
 ## FAQ
 
 **Q**: How do I transfer my data to another computer?<br>
-**A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous AddressBook home folder.
+**A**: Close ClientDesk on both computers. Install ClientDesk on the new computer, then copy
+`data/addressbook.json` from the folder containing your old ClientDesk JAR to the corresponding `data` folder beside
+the new JAR, replacing the file there. Keep a backup of both files until you have opened ClientDesk and verified the
+transferred clients and projects.
 
 --------------------------------------------------------------------------------------------------------------------
 
