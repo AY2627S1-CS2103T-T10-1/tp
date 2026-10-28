@@ -36,12 +36,7 @@ public class EditClientCommandParser implements Parser<EditClientCommand> {
             throw new ParseException(EditClientCommand.MESSAGE_NO_FIELD);
         }
         arguments.verifyNoDuplicatePrefixesFor(PREFIX_EMAIL);
-        String email = arguments.getValue(PREFIX_EMAIL).get();
-        // Reuse the existing email model and additionally enforce the MVP length and domain-dot rules.
-        if (email.length() > 254 || !Email.isValidEmail(email)
-                || !email.substring(email.indexOf('@') + 1).contains(".")) {
-            throw new ParseException(MESSAGE_INVALID_EMAIL);
-        }
-        return new EditClientCommand(index, new Email(email));
+        Email email = ParserUtil.parseEmail(arguments.getValue(PREFIX_EMAIL).get());
+        return new EditClientCommand(index, email);
     }
 }

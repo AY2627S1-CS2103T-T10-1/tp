@@ -89,7 +89,12 @@ public class ParserUtil {
     public static Email parseEmail(String email) throws ParseException {
         requireNonNull(email);
         String trimmedEmail = email.trim();
-        if (!Email.isValidEmail(trimmedEmail)) {
+        // Tighten new input without changing validation used to load existing saved records.
+        String localPart = trimmedEmail.split("@", -1)[0];
+        boolean quotedLocalPart = localPart.startsWith("\"") && localPart.endsWith("\"");
+        boolean invalidDots = !quotedLocalPart && (localPart.startsWith(".")
+                || localPart.endsWith(".") || localPart.contains(".."));
+        if (!Email.isValidEmail(trimmedEmail) || invalidDots) {
             throw new ParseException(Email.MESSAGE_CONSTRAINTS);
         }
         return new Email(trimmedEmail);
