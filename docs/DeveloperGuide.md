@@ -9,7 +9,7 @@ title: Developer Guide
 
 ## **Acknowledgements**
 
-* Clarence Choo used OpenAI Codex to help implement and test the v1.5 email-edit save-failure fix and its guide updates.
+* Clarence Choo used OpenAI Codex for v1.5 alpha testing, bug fixes, regression tests and guide updates.
 
 * Help retains the existing ClientDesk command catalogue and AddressBook-Level3 Help window.
 
