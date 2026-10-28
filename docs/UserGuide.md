@@ -251,7 +251,8 @@ On success, ClientDesk reports `Added project #<id> to <client>.` Project IDs st
 A project is a duplicate when the same client already has its title and deadline. Title comparison ignores case,
 surrounding spaces and repeated spaces, including Unicode spaces. Status and priority do not affect duplicate
 handling. A duplicate reports `This project already exists for <client>.`; matching projects under different clients
-are allowed.
+are allowed. Unicode case variants such as `IşıkWebsite` and `IŞIKWEBSITE` match regardless of your computer's
+language settings. `Straße` and `STRASSE` remain distinct.
 
 Invalid input reports the relevant title, deadline, status, priority or index constraint. Missing required parameters
 report `Usage: add-project CLIENT_INDEX title/TITLE deadline/DATE [status/STATUS] [priority/PRIORITY]`.
@@ -293,7 +294,9 @@ Updated project #11 for Acme Studio: Website launch | Deadline: 2026-10-30 | Sta
 
 The updated client is selected and the current client filter is preserved. Use `view 1` again to inspect its projects. Changes are saved automatically and survive restarting ClientDesk. Other clients and projects are unchanged.
 
-Two projects for the same client cannot have the same normalized title and deadline. Title comparison ignores case and repeated spaces, regardless of status or priority. The same title with a different deadline, or matching work under another client, is allowed.
+Adding a project or changing its title or deadline cannot duplicate another project for the same client. Title comparison ignores case and repeated spaces, regardless of status or priority. The same title with a different deadline, or matching work under another client, is allowed.
+
+Projects saved in v1.4 remain available even if their Unicode title variants now match. You can update their status or priority and delete them. Changing their title or deadline must satisfy the current duplicate rule.
 
 | Situation | Result |
 | --- | --- |

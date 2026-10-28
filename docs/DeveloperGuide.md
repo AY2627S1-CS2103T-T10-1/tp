@@ -286,8 +286,10 @@ future project editing. `ProjectPriority` represents the three priority levels.
 #### Validation and identity
 
 `ProjectTitle` counts Unicode code points, rejects control/format characters and unpaired surrogates, and requires
-a letter or number. Its display value retains internal spacing. Duplicate comparison collapses Unicode spaces
-and applies `Locale.ROOT` case conversion. `ProjectDeadline` accepts only an ASCII, strict ISO calendar date in
+a letter or number. Its display value retains internal spacing. `ProjectTitle.isSameTitle` collapses Unicode spaces
+and matches either the existing `Locale.ROOT` lowercase key or `String.equalsIgnoreCase`. This covers Unicode
+case variants such as dotless I, final sigma and supplementary letters without expanding `ß` to `ss`.
+`ProjectDeadline` accepts only an ASCII, strict ISO calendar date in
 years 0001–9999; impossible dates are not normalized into another day.
 
 The parser recognizes known prefixes at whitespace boundaries, allowing parameter reordering and literal slash
@@ -296,7 +298,7 @@ invalid or overflowing indexes and invalid scalar values. `AddressBookParser` re
 `add-project` so its outer trimming cannot hide a trailing title control character.
 
 Each immutable `Person` owns an immutable list of `Project` values and a persisted `nextProjectId`. The constructor
-checks unique positive IDs, unique normalized title/deadline pairs and a counter greater than every saved ID.
+checks unique positive IDs, unique v1.4 normalized title/deadline pairs and a counter greater than every saved ID.
 IDs are independent between clients. The counter can reach `Integer.MAX_VALUE + 1L` as an exhausted sentinel;
 the command then reports exhaustion instead of overflowing. Deleting a project retains the counter, so a deleted
 ID is never reused. Existing client edit and remark commands preserve both fields.
@@ -332,6 +334,11 @@ for legacy files, with no projects and a next ID of 1. Nonempty project data mus
 writes both `projects` and `nextProjectId` for all clients. Project lists and counters must be retained by any future
 client-copy operation, including undo snapshots.
 
+Storage retains v1.4's `ProjectTitle.normalizedValue()` validation key so previously accepted Unicode title pairs
+remain readable and survive saving without changing their spelling, IDs or counter. New additions and title/deadline
+edits use the broader duplicate matching above. Status/priority edits and deletion remain available for existing
+pairs; duplicate IDs and pairs already invalid under v1.4 still fail loading.
+
 This subsection describes project creation and deletion. Project editing is described in the Edit project
 subsection below. Undo, notes, follow-ups and agenda are planned.
 
@@ -355,7 +362,7 @@ argument validation.
 
 `EditProjectCommandParser` reads a displayed client index and a stable, client-local project ID. It rejects repeated prefixes and invalid identifiers/field values and creates an immutable `EditProjectDescriptor` containing only supplied fields. `ProjectTitle` and `ProjectDeadline` centralize title/date validation; `ProjectStatus` and `ProjectPriority` provide the persisted command vocabulary. The descriptor can represent completion, reopening, and any combination of title/deadline/priority changes. The parser shares the `CliSyntax` prefix constants and unsigned ASCII identifier form with Add Project. Known prefixes delimit fields; other slash-containing title words remain literal text. Boundary trimming uses linear scans so oversized inputs with long internal space runs are rejected promptly.
 
-`EditProjectCommand` finds the client in the displayed list and the project by ID within that client. It applies the descriptor without changing the ID or other projects, and rejects a conflicting normalized title/deadline under the same client. An exact no-op returns without mutation. Both failed lookup and duplicate validation happen before updating the proposed client.
+`EditProjectCommand` finds the client in the displayed list and the project by ID within that client. It applies the descriptor without changing the ID or other projects, and checks for conflicting work under that client when the title or deadline changes. An exact no-op returns without mutation. Both failed lookup and duplicate validation happen before updating the proposed client.
 
 `LogicManager` executes this command against a staged `ModelManager` copied from the live data. The staging filter contains exactly the clients visible when the command was submitted, so the displayed index resolves consistently even after a search. Only after `Storage.saveAddressBook` succeeds does it publish the staged data to the live model; the live filter itself is retained. A save failure leaves the live model, filter and persisted data unchanged. `JsonAddressBookStorage` already uses atomic file replacement, which protects the original saved file during write failures.
 

@@ -160,6 +160,14 @@ public class PersonTest {
     }
 
     @Test
+    public void withProjects_legacyUnicodeCaseVariants_preservesPreviouslyAcceptedData() {
+        List<Project> projects = List.of(project(1, "IşıkWebsite", "2026-10-15"),
+                project(2, "IŞIKWEBSITE", "2026-10-15"));
+        assertTrue(projects.getFirst().isSameProject(projects.get(1)));
+        assertEquals(projects, ALICE.withProjects(projects, 3).getProjects());
+    }
+
+    @Test
     public void withProjects_invalidCounter_throwsIllegalArgumentException() {
         Project project = project(2, "Website redesign", "2026-10-15");
         assertThrows(IllegalArgumentException.class, () -> ALICE.withProjects(List.of(project), 1));
