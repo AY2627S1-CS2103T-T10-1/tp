@@ -108,7 +108,7 @@ Repeated name, phone or email prefixes and unknown prefixes are rejected.
 
 Field | Rules
 ------|------
-Name | 1–80 characters with at least one letter or number. Letters, numbers, spaces, apostrophes, hyphens, periods, ampersands and parentheses are allowed.
+Name | 1–80 characters with at least one letter or number. Letters, numbers, spaces, straight or curly apostrophes, hyphens, periods, ampersands and parentheses are allowed.
 Phone | 7–15 digits, with an optional leading `+`, spaces or hyphens. Formatting is removed before storage.
 Email | 3–254 characters, exactly one `@`, non-empty local and domain parts, no spaces and a dot in the domain. Domain labels cannot start or end with a hyphen.
 Tag | 1–30 lowercase letters, numbers or internal hyphens; no leading or trailing hyphen. Repeated tags are stored once.
@@ -350,7 +350,7 @@ Name, phone, email and address are required. Tags are optional and repeatable. U
 
 Field | Legacy Add/Edit rules
 ------|------
-Name | 1–80 characters containing at least one letter or number; allows letters, numbers, spaces, apostrophes, hyphens, periods, ampersands and parentheses.
+Name | 1–80 characters containing at least one letter or number; allows letters, numbers, spaces, straight or curly apostrophes, hyphens, periods, ampersands and parentheses.
 Phone | At least 3 digits, with no spaces, hyphens or leading `+`. This differs from `add-client`'s 7–15-digit formatted-phone rule.
 Email | 3–254 characters, exactly one `@`, no spaces, and a dotted domain whose labels do not start or end with a hyphen.
 Address | A non-blank value.

@@ -39,6 +39,16 @@ public class NameTest {
     }
 
     @Test
+    public void isValidName_typographicApostrophes_preservesSpellingAndConstraints() {
+        for (String name : java.util.List.of("O’Connor", "D‘Arcy", "O'Connor")) {
+            assertTrue(Name.isValidName(name));
+            org.junit.jupiter.api.Assertions.assertEquals(name, new Name(name).fullName);
+        }
+        assertFalse(Name.isValidName("‘’"));
+        assertFalse(Name.isValidName("O’" + "a".repeat(79)));
+    }
+
+    @Test
     public void equals() {
         Name name = new Name("Valid Name");
 
