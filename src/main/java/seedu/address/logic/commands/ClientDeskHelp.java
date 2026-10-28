@@ -133,7 +133,8 @@ public class ClientDeskHelp {
                 "Locate clients by partial name, phone, email or tag.",
                 "find KEYWORD [KEYWORD]...",
                 "Each keyword is 1–50 characters. Matching ignores case. All keywords must match the"
-                + " same client.",
+                + " same client. If no clients match, the full client list is restored. "
+                + "Check the displayed indexes before running an indexed command.",
                 "find acme; find startup web-design; find 8123"));
         commands.put("add-project", new CommandHelp(
                 "Record client work and its deadline.",
