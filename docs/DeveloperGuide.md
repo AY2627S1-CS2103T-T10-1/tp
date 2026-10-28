@@ -248,6 +248,12 @@ With no command name, `help` returns the catalogue overview instead. The Help me
 prefixes or unknown prefixes. It validates the creation rules before building a `Person`. Phone formatting is
 removed and tags are lowercase. The new client has the address `Not provided`, no projects and next project ID 1.
 
+The shared `Name` validator accepts Unicode letters, marks and numbers plus the documented punctuation, with
+at least one letter or number. Its 1–80 limit counts code points, including each combining mark. `ParserUtil`
+applies this rule to `add-client`, legacy `add` and legacy `edit`; JSON loading uses the same validator. Spelling
+is preserved without Unicode normalization, including decomposed accents. The character whitelist continues to
+reject control characters, format characters and unpaired surrogates; it does not enforce mark placement.
+
 `AddClientCommand` checks duplicates against all stored clients, including clients hidden by the current filter.
 A duplicate has the same email ignoring case, or the same normalized name and phone. A matching name alone
 does not prevent creation.

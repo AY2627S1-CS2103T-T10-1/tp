@@ -86,12 +86,13 @@ public class AddClientCommandParserTest {
 
     @Test
     public void parse_businessNamesAndNameLengthBounds_followSpec() {
-        for (String name : new String[] {"O'Neil & Co. (SG)", "Northstar-Labs", "A", "A".repeat(80)}) {
+        for (String name : new String[] {"O'Neil & Co. (SG)", "Northstar-Labs", "A", "A".repeat(80),
+            "अनिल", "วิชัย", "Jose\u0301"}) {
             Person expected = new PersonBuilder(client).withName(name).build();
             assertParseSuccess(parser, " n/" + name + " p/6591234567 e/Bob@acme.com",
                     new AddClientCommand(expected));
         }
-        for (String name : new String[] {"A".repeat(81), "() & . -", "Studio*"}) {
+        for (String name : new String[] {"A".repeat(81), "() & . -", "Studio*", "\u0301", "A\u200bB"}) {
             assertParseFailure(parser, " n/" + name + " p/6591234567 e/Bob@acme.com", Name.MESSAGE_CONSTRAINTS);
         }
     }
