@@ -14,6 +14,8 @@ title: Developer Guide
 * The `edit-project` save-before-publish flow follows the existing `delete-client` staging approach. The shared project model and JSON storage come from Anson's merged [Add Project PR #58](https://github.com/AY2627S1-CS2103T-T10-1/tp/pull/58). The Edit Project prefix scanning and whitespace trimming adapt `AddProjectCommandParser` from [commit d64842b](https://github.com/iians0n/tp/commit/d64842b07ad207b1b264f44461af6a2ba1a763ed), and its JavaFX test follows `AddProjectUiTest` from that commit. Project display in `view` retains the implementation reused from Anson's earlier [commit f5e77fa](https://github.com/iians0n/tp/commit/f5e77fa407264a274d922d6fb679e7202daa3624). These reused contributions are credited to Anson.
 
 * The `delete-client` command and save-before-publish flow follow the command and atomic-save structure introduced for `add-client` in [team commit 332b415](https://github.com/AY2627S1-CS2103T-T10-1/tp/commit/332b415a1e13cf5dd3f1d6b8c1eeb62451060542). No source code was copied verbatim.
+* Clarence Choo used OpenAI Codex to help implement Unicode-space email input validation, compatibility tests and the related guide updates.
+
 * The `list-clients` command and parser follow the separate client command structure established by [team commit 332b415](https://github.com/AY2627S1-CS2103T-T10-1/tp/commit/332b415a1e13cf5dd3f1d6b8c1eeb62451060542). No source code was copied verbatim.
 * The atomic legacy deletion explanation and sequence diagram were developed for [issue #79](https://github.com/AY2627S1-CS2103T-T10-1/tp/issues/79). They document the save-before-publish behavior introduced by [issue #77](https://github.com/AY2627S1-CS2103T-T10-1/tp/issues/77); no external source was copied.
 --------------------------------------------------------------------------------------------------------------------
@@ -243,6 +245,9 @@ The parser checks the requested name against `ClientDeskHelp` before creating a 
 With no command name, `help` returns the catalogue overview instead. The Help menu and `F1` call `MainWindow.handleHelp()` directly with the same overview, bypassing command parsing and storage. An unknown name or more than one argument causes a `ParseException` before a Help command is created; the command box displays the error and the Help window's content is unchanged. The existing Help parser, integration and UI tests cover these paths.
 
 ### Add client
+
+`ParserUtil.parseEmail` rejects Unicode whitespace and separator characters in new command input, including `edit-client`. The stored `Email` representation retains its existing validation so records accepted by v1.4 still load and round-trip unchanged. `EmailInputIntegrationTest` checks all four email-entry commands and legacy storage compatibility.
+
 
 `AddClientCommandParser` requires name, phone and email, accepts repeated tags, and rejects repeated required
 prefixes or unknown prefixes. It validates the creation rules before building a `Person`. Phone formatting is
