@@ -10,7 +10,6 @@ import seedu.address.logic.commands.AddClientCommand;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
-import seedu.address.model.tag.Tag;
 import seedu.address.testutil.PersonBuilder;
 
 public class AddClientCommandParserTest {
@@ -86,12 +85,13 @@ public class AddClientCommandParserTest {
 
     @Test
     public void parse_businessNamesAndNameLengthBounds_followSpec() {
-        for (String name : new String[] {"O'Neil & Co. (SG)", "Northstar-Labs", "A", "A".repeat(80)}) {
+        for (String name : new String[] {"O'Neil & Co. (SG)", "Northstar-Labs", "A", "A".repeat(80),
+            "अनिल", "วิชัย", "Jose\u0301"}) {
             Person expected = new PersonBuilder(client).withName(name).build();
             assertParseSuccess(parser, " n/" + name + " p/6591234567 e/Bob@acme.com",
                     new AddClientCommand(expected));
         }
-        for (String name : new String[] {"A".repeat(81), "() & . -", "Studio*"}) {
+        for (String name : new String[] {"A".repeat(81), "() & . -", "Studio*", "\u0301", "A\u200bB"}) {
             assertParseFailure(parser, " n/" + name + " p/6591234567 e/Bob@acme.com", Name.MESSAGE_CONSTRAINTS);
         }
     }
@@ -107,8 +107,17 @@ public class AddClientCommandParserTest {
     public void parse_invalidTags_reportsConstraint() {
         for (String tag : new String[] {"", "Startup", "-startup", "startup-", "web design", "a".repeat(31)}) {
             assertParseFailure(parser, " n/Acme p/91234567 e/bob@acme.com t/" + tag,
-                    Tag.MESSAGE_CONSTRAINTS);
+                    AddClientCommandParser.MESSAGE_TAG_CONSTRAINTS);
         }
+    }
+
+    @Test
+    public void parse_uppercaseTag_explainsHowToCorrectInput() {
+        String args = " n/Acme Studio p/6591234567 e/Bob@acme.com t/";
+        assertParseFailure(parser, args + "VIP",
+                "Tag must be 1–30 lowercase letters, numbers, or internal hyphens.");
+        assertParseSuccess(parser, args + "vip",
+                new AddClientCommand(new PersonBuilder(client).withTags("vip").build()));
     }
 
     @Test

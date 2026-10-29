@@ -55,6 +55,18 @@ public class ProjectTest {
     }
 
     @Test
+    public void isSameProject_unicodeCaseVariants_requiresMatchingDeadline() {
+        Project original = new Project(1, new ProjectTitle("IşıkWebsite"), DEADLINE,
+                ProjectStatus.NOT_STARTED, ProjectPriority.MEDIUM);
+        Project duplicate = new Project(2, new ProjectTitle("IŞIKWEBSITE"), DEADLINE,
+                ProjectStatus.COMPLETED, ProjectPriority.HIGH);
+        assertTrue(original.isSameProject(duplicate));
+        assertTrue(duplicate.isSameProject(original));
+        assertFalse(original.isSameProject(new Project(2, duplicate.getTitle(), new ProjectDeadline("2026-10-16"),
+                duplicate.getStatus(), duplicate.getPriority())));
+    }
+
+    @Test
     public void equalsAndHashCode_compareAllFields() {
         Project copy = new Project(1, TITLE, DEADLINE, ProjectStatus.NOT_STARTED, ProjectPriority.MEDIUM);
         assertEquals(PROJECT, PROJECT);
