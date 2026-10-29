@@ -447,6 +447,11 @@ a different working directory, back up and copy its `data` folder and `preferenc
 the new JAR before starting this version. Data, preferences and logs now use the JAR's folder regardless of the
 terminal's working directory.
 
+Keep these files and folders inside the ClientDesk home folder. Symbolic links that point outside it are rejected.
+If a data or lock-file link prevents loading or saving, close ClientDesk and replace the link with a file or folder
+inside the home folder before restarting. An outside preference-file link uses default preferences without changing
+its target; an outside log-file link disables file logging while console messages remain available.
+
 <div markdown="span" class="alert alert-warning">:exclamation: **Caution:**
 If ClientDesk cannot read or validate an existing data file, it shows an error identifying the file and closes
 without opening the command window. The original file remains unchanged. Back it up, then restore a valid copy

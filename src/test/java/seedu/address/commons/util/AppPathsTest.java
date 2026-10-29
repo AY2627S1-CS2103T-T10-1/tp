@@ -1,7 +1,9 @@
 package seedu.address.commons.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static seedu.address.testutil.Assert.assertThrows;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,6 +15,24 @@ public class AppPathsTest {
 
     @TempDir
     Path temporaryFolder;
+
+    @Test
+    public void resolveWithinHome_missingDescendants_returnsNormalizedPath() throws Exception {
+        Path home = Files.createDirectory(temporaryFolder.resolve("home"));
+        Path path = home.resolve("unused/../data/nested/addressbook.json");
+
+        assertEquals(home.resolve("data/nested/addressbook.json").toAbsolutePath(),
+                AppPaths.resolveWithinHome(path, home.toRealPath()));
+    }
+
+    @Test
+    public void resolveWithinHome_siblingWithSamePrefix_rejects() throws Exception {
+        Path home = Files.createDirectory(temporaryFolder.resolve("home"));
+        Path sibling = Files.createDirectory(temporaryFolder.resolve("home-other"));
+
+        Path realHome = home.toRealPath();
+        assertThrows(IOException.class, () -> AppPaths.resolveWithinHome(sibling.resolve("data.json"), realHome));
+    }
 
     @Test
     public void resolveHome_jarInFolderWithSpaces_usesJarFolderInsteadOfWorkingDirectory() throws Exception {
