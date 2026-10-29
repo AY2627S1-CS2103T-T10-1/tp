@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Locale;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
@@ -98,12 +97,17 @@ public class LogsCenter {
             Path normalizedLogFile = logFile.toAbsolutePath().normalize();
             Path home = normalizedLogFile.getParent().toRealPath();
             AppPaths.resolveWithinHome(normalizedLogFile, home);
-            // FileHandler adds rotation numbers, instance suffixes and a lock suffix to this name.
-            String logFilePrefix = (normalizedLogFile.getFileName() + ".").toLowerCase(Locale.ROOT);
-            try (var files = Files.newDirectoryStream(home,
-                    path -> path.getFileName().toString().toLowerCase(Locale.ROOT).startsWith(logFilePrefix))) {
+            // Rebuild each possible generated filename using the canonical base spelling so the filesystem itself
+            // resolves case and Unicode aliases before FileHandler opens rotations, instance files or locks.
+            String fileName = normalizedLogFile.getFileName().toString();
+            int basePartCount = fileName.split("\\.", -1).length;
+            try (var files = Files.newDirectoryStream(home)) {
                 for (Path path : files) {
-                    AppPaths.resolveWithinHome(path, home);
+                    String[] parts = path.getFileName().toString().split("\\.", basePartCount + 1);
+                    if (parts.length > basePartCount) {
+                        Path candidate = normalizedLogFile.resolveSibling(fileName + "." + parts[basePartCount]);
+                        AppPaths.resolveWithinHome(candidate, home);
+                    }
                 }
             }
             String filePattern = normalizedLogFile.toString().replace("%", "%%");
