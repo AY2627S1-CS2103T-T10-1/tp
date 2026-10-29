@@ -85,6 +85,16 @@ public class MainAppTest {
     }
 
     @Test
+    public void init_trailingGarbage_blocksCommandsAndPreservesBytes() throws Exception {
+        assertFailedStartupPreservesFile("trailing-garbage.json", "{\"persons\":[]} trailing data");
+    }
+
+    @Test
+    public void init_secondJsonRoot_blocksCommandsAndPreservesBytes() throws Exception {
+        assertFailedStartupPreservesFile("second-root.json", "{\"persons\":[]} {\"persons\":[null]}");
+    }
+
+    @Test
     public void init_malformedUtf8_blocksCommandsAndPreservesBytes() throws Exception {
         String contents = """
                 {"persons":[{"name":"Alice","phone":"81234567","email":"alice@example.com",
