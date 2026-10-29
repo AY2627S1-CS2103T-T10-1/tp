@@ -838,8 +838,8 @@ testers are expected to do more *exploratory* testing.
    bottom of the window.
 
 1. Resize the main window to its minimum size and drag the divider towards either side.<br>
-   Expected: The tabs, command input and result area remain available. Client fields and project titles wrap;
-   projects and tags remain scrollable. For a client with a long name or email, use **Details** to read and select the
+   Expected: The tabs, command input and result area remain available. Client list fields and project titles wrap;
+   projects and tags remain scrollable. Long header values end with an ellipsis; use **Details** to read and select the
    full value. A client with many tags must not push the tabs out of the window.
 1. Relaunch ClientDesk and type a command without clicking the input first.<br>
    Expected: The command field receives initial keyboard focus and Enter executes the command.

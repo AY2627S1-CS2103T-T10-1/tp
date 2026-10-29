@@ -16,14 +16,17 @@
     <HBox alignment="CENTER_LEFT" spacing="14">
       <Label fx:id="clientAvatar" text="?" styleClass="client-avatar" />
       <VBox spacing="5" HBox.hgrow="ALWAYS" minWidth="0">
-        <Label fx:id="clientName" text="No client selected" styleClass="client-title" wrapText="true" maxHeight="70" />
+        <Label fx:id="clientName" text="No client selected" styleClass="client-title" wrapText="false" textOverrun="ELLIPSIS"
+               minWidth="0" maxWidth="Infinity" />
         <HBox spacing="7" alignment="CENTER_LEFT" styleClass="client-contact-row">
           <Label text="PHONE" styleClass="client-contact-label" />
-          <Label fx:id="clientPhone" styleClass="client-contact-value" wrapText="true" maxHeight="36" minWidth="0" />
+          <Label fx:id="clientPhone" styleClass="client-contact-value" wrapText="false" textOverrun="ELLIPSIS"
+                 minWidth="0" maxWidth="Infinity" HBox.hgrow="ALWAYS" />
         </HBox>
         <HBox spacing="7" alignment="CENTER_LEFT" styleClass="client-contact-row">
           <Label text="EMAIL" styleClass="client-contact-label" />
-          <Label fx:id="clientEmail" styleClass="client-contact-value" wrapText="true" maxHeight="36" minWidth="0" />
+          <Label fx:id="clientEmail" styleClass="client-contact-value" wrapText="false" textOverrun="ELLIPSIS"
+                 minWidth="0" maxWidth="Infinity" HBox.hgrow="ALWAYS" />
         </HBox>
       </VBox>
     </HBox>
