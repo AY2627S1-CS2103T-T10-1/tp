@@ -196,7 +196,7 @@ Example: `edit-client 1 e/new@example.com`
 
 Use a positive index from the currently displayed list, including search results. Supply exactly one lowercase `e/` parameter. The email must be 3–254 characters, contain exactly one `@` and no spaces, and have a dotted domain whose labels do not start or end with a hyphen. Email duplicates are checked case-insensitively against all clients, including those hidden by a search.
 
-Success reports `Updated client: <name>.`; an identical email reports `No changes needed for <name>.` without saving. A save failure restores the previous record. If the updated email no longer matches your search, the client may disappear from those results; use `list-clients` to find it again.
+Success reports `Updated client: <name>.`; an identical email reports `No changes needed for <name>.` without saving. A save failure leaves the previous record, selected client and details unchanged. If the updated email no longer matches your search, the client may disappear from those results; use `list-clients` to find it again.
 
 This command supports email editing only. Use the existing [Edit command](#editing-a-person-edit) to change a name, phone, address or tags. ClientDesk has no undo command.
 
