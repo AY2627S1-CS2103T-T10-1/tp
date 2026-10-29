@@ -180,6 +180,8 @@ The deletion follows a save-before-publish flow:
 
 The same staging boundary protects the inherited `add`, `edit`, `remark` and `clear` mutations. Read-only inherited commands, including `list` and `exit`, execute without saving client data.
 
+All client, project and legacy mutations share `LogicManager#executeStagedMutation`. It prepares a snapshot with the displayed clients, executes the command, saves the result and then publishes it. Small policy helpers preserve command-specific behavior: Add Client and legacy Add/Edit/Remark restore the full list after success; other mutations retain the live filter. Only unchanged Edit Client and Edit Project commands skip saving. Save failures retain their existing command-specific or legacy permission/error messages.
+
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
 
 <img src="images/ParserClasses.png" width="600"/>
