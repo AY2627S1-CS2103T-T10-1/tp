@@ -124,8 +124,8 @@ public class Person {
     }
 
     /**
-     * Returns true for the same normalized email, or the same normalized name and phone.
-     * Clients may share a name when their contact information differs.
+     * Returns the v1.4 stored-identity comparison, preserving existing data and staged copies.
+     * Commands also use {@link #hasSameClientIdentity(Person)} to reject Unicode case variants.
      */
     public boolean isSamePerson(Person otherPerson) {
         if (otherPerson == this) {
@@ -141,6 +141,16 @@ public class Person {
      */
     private String normalizedName() {
         return name.fullName.trim().replaceAll("\\s+", " ").toLowerCase(Locale.ROOT);
+    }
+
+    /**
+     * Returns whether client input would duplicate an email or a case-insensitive name and phone.
+     * Retains the stored comparison and adds Unicode simple case matching without changing displayed names.
+     */
+    public boolean hasSameClientIdentity(Person otherPerson) {
+        return isSamePerson(otherPerson) || (otherPerson != null && phone.equals(otherPerson.phone)
+                && name.fullName.trim().replaceAll("\\s+", " ")
+                        .equalsIgnoreCase(otherPerson.name.fullName.trim().replaceAll("\\s+", " ")));
     }
 
     /**

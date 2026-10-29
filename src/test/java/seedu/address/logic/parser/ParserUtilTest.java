@@ -143,6 +143,14 @@ public class ParserUtilTest {
     }
 
     @Test
+    public void parseEmail_unicodeSeparators_throwsParseException() {
+        assertThrows(ParseException.class, () -> ParserUtil.parseEmail("alice\u2028smith@example.com"));
+        assertThrows(ParseException.class, () -> ParserUtil.parseEmail("alice\u2029smith@example.com"));
+        assertThrows(ParseException.class, () -> ParserUtil.parseEmail("\u00a0alice@example.com"));
+        assertThrows(ParseException.class, () -> ParserUtil.parseEmail("alice@example.com\u00a0"));
+    }
+
+    @Test
     public void parseEmail_validValueWithoutWhitespace_returnsEmail() throws Exception {
         Email expectedEmail = new Email(VALID_EMAIL);
         assertEquals(expectedEmail, ParserUtil.parseEmail(VALID_EMAIL));

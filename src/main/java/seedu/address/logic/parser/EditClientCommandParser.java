@@ -13,7 +13,7 @@ import seedu.address.model.person.Email;
  */
 public class EditClientCommandParser implements Parser<EditClientCommand> {
 
-    public static final String MESSAGE_INVALID_EMAIL = "Enter an email such as name@example.com.";
+    public static final String MESSAGE_INVALID_EMAIL = Email.MESSAGE_CONSTRAINTS;
 
     @Override
     public EditClientCommand parse(String args) throws ParseException {

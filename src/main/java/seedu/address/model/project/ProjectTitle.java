@@ -38,10 +38,19 @@ public final class ProjectTitle {
     }
 
     /**
-     * Returns a locale-independent title for duplicate comparison.
+     * Returns the v1.4 storage validation key so previously accepted case variants remain readable.
      */
     public String normalizedValue() {
         return value.replaceAll("\\p{Zs}+", " ").toLowerCase(Locale.ROOT);
+    }
+
+    /**
+     * Matches titles using the stored lowercase key or locale-independent Unicode case comparison.
+     * Spaces are collapsed; sharp S remains distinct from "ss".
+     */
+    public boolean isSameTitle(ProjectTitle other) {
+        return other != null && (normalizedValue().equals(other.normalizedValue())
+                || value.replaceAll("\\p{Zs}+", " ").equalsIgnoreCase(other.value.replaceAll("\\p{Zs}+", " ")));
     }
 
     private static boolean isPrintable(int codePoint) {
