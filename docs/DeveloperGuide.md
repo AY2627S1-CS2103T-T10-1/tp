@@ -16,6 +16,7 @@ title: Developer Guide
 * The `delete-client` command and save-before-publish flow follow the command and atomic-save structure introduced for `add-client` in [team commit 332b415](https://github.com/AY2627S1-CS2103T-T10-1/tp/commit/332b415a1e13cf5dd3f1d6b8c1eeb62451060542). No source code was copied verbatim.
 * The `list-clients` command and parser follow the separate client command structure established by [team commit 332b415](https://github.com/AY2627S1-CS2103T-T10-1/tp/commit/332b415a1e13cf5dd3f1d6b8c1eeb62451060542). No source code was copied verbatim.
 * The atomic legacy deletion explanation and sequence diagram were developed for [issue #79](https://github.com/AY2627S1-CS2103T-T10-1/tp/issues/79). They document the save-before-publish behavior introduced by [issue #77](https://github.com/AY2627S1-CS2103T-T10-1/tp/issues/77); no external source was copied.
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## **Setting up, getting started**
@@ -106,7 +107,7 @@ because `UiPart` is abstract; solid lines with hollow triangles point to it.
 
 The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, `ClientDetailsPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
-The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
+The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-T10-1/tp/blob/master/src/main/java/seedu/address/ui/MainWindow.java).
 
 The `UI` component,
 
@@ -244,6 +245,9 @@ With no command name, `help` returns the catalogue overview instead. The Help me
 
 ### Add client
 
+`ParserUtil.parseEmail` rejects Unicode whitespace and separator characters in new command input, including `edit-client`. The stored `Email` representation retains its existing validation so records accepted by v1.4 still load and round-trip unchanged. `EmailInputIntegrationTest` checks all four email-entry commands and legacy storage compatibility.
+
+
 `AddClientCommandParser` requires name, phone and email, accepts repeated tags, and rejects repeated required
 prefixes or unknown prefixes. It validates the creation rules before building a `Person`. Phone formatting is
 removed and tags are lowercase. The new client has the address `Not provided`, no projects and next project ID 1.
@@ -256,6 +260,12 @@ does not prevent creation.
 If saving fails, the live data and displayed filter stay unchanged. A successful save publishes the new client,
 restores the full list and selects the new entry. Copying the existing address book into the staged model retains
 each existing client's projects and next project ID.
+
+### Editing a client's email safely
+
+`LogicManager` executes `edit-client` against a proposed model carrying the currently displayed clients. An unchanged email skips saving. Otherwise, storage must succeed before the proposed records replace the live records. This preserves the live filter, selection and details when saving fails; successful publication re-evaluates the existing filter against the new email.
+
+`EditClientUiTest` covers a selected client found by their old email. Its failing storage stub verifies that a rejected email change cannot clear the selection or details.
 
 ### Find clients
 
@@ -808,6 +818,15 @@ testers are expected to do more *exploratory* testing.
 1. Enter `find alex`, note the displayed clients, then open Help through the command, Help menu and `F1`.<br>
    Expected: Each route opens Help. Closing it leaves the displayed clients and their data unchanged.
 
+### Setting a remark
+
+1. On disposable data with a displayed client, enter `remark 1 r/Keep this reminder`, then `view 1`.<br>
+   Expected: the selected client has that remark.
+1. Enter `remark 1 r/Call Monday r/Call Tuesday`, then `remark 1 r/Important reminder r/`.<br>
+   Expected: both commands report a repeated `r/` prefix; `view 1` still shows `Keep this reminder`.
+1. Enter `remark 1 r/`, then `view 1`.<br>
+   Expected: the remark is empty. The legacy `remark 1` shorthand also clears it.
+
 ### Adding a client
 
 Run these cases in a disposable folder containing the JAR, using Java 25. Keep that folder separate from your
@@ -851,8 +870,17 @@ normal ClientDesk data. Start the application with `java -jar addressbook.jar` f
    Expected: The first client in the displayed list is removed, a success message names the client, and the change is saved.
 1. Test case: `delete-client 0` or `delete-client x`.<br>
    Expected: A usage error is shown and no client is deleted.
-1. Search with `find acme`, then enter `delete-client 1`.<br>
-   Expected: The first matching client is deleted, and other displayed matches remain.
+1. Test deletion from a filtered list using disposable test data:
+   1. Add `add-client n/AlphaDeleteTarget p/91234567 e/alpha-delete-target@example.com` and
+      `add-client n/AlphaDeleteKeep p/92345678 e/alpha-delete-keep@example.com`.
+      Both commands must succeed; start with fresh test data if either client already exists.
+   1. Enter `find AlphaDeleteTarget`.<br>
+      Expected: Exactly one match, named AlphaDeleteTarget. Check this before deleting;
+      a search with no matches restores the full list and is not a valid setup for this test.
+   1. Enter `delete-client 1`.<br>
+      Expected: `Deleted client: AlphaDeleteTarget.` and an empty filtered list.
+   1. Enter `find AlphaDeleteKeep`.<br>
+      Expected: Exactly one match, named AlphaDeleteKeep. Other clients remain unchanged.
 1. Enter `delete-client 999` when fewer than 999 clients are displayed.<br>
    Expected: An invalid client index error is shown and no client is deleted.
 ### Listing clients
