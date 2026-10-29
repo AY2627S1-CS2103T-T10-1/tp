@@ -16,6 +16,7 @@ title: Developer Guide
 * The `delete-client` command and save-before-publish flow follow the command and atomic-save structure introduced for `add-client` in [team commit 332b415](https://github.com/AY2627S1-CS2103T-T10-1/tp/commit/332b415a1e13cf5dd3f1d6b8c1eeb62451060542). No source code was copied verbatim.
 * The `list-clients` command and parser follow the separate client command structure established by [team commit 332b415](https://github.com/AY2627S1-CS2103T-T10-1/tp/commit/332b415a1e13cf5dd3f1d6b8c1eeb62451060542). No source code was copied verbatim.
 * The atomic legacy deletion explanation and sequence diagram were developed for [issue #79](https://github.com/AY2627S1-CS2103T-T10-1/tp/issues/79). They document the save-before-publish behavior introduced by [issue #77](https://github.com/AY2627S1-CS2103T-T10-1/tp/issues/77); no external source was copied.
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## **Setting up, getting started**
@@ -106,7 +107,7 @@ because `UiPart` is abstract; solid lines with hollow triangles point to it.
 
 The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, `ClientDetailsPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
-The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
+The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-T10-1/tp/blob/master/src/main/java/seedu/address/ui/MainWindow.java).
 
 The `UI` component,
 
@@ -244,13 +245,24 @@ With no command name, `help` returns the catalogue overview instead. The Help me
 
 ### Add client
 
+`ParserUtil.parseEmail` rejects Unicode whitespace and separator characters in new command input, including `edit-client`. The stored `Email` representation retains its existing validation so records accepted by v1.4 still load and round-trip unchanged. `EmailInputIntegrationTest` checks all four email-entry commands and legacy storage compatibility.
+
+
 `AddClientCommandParser` requires name, phone and email, accepts repeated tags, and rejects repeated required
 prefixes or unknown prefixes. It validates the creation rules before building a `Person`. Phone formatting is
 removed and tags are lowercase. The new client has the address `Not provided`, no projects and next project ID 1.
 
+The shared `Name` validator accepts Unicode letters, marks and numbers plus the documented punctuation, with
+at least one letter or number. Its 1–80 limit counts code points, including each combining mark. `ParserUtil`
+applies this rule to `add-client`, legacy `add` and legacy `edit`; JSON loading uses the same validator. Spelling
+is preserved without Unicode normalization, including decomposed accents. The character whitelist continues to
+reject control characters, format characters and unpaired surrogates; it does not enforce mark placement.
+
 `AddClientCommand` checks duplicates against all stored clients, including clients hidden by the current filter.
 A duplicate has the same email ignoring case, or the same normalized name and phone. A matching name alone
-does not prevent creation.
+does not prevent creation. `Person.hasSameClientIdentity()` combines the v1.4 identity comparison with Unicode `equalsIgnoreCase()` on whitespace-normalized names. Both add commands use it against the full stored list; inherited `edit` rejects new collisions, including hidden clients.
+
+`Person.isSamePerson()` and the stored-list invariant retain v1.4 semantics so formerly accepted Unicode case pairs can load, be staged and round-trip without losing records. Unrelated edits may preserve an existing case collision; edits that introduce a new collision or violate the original identity rule are rejected before mutation.
 
 `LogicManager` runs Add Client on a staged model and saves that model before publishing it to the live model.
 If saving fails, the live data and displayed filter stay unchanged. A successful save publishes the new client,
@@ -268,7 +280,10 @@ each existing client's projects and next project ID.
 `FindCommandParser` splits the input into keywords and rejects empty input or keywords longer than 50 Unicode
 code points with `Usage: find KEYWORD [KEYWORD]...`. Validation happens before changing the displayed list.
 
-`PersonContainsKeywordsPredicate` copies the keywords and normalizes them with `Locale.ROOT`.
+`PersonContainsKeywordsPredicate` copies the original keywords and compiles each as a `Pattern` with
+`LITERAL | CASE_INSENSITIVE | UNICODE_CASE`. `Matcher.find()` applies locale-independent Unicode case matching to
+substrings, including Turkish I variants, Greek sigma variants and supplementary letters. Literal patterns preserve
+punctuation; matching does not remove accents or expand `ß` to `ss`.
 Every keyword must be a substring of the same client's name, phone, email, or tags. Keywords may match different
 fields. Separate field, tag, and substring helpers keep matching at one level of abstraction.
 
@@ -292,8 +307,10 @@ future project editing. `ProjectPriority` represents the three priority levels.
 #### Validation and identity
 
 `ProjectTitle` counts Unicode code points, rejects control/format characters and unpaired surrogates, and requires
-a letter or number. Its display value retains internal spacing. Duplicate comparison collapses Unicode spaces
-and applies `Locale.ROOT` case conversion. `ProjectDeadline` accepts only an ASCII, strict ISO calendar date in
+a letter or number. Its display value retains internal spacing. `ProjectTitle.isSameTitle` collapses Unicode spaces
+and matches either the existing `Locale.ROOT` lowercase key or `String.equalsIgnoreCase`. This covers Unicode
+case variants such as dotless I, final sigma and supplementary letters without expanding `ß` to `ss`.
+`ProjectDeadline` accepts only an ASCII, strict ISO calendar date in
 years 0001–9999; impossible dates are not normalized into another day.
 
 The parser recognizes known prefixes at whitespace boundaries, allowing parameter reordering and literal slash
@@ -302,7 +319,7 @@ invalid or overflowing indexes and invalid scalar values. `AddressBookParser` re
 `add-project` so its outer trimming cannot hide a trailing title control character.
 
 Each immutable `Person` owns an immutable list of `Project` values and a persisted `nextProjectId`. The constructor
-checks unique positive IDs, unique normalized title/deadline pairs and a counter greater than every saved ID.
+checks unique positive IDs, unique v1.4 normalized title/deadline pairs and a counter greater than every saved ID.
 IDs are independent between clients. The counter can reach `Integer.MAX_VALUE + 1L` as an exhausted sentinel;
 the command then reports exhaustion instead of overflowing. Deleting a project retains the counter, so a deleted
 ID is never reused. Existing client edit and remark commands preserve both fields.
@@ -338,6 +355,11 @@ for legacy files, with no projects and a next ID of 1. Nonempty project data mus
 writes both `projects` and `nextProjectId` for all clients. Project lists and counters must be retained by any future
 client-copy operation, including undo snapshots.
 
+Storage retains v1.4's `ProjectTitle.normalizedValue()` validation key so previously accepted Unicode title pairs
+remain readable and survive saving without changing their spelling, IDs or counter. New additions and title/deadline
+edits use the broader duplicate matching above. Status/priority edits and deletion remain available for existing
+pairs; duplicate IDs and pairs already invalid under v1.4 still fail loading.
+
 This subsection describes project creation and deletion. Project editing is described in the Edit project
 subsection below. Undo, notes, follow-ups and agenda are planned.
 
@@ -361,7 +383,7 @@ argument validation.
 
 `EditProjectCommandParser` reads a displayed client index and a stable, client-local project ID. It rejects repeated prefixes and invalid identifiers/field values and creates an immutable `EditProjectDescriptor` containing only supplied fields. `ProjectTitle` and `ProjectDeadline` centralize title/date validation; `ProjectStatus` and `ProjectPriority` provide the persisted command vocabulary. The descriptor can represent completion, reopening, and any combination of title/deadline/priority changes. The parser shares the `CliSyntax` prefix constants and unsigned ASCII identifier form with Add Project. Known prefixes delimit fields; other slash-containing title words remain literal text. Boundary trimming uses linear scans so oversized inputs with long internal space runs are rejected promptly.
 
-`EditProjectCommand` finds the client in the displayed list and the project by ID within that client. It applies the descriptor without changing the ID or other projects, and rejects a conflicting normalized title/deadline under the same client. An exact no-op returns without mutation. Both failed lookup and duplicate validation happen before updating the proposed client.
+`EditProjectCommand` finds the client in the displayed list and the project by ID within that client. It applies the descriptor without changing the ID or other projects, and checks for conflicting work under that client when the title or deadline changes. An exact no-op returns without mutation. Both failed lookup and duplicate validation happen before updating the proposed client.
 
 `LogicManager` executes this command against a staged `ModelManager` copied from the live data. The staging filter contains exactly the clients visible when the command was submitted, so the displayed index resolves consistently even after a search. Only after `Storage.saveAddressBook` succeeds does it publish the staged data to the live model; the live filter itself is retained. A save failure leaves the live model, filter and persisted data unchanged. `JsonAddressBookStorage` already uses atomic file replacement, which protects the original saved file during write failures.
 
@@ -798,6 +820,15 @@ testers are expected to do more *exploratory* testing.
 1. Enter `find alex`, note the displayed clients, then open Help through the command, Help menu and `F1`.<br>
    Expected: Each route opens Help. Closing it leaves the displayed clients and their data unchanged.
 
+### Setting a remark
+
+1. On disposable data with a displayed client, enter `remark 1 r/Keep this reminder`, then `view 1`.<br>
+   Expected: the selected client has that remark.
+1. Enter `remark 1 r/Call Monday r/Call Tuesday`, then `remark 1 r/Important reminder r/`.<br>
+   Expected: both commands report a repeated `r/` prefix; `view 1` still shows `Keep this reminder`.
+1. Enter `remark 1 r/`, then `view 1`.<br>
+   Expected: the remark is empty. The legacy `remark 1` shorthand also clears it.
+
 ### Adding a client
 
 Run these cases in a disposable folder containing the JAR, using Java 25. Keep that folder separate from your
@@ -841,8 +872,17 @@ normal ClientDesk data. Start the application with `java -jar addressbook.jar` f
    Expected: The first client in the displayed list is removed, a success message names the client, and the change is saved.
 1. Test case: `delete-client 0` or `delete-client x`.<br>
    Expected: A usage error is shown and no client is deleted.
-1. Search with `find acme`, then enter `delete-client 1`.<br>
-   Expected: The first matching client is deleted, and other displayed matches remain.
+1. Test deletion from a filtered list using disposable test data:
+   1. Add `add-client n/AlphaDeleteTarget p/91234567 e/alpha-delete-target@example.com` and
+      `add-client n/AlphaDeleteKeep p/92345678 e/alpha-delete-keep@example.com`.
+      Both commands must succeed; start with fresh test data if either client already exists.
+   1. Enter `find AlphaDeleteTarget`.<br>
+      Expected: Exactly one match, named AlphaDeleteTarget. Check this before deleting;
+      a search with no matches restores the full list and is not a valid setup for this test.
+   1. Enter `delete-client 1`.<br>
+      Expected: `Deleted client: AlphaDeleteTarget.` and an empty filtered list.
+   1. Enter `find AlphaDeleteKeep`.<br>
+      Expected: Exactly one match, named AlphaDeleteKeep. Other clients remain unchanged.
 1. Enter `delete-client 999` when fewer than 999 clients are displayed.<br>
    Expected: An invalid client index error is shown and no client is deleted.
 ### Listing clients
@@ -853,6 +893,20 @@ normal ClientDesk data. Start the application with `java -jar addressbook.jar` f
    Expected: The search filter is cleared and the full client list is shown.
 1. Enter `list-clients extra`.<br>
    Expected: A usage error is shown and the displayed list is unchanged.
+
+### Finding clients with Unicode names
+
+In a disposable data folder, run `add-client n/Işık Studio p/81234567 e/isik@example.com t/startup` and
+`add-client n/Beacon Design p/82345678 e/beacon@example.com`. Record the saved data file's contents before searching.
+
+1. Enter `find IŞIK`.<br>
+   Expected: Only `Işık Studio` is shown, with `Found 1 matching clients.`. The saved file is unchanged.
+1. Enter `find ŞI START`.<br>
+   Expected: The same client is found through partial matches across its name and tag.
+1. Enter `find IŞIK missing`.<br>
+   Expected: `No clients matched: IŞIK missing.` is shown and the full list is restored. The saved file is unchanged.
+1. Add a client named `ΟΣ`, then enter `find ς`.<br>
+   Expected: `ΟΣ` is found despite the different Unicode sigma case form.
 
 ### Adding projects
 

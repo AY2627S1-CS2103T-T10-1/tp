@@ -30,6 +30,9 @@ public class AddClientCommandParser implements Parser<AddClientCommand> {
     public static final String MESSAGE_PHONE_CONSTRAINTS =
             "Phone must contain 7–15 digits and may use a leading +, spaces, or hyphens.";
 
+    public static final String MESSAGE_TAG_CONSTRAINTS =
+            "Tag must be 1–30 lowercase letters, numbers, or internal hyphens.";
+
     private static final Pattern PARAMETER_PREFIX = Pattern.compile("(?<!\\S)([^\\s/]+/)");
     private static final Set<String> SUPPORTED_PREFIXES = Set.of("n/", "p/", "e/", "t/");
 
@@ -50,7 +53,7 @@ public class AddClientCommandParser implements Parser<AddClientCommand> {
         Set<Tag> tags = new HashSet<>();
         for (String value : arguments.getAllValues(PREFIX_TAG)) {
             if (!value.matches("[a-z0-9]+(?:-+[a-z0-9]+)*") || value.length() > 30) {
-                throw new ParseException(Tag.MESSAGE_CONSTRAINTS);
+                throw new ParseException(MESSAGE_TAG_CONSTRAINTS);
             }
             tags.add(new Tag(value));
         }

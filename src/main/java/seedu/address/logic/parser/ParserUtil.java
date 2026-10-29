@@ -81,7 +81,7 @@ public class ParserUtil {
     }
 
     /**
-     * Parses a {@code String email} into an {@code Email}.
+     * Parses a newly entered email, rejecting Unicode spaces while retaining legacy storage compatibility.
      * Leading and trailing whitespaces will be trimmed.
      *
      * @throws ParseException if the given {@code email} is invalid.
@@ -89,7 +89,8 @@ public class ParserUtil {
     public static Email parseEmail(String email) throws ParseException {
         requireNonNull(email);
         String trimmedEmail = email.trim();
-        if (!Email.isValidEmail(trimmedEmail)) {
+        if (!Email.isValidEmail(trimmedEmail) || trimmedEmail.codePoints()
+                .anyMatch(codePoint -> Character.isWhitespace(codePoint) || Character.isSpaceChar(codePoint))) {
             throw new ParseException(Email.MESSAGE_CONSTRAINTS);
         }
         return new Email(trimmedEmail);
