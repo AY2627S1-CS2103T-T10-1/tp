@@ -75,6 +75,38 @@ public class ProjectTitleTest {
     }
 
     @Test
+    public void isSameTitle_unicodeCaseVariants_ignoresCaseAndSpacesInEveryLocale() {
+        String[][] equivalentTitles = {{"IşıkWebsite", "IŞIKWEBSITE"}, {"İ Website", "i\u00a0  WEBSITE"},
+            {"İ Website", "i\u0307 WEBSITE"}, {"ΟΣ", "ος"}, {"Σ Website", "ς WEBSITE"},
+            {"Straße", "STRAẞE"}, {"𐐀 Website", "𐐨 WEBSITE"}};
+        Locale originalLocale = Locale.getDefault();
+        try {
+            for (Locale locale : new Locale[] {Locale.ROOT, Locale.forLanguageTag("tr-TR"),
+                Locale.forLanguageTag("lt-LT")}) {
+                Locale.setDefault(locale);
+                for (String[] titles : equivalentTitles) {
+                    ProjectTitle first = new ProjectTitle(titles[0]);
+                    ProjectTitle second = new ProjectTitle(titles[1]);
+                    assertTrue(first.isSameTitle(second));
+                    assertTrue(second.isSameTitle(first));
+                    assertEquals(titles[0], first.value);
+                    assertEquals(titles[1], second.value);
+                }
+            }
+        } finally {
+            Locale.setDefault(originalLocale);
+        }
+    }
+
+    @Test
+    public void isSameTitle_expandedCaseMappingsOrDifferentTitles_remainDistinct() {
+        assertFalse(new ProjectTitle("Straße").isSameTitle(new ProjectTitle("STRASSE")));
+        assertFalse(new ProjectTitle("Oﬃce").isSameTitle(new ProjectTitle("OFFICE")));
+        assertFalse(new ProjectTitle("Website").isSameTitle(new ProjectTitle("Web site")));
+        assertFalse(new ProjectTitle("Website").isSameTitle(null));
+    }
+
+    @Test
     public void equalsAndHashCode_compareDisplayValues() {
         ProjectTitle title = new ProjectTitle("Website redesign");
         assertEquals(title, title);

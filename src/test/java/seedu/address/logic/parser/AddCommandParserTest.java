@@ -49,6 +49,15 @@ public class AddCommandParserTest {
     private AddCommandParser parser = new AddCommandParser();
 
     @Test
+    public void parse_combiningMarkNames_preservesSpelling() {
+        for (String name : new String[] {"अनिल", "วิชัย", "Jose\u0301"}) {
+            Person expectedPerson = new PersonBuilder(BOB).withName(name).build();
+            assertParseSuccess(parser, " n/" + name + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB
+                    + TAG_DESC_HUSBAND + TAG_DESC_FRIEND, new AddCommand(expectedPerson));
+        }
+    }
+
+    @Test
     public void parse_allFieldsPresent_success() {
         Person expectedPerson = new PersonBuilder(BOB).withTags(VALID_TAG_FRIEND).build();
 

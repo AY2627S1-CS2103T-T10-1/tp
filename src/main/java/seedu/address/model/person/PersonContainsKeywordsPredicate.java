@@ -3,8 +3,8 @@ package seedu.address.model.person;
 import static java.util.Objects.requireNonNull;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 import seedu.address.commons.util.ToStringBuilder;
 
@@ -14,7 +14,7 @@ import seedu.address.commons.util.ToStringBuilder;
  */
 public class PersonContainsKeywordsPredicate implements Predicate<Person> {
     private final List<String> keywords;
-    private final List<String> normalizedKeywords;
+    private final List<Pattern> keywordPatterns;
 
     /**
      * Creates a predicate with a defensive copy of the given {@code keywords}.
@@ -23,8 +23,9 @@ public class PersonContainsKeywordsPredicate implements Predicate<Person> {
      */
     public PersonContainsKeywordsPredicate(List<String> keywords) {
         this.keywords = List.copyOf(keywords);
-        normalizedKeywords = this.keywords.stream()
-                .map(keyword -> keyword.toLowerCase(Locale.ROOT))
+        keywordPatterns = this.keywords.stream()
+                .map(keyword -> Pattern.compile(keyword,
+                        Pattern.LITERAL | Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE))
                 .toList();
     }
 
@@ -38,32 +39,49 @@ public class PersonContainsKeywordsPredicate implements Predicate<Person> {
     @Override
     public boolean test(Person person) {
         requireNonNull(person);
-        return !normalizedKeywords.isEmpty()
-                && normalizedKeywords.stream().allMatch(keyword -> hasMatchingField(person, keyword));
+        return !keywordPatterns.isEmpty()
+                && keywordPatterns.stream().allMatch(keyword -> hasMatchingField(person, keyword));
     }
 
     /**
-     * Returns whether any searchable field contains the normalized {@code keyword}.
+     * Returns whether any searchable field matches {@code keyword}, allowing formatting in phone keywords.
      */
-    private boolean hasMatchingField(Person person, String keyword) {
+    private boolean hasMatchingField(Person person, Pattern keyword) {
         return containsKeyword(person.getName().fullName, keyword)
-                || containsKeyword(person.getPhone().value, keyword)
+                || hasMatchingPhone(person.getPhone().value, keyword)
                 || containsKeyword(person.getEmail().value, keyword)
                 || hasMatchingTag(person, keyword);
     }
 
     /**
-     * Returns whether any tag contains the normalized {@code keyword}.
+     * Matches stored digits using a phone keyword with an optional plus and formatting hyphens.
+     * Other fields still match the original keyword literally.
      */
-    private boolean hasMatchingTag(Person person, String keyword) {
+    private boolean hasMatchingPhone(String phone, Pattern keyword) {
+        if (containsKeyword(phone, keyword)) {
+            return true;
+        }
+        String phoneKeyword = keyword.pattern();
+        if (!phoneKeyword.matches("\\+?[0-9 -]+")) {
+            return false;
+        }
+        String digits = phoneKeyword.replaceAll("[+ -]", "");
+        return !digits.isEmpty() && phone.contains(digits);
+    }
+
+    /**
+     * Returns whether any tag contains the literal {@code keyword}.
+     */
+    private boolean hasMatchingTag(Person person, Pattern keyword) {
         return person.getTags().stream().anyMatch(tag -> containsKeyword(tag.tagName, keyword));
     }
 
     /**
-     * Returns whether {@code value} contains the normalized {@code keyword}, independently of the default locale.
+     * Returns whether {@code value} contains the literal {@code keyword}, using locale-independent Unicode case
+     * matching.
      */
-    private boolean containsKeyword(String value, String keyword) {
-        return value.toLowerCase(Locale.ROOT).contains(keyword);
+    private boolean containsKeyword(String value, Pattern keyword) {
+        return keyword.matcher(value).find();
     }
 
     @Override

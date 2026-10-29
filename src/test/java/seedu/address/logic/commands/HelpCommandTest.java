@@ -35,6 +35,14 @@ public class HelpCommandTest {
     }
 
     @Test
+    public void execute_find_explainsFullListResetAndPreservesModel() {
+        String instructions = new HelpCommand("find").execute(model).getFeedbackToUser();
+        assertTrue(instructions.contains("If no clients match, the full client list is restored."));
+        assertTrue(instructions.contains("Check the displayed indexes"));
+        assertEquals(expectedModel, model);
+    }
+
+    @Test
     public void execute_view_describesDisplayedClientFields() {
         String instructions = new HelpCommand("view").execute(model).getFeedbackToUser();
         assertTrue(instructions.contains("contact information, remark, tags and projects"));

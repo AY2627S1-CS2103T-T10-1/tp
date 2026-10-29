@@ -58,7 +58,10 @@ public class EditProjectCommand extends Command {
         if (updated.equals(original)) {
             return new CommandResult("No changes needed for project #" + projectId + ".");
         }
-        if (client.getProjects().stream()
+        // Legacy case variants can still receive status and priority updates.
+        boolean titleOrDeadlineChanged = !updated.getTitle().equals(original.getTitle())
+                || !updated.getDeadline().equals(original.getDeadline());
+        if (titleOrDeadlineChanged && client.getProjects().stream()
                 .anyMatch(project -> project.getId() != projectId && project.isSameProject(updated))) {
             throw new CommandException(MESSAGE_DUPLICATE);
         }

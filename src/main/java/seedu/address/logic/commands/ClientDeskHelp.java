@@ -10,8 +10,8 @@ import java.util.Map;
 public class ClientDeskHelp {
 
     private static final String LEGACY_FIELD_RULES =
-            "Name: 1–80 characters with a letter or number; letters, numbers, spaces, apostrophes, "
-            + "hyphens, periods, & and parentheses are allowed.\n"
+            "Name: 1–80 Unicode code points with a letter or number; letters, combining marks, numbers, "
+            + "spaces, apostrophes, hyphens, periods, & and parentheses are allowed.\n"
             + "Phone: at least 3 digits, without spaces, hyphens or +. Email: 3–254 characters, "
             + "one @, no spaces and a dotted domain whose labels do not start or end with a hyphen.\n"
             + "Address must not be blank. Tags: 1–30 letters, numbers or internal hyphens; case is preserved.\n"
@@ -61,8 +61,8 @@ public class ClientDeskHelp {
         commands.put("add-client", new CommandHelp(
                 "Create a client with contact information and optional tags.",
                 "add-client n/NAME p/PHONE e/EMAIL [t/TAG]...",
-                "Name: 1–80 characters with at least one letter or number; letters, numbers, spaces, "
-                + "apostrophes, hyphens, periods, & and parentheses are allowed.\n"
+                "Name: 1–80 Unicode code points with at least one letter or number; letters, combining marks, "
+                + "numbers, spaces, apostrophes, hyphens, periods, & and parentheses are allowed.\n"
                 + "Phone: 7–15 digits; optional leading +, spaces and hyphens.\n"
                 + "Email: 3–254 characters, one @, non-empty local and domain parts, no spaces, "
                 + "and a dot in the domain. Domain labels cannot start or end with a hyphen.\n"
@@ -134,7 +134,8 @@ public class ClientDeskHelp {
                 "Locate clients by partial name, phone, email or tag.",
                 "find KEYWORD [KEYWORD]...",
                 "Each keyword is 1–50 characters. Matching ignores case. All keywords must match the"
-                + " same client.",
+                + " same client. If no clients match, the full client list is restored. "
+                + "Check the displayed indexes before running an indexed command.",
                 "find acme; find startup web-design; find 8123"));
         commands.put("add-project", new CommandHelp(
                 "Record client work and its deadline.",
