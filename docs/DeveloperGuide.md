@@ -140,6 +140,13 @@ publishing it to the live model. After successful execution, `MainWindow` calls
 list replacement and refreshes the details without another `view` command. Add and delete
 use the same result mechanism as edit; the UI does not parse command text to identify them.
 
+When a successful command does not request a selection, `MainWindow` restores the previously
+selected client's current record by its stored identity if it is still displayed. This keeps
+remark and email updates selected without retaining an outdated record. Otherwise, it clears selection. Deleting a
+client
+therefore cannot select the unrelated client that moves into the deleted row; deleting another
+client preserves the current selection.
+
 Validation or save failures produce no successful selection result and leave the selected
 client and details unchanged. Deleting the selected client clears the selection and returns
 the panel to its instructions. The selection is based on the actual updated client, so it
@@ -220,6 +227,14 @@ The `Storage` component,
   `JsonAdaptedProject`. Legacy client records without those fields load with no projects and the next ID set to 1.
   Stored project fields and IDs are validated before a `Person` is created, so invalid project data is rejected on load.
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
+
+`MainApp` supplies the JAR's home folder to both JSON storage implementations, which capture its real location once.
+Before each runtime read or save, `AppPaths.resolveWithinHome` resolves the normalized path's existing target or
+nearest existing ancestor against that fixed home folder. This rejects outside targets, including links above a
+missing data file. Saving also checks the destination's parent before creating temporary files, and the data sidecar
+lock before opening it. File logging checks existing rotation, instance and lock filenames
+before opening a `FileHandler`; console logging remains available when that check fails. These checks handle existing
+links and changes detected between storage operations; they do not claim protection against concurrent filesystem changes.
 
 ### Common classes
 
@@ -811,7 +826,17 @@ testers are expected to do more *exploratory* testing.
    1. Resize the window to an optimal size. Move the window to a different location. Close the window.
 
    1. Relaunch the app by double-clicking the JAR file.<br>
-       Expected: The most recent window size and location are retained.
+       Expected: The most recent window size and location are retained when they fit the available screen area.
+       After changing screen resolution or disconnecting a screen, the window is resized or moved to remain visible.
+
+1. Using a smaller display
+
+   1. Set the display to 1280x720 with 150% scaling, then launch the app. Repeat after saving a larger window size.
+
+   1. Enter `view 1` for a client with several projects and scroll to the last project. Enter an invalid command,
+      then open `help` and resize the Help window if needed.<br>
+      Expected: The main window fits the available desktop area. Command entry, results, client list, project details
+      and their scrollbars remain usable. Help instructions and Copy URL remain accessible.
 
 1. Launching from the command line
 
@@ -864,7 +889,10 @@ testers are expected to do more *exploratory* testing.
 
 ### Setting a remark
 
-1. On disposable data with a displayed client, enter `remark 1 r/Keep this reminder`, then `view 1`.<br>
+Use disposable data containing at least one client. Enter `list-clients` before starting so that index 1
+continues to identify the same client when `remark` restores the full list.
+
+1. Enter `remark 1 r/Keep this reminder`, then `view 1`.<br>
    Expected: the selected client has that remark.
 1. Enter `remark 1 r/Call Monday r/Call Tuesday`, then `remark 1 r/Important reminder r/`.<br>
    Expected: both commands report a repeated `r/` prefix; `view 1` still shows `Keep this reminder`.
@@ -934,6 +962,13 @@ normal ClientDesk data. Start the application with `java -jar addressbook.jar` f
       Expected: Exactly one match, named AlphaDeleteKeep. Other clients remain unchanged.
 1. Enter `delete-client 999` when fewer than 999 clients are displayed.<br>
    Expected: An invalid client index error is shown and no client is deleted.
+1. In disposable data with at least three clients, enter `list-clients`, `view 1`, then `delete-client 1`.<br>
+   Expected: The selected client is removed and the details panel shows its instructions, even though
+   another client now occupies row 1. Restore the disposable data before repeating with a selected middle
+   or last row, and with legacy `delete`.
+1. With at least two remaining clients, enter `view 2`, then `delete-client 1`.<br>
+   Expected: The second client remains selected with the same details, now at displayed index 1.
+
 ### Listing clients
 
 1. Add clients with different names, then enter `list-clients`.<br>
@@ -1020,6 +1055,19 @@ Use a disposable folder containing the JAR for these tests. Close ClientDesk bef
 
    1. Restore the backup and restart ClientDesk.<br>
       Expected: ClientDesk opens with the restored clients and projects.
+
+1. Keeping runtime files inside the home folder (on systems supporting symbolic links)
+
+   1. Close ClientDesk. In disposable folders, link the JAR folder's `data` directory to a sibling directory
+      containing a valid `addressbook.json`. Start ClientDesk.<br>
+      Expected: Loading is rejected; the sibling data file remains unchanged. Replace the link with an ordinary
+      `data` folder inside the JAR folder and retry: loading works normally. A link to another directory inside the
+      JAR folder is also allowed.
+
+   1. With ClientDesk closed, link `preferences.json` or `addressbook.log.0` to a disposable file outside the JAR
+      folder, then start and close ClientDesk.<br>
+      Expected: Neither outside file changes. Defaults replace unavailable preferences in memory; unavailable
+      file logging leaves console logging available. Remove these test links before continuing.
 
 ### Editing a project
 

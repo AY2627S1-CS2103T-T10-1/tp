@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 import seedu.address.commons.exceptions.DataLoadingException;
+import seedu.address.commons.util.AppPaths;
 import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.ReadOnlyUserPrefs;
 import seedu.address.model.UserPrefs;
@@ -15,9 +16,24 @@ import seedu.address.model.UserPrefs;
 public class JsonUserPrefsStorage {
 
     private Path filePath;
+    private final Path allowedHome;
 
+    /**
+     * Creates preference storage for a caller-managed path without a runtime home boundary.
+     */
     public JsonUserPrefsStorage(Path filePath) {
         this.filePath = filePath;
+        this.allowedHome = null;
+    }
+
+    /**
+     * Creates preference storage limited to the current real location of {@code allowedHome}.
+     *
+     * @throws IOException if the home folder cannot be resolved
+     */
+    public JsonUserPrefsStorage(Path filePath, Path allowedHome) throws IOException {
+        this.filePath = filePath;
+        this.allowedHome = allowedHome.toRealPath();
     }
 
     public Path getUserPrefsFilePath() {
@@ -40,7 +56,11 @@ public class JsonUserPrefsStorage {
      * @throws DataLoadingException if the file format is not as expected.
      */
     public Optional<UserPrefs> readUserPrefs(Path prefsFilePath) throws DataLoadingException {
-        return JsonUtil.readJsonFile(prefsFilePath, UserPrefs.class);
+        try {
+            return JsonUtil.readJsonFile(resolveFilePath(prefsFilePath), UserPrefs.class);
+        } catch (IOException exception) {
+            throw new DataLoadingException(exception);
+        }
     }
 
     /**
@@ -49,7 +69,11 @@ public class JsonUserPrefsStorage {
      * @throws IOException if there was any problem writing to the file.
      */
     public void saveUserPrefs(ReadOnlyUserPrefs userPrefs) throws IOException {
-        JsonUtil.saveJsonFile(userPrefs, filePath);
+        JsonUtil.saveJsonFile(userPrefs, resolveFilePath(filePath));
+    }
+
+    private Path resolveFilePath(Path path) throws IOException {
+        return allowedHome == null ? path : AppPaths.resolveWithinHome(path, allowedHome);
     }
 
 }

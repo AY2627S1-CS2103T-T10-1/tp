@@ -3,6 +3,7 @@ package seedu.address.commons.core;
 import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.logging.ConsoleHandler;
@@ -93,7 +94,23 @@ public class LogsCenter {
      */
     static void addFileHandler(Logger targetLogger, Path logFile) {
         try {
-            String filePattern = logFile.toString().replace("%", "%%");
+            Path normalizedLogFile = logFile.toAbsolutePath().normalize();
+            Path home = normalizedLogFile.getParent().toRealPath();
+            AppPaths.resolveWithinHome(normalizedLogFile, home);
+            // Rebuild each possible generated filename using the canonical base spelling so the filesystem itself
+            // resolves case and Unicode aliases before FileHandler opens rotations, instance files or locks.
+            String fileName = normalizedLogFile.getFileName().toString();
+            int basePartCount = fileName.split("\\.", -1).length;
+            try (var files = Files.newDirectoryStream(home)) {
+                for (Path path : files) {
+                    String[] parts = path.getFileName().toString().split("\\.", basePartCount + 1);
+                    if (parts.length > basePartCount) {
+                        Path candidate = normalizedLogFile.resolveSibling(fileName + "." + parts[basePartCount]);
+                        AppPaths.resolveWithinHome(candidate, home);
+                    }
+                }
+            }
+            String filePattern = normalizedLogFile.toString().replace("%", "%%");
             FileHandler fileHandler = new FileHandler(filePattern, MAX_FILE_SIZE_IN_BYTES, MAX_FILE_COUNT, true);
             fileHandler.setFormatter(new SimpleFormatter());
             fileHandler.setLevel(Level.ALL);

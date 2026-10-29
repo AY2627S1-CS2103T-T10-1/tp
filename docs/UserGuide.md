@@ -449,6 +449,11 @@ a different working directory, back up and copy its `data` folder and `preferenc
 the new JAR before starting this version. Data, preferences and logs now use the JAR's folder regardless of the
 terminal's working directory.
 
+Keep these files and folders inside the ClientDesk home folder. Symbolic links that point outside it are rejected.
+If a data or lock-file link prevents loading or saving, close ClientDesk and replace the link with a file or folder
+inside the home folder before restarting. An outside preference-file link uses default preferences without changing
+its target; an outside log-file link disables file logging while console messages remain available.
+
 <div markdown="span" class="alert alert-warning">:exclamation: **Caution:**
 If ClientDesk cannot read or validate an existing data file, it shows an error identifying the file and closes
 without opening the command window. The original file remains unchanged. Back it up, then restore a valid copy
@@ -466,12 +471,6 @@ and keep field values within the documented limits.
 `data/addressbook.json` from the folder containing your old ClientDesk JAR to the corresponding `data` folder beside
 the new JAR, replacing the file there. Keep a backup of both files until you have opened ClientDesk and verified the
 transferred clients and projects.
-
---------------------------------------------------------------------------------------------------------------------
-
-## Known issues
-
-1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
 
 --------------------------------------------------------------------------------------------------------------------
 
