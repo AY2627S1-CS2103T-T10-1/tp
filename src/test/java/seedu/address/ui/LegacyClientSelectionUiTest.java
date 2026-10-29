@@ -24,6 +24,7 @@ import seedu.address.model.person.Person;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
+import seedu.address.testutil.ClientWorkspaceTestUtil;
 import seedu.address.testutil.JavaFxTestUtil;
 import seedu.address.testutil.PersonBuilder;
 
@@ -53,6 +54,7 @@ public class LegacyClientSelectionUiTest {
             try {
                 window.fillInnerParts();
                 window.show();
+                ClientWorkspaceTestUtil.selectDetailsTab(window);
                 TextField input = (TextField) window.getPrimaryStage().getScene().lookup("#commandTextField");
                 TextArea details = (TextArea) window.getPrimaryStage().getScene().lookup("#clientDetails");
                 ListView<?> clients = (ListView<?>) window.getPrimaryStage().getScene().lookup("#personListView");
@@ -107,6 +109,7 @@ public class LegacyClientSelectionUiTest {
             try {
                 window.fillInnerParts();
                 window.show();
+                ClientWorkspaceTestUtil.selectDetailsTab(window);
                 TextField input = (TextField) window.getPrimaryStage().getScene().lookup("#commandTextField");
                 TextArea details = (TextArea) window.getPrimaryStage().getScene().lookup("#clientDetails");
                 ListView<?> clients = (ListView<?>) window.getPrimaryStage().getScene().lookup("#personListView");
@@ -136,4 +139,5 @@ public class LegacyClientSelectionUiTest {
         input.setText(command);
         input.fireEvent(new ActionEvent());
     }
+
 }

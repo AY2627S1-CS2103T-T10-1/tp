@@ -74,7 +74,7 @@ public class UiManager implements Ui {
     private static Alert createAlert(Stage owner, AlertType type, String title, String headerText,
             String contentText) {
         final Alert alert = new Alert(type);
-        alert.getDialogPane().getStylesheets().add("view/DarkTheme.css");
+        alert.getDialogPane().getStylesheets().add("view/ClientDesk.css");
         if (owner != null) {
             alert.initOwner(owner);
         }

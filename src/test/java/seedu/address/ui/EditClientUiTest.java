@@ -23,6 +23,7 @@ import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
+import seedu.address.testutil.ClientWorkspaceTestUtil;
 import seedu.address.testutil.JavaFxTestUtil;
 
 public class EditClientUiTest {
@@ -47,6 +48,7 @@ public class EditClientUiTest {
             try {
                 window.fillInnerParts();
                 window.show();
+                ClientWorkspaceTestUtil.selectDetailsTab(window);
                 TextArea details = (TextArea) window.getPrimaryStage().getScene().lookup("#clientDetails");
                 TextField input = (TextField) window.getPrimaryStage().getScene().lookup("#commandTextField");
                 enter(input, "find " + ALICE.getEmail().value);

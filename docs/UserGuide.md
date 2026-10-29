@@ -25,7 +25,7 @@ and records their projects, deadlines, status and priority, with a graphical cli
    A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.<br>
    ![Ui](images/Ui.png)
 
-1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
+1. Type a command in the bottom command bar and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
    Some example commands you can try:
 
    * `list-clients` : Lists all clients.
@@ -39,6 +39,10 @@ and records their projects, deadlines, status and priority, with a graphical cli
    * `exit` : Exits the app.
 
 1. Refer to the [Features](#features) section below for details of each command.
+
+The workspace opens on the **Projects** tab. Select a client from the list to see their header and projects; choose
+**Details** to read their full contact information and remark. Open the command guide from the header button, the
+Help menu or `F1`.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -182,16 +186,14 @@ Example: `view 1` displays the first client in the current list.
 
 ### Client details panel
 
-Enter `view INDEX` to select a client from the currently displayed list and show
-contact information and saved projects in the right-hand details panel. Projects
-are ordered by their stable IDs and include title, deadline, status and priority.
-You can also select a client directly from the list. The panel is read-only;
-scroll to read longer records and drag the divider to adjust the panel widths.
-Clients without projects show `Projects: No projects yet.` When no client is
-selected, the panel shows instructions. Invalid view commands retain the previous
-details.
+Enter `view INDEX` to select a client from the currently displayed list, or click a client in the list. The header
+shows the client's name and contact summary. The **Projects** tab displays project cards in stable ID order, with
+each project's title, deadline, status and priority. The **Details** tab shows the full contact details, remark, tags
+and projects in text form. The workspace is read-only; scroll to read longer content and drag the divider to adjust
+the panel widths. Clients without projects show an empty-state message on the Projects tab. When no client is
+selected, the workspace shows instructions. Invalid `view` commands retain the previous selection and details.
 
-Successful `add-project`, `edit-project` and `delete-project` commands select the affected client and refresh their details automatically, including when using a filtered list. Invalid project commands and failed project saves retain the previous selection and details. Deleting the last project shows `Projects: No projects yet.`; deleting the selected client clears the panel to its instructions.
+Successful `add-project`, `edit-project` and `delete-project` commands select the affected client and refresh their details automatically, including when using a filtered list. Invalid project commands and failed project saves retain the previous selection and details. Deleting the last project shows the no-projects empty state; deleting the selected client clears the workspace to its instructions.
 
 Successful legacy `add` and `edit` commands select the newly added or edited client after the list refreshes. An edit that changes the client's name keeps that client selected even when its row moves. A failed save retains the previous selection and details.
 

@@ -74,7 +74,16 @@ The sections below give more details of each component.
 
 ### UI component
 
-The **API** of this component is specified in [`Ui.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/ui/Ui.java)
+The **API** of this component is specified in [`Ui.java`](https://github.com/AY2627S1-CS2103T-T10-1/tp/blob/master/src/main/java/seedu/address/ui/Ui.java).
+
+The layout follows the original [ClientDesk UI mockup in PR #31](https://github.com/AY2627S1-CS2103T-T10-1/tp/pull/31)
+for the implemented client and project workflows. The current workspace uses a light client list beside the selected
+client's workspace. The workspace header shows
+the client's name and contact summary, with **Projects** and **Details** tabs. Project cards display each project's
+title, deadline, status and priority. The bottom command bar remains available for keyboard-based workflows, and Help
+is available from the menu and by pressing `F1`.
+
+![ClientDesk workspace showing the client list and selected client's projects](images/Ui.png)
 
 ![Structure of the UI Component](images/UiClassDiagram.png)
 
@@ -107,7 +116,7 @@ because `UiPart` is abstract; solid lines with hollow triangles point to it.
 
 The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, `ClientDetailsPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
-The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-T10-1/tp/blob/master/src/main/java/seedu/address/ui/MainWindow.java).
+The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-T10-1/tp/blob/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-T10-1/tp/blob/master/src/main/java/seedu/address/ui/MainWindow.java).
 
 The `UI` component,
 
@@ -809,6 +818,31 @@ testers are expected to do more *exploratory* testing.
 
    1. Enter `exit` in the command box.<br>
       Expected: ClientDesk displays its exit acknowledgement and closes normally.
+
+### Client workspace layout
+
+1. Launch ClientDesk and inspect the main workspace.<br>
+   Expected: The light client list appears on the left. The selected-client workspace on the right opens on the
+   **Projects** tab, with a client header above the **Projects** and **Details** tabs. The command bar and result area
+   remain at the bottom of the window.
+1. Select a client with at least one project.<br>
+   Expected: The header shows that client's name and contact summary. The Projects tab shows project cards with
+   title, deadline, status and priority. Select **Details** and confirm the full contact details, remark, tags and
+   project text are available. Switch tabs and select another client; each view shows the newly selected client's data.
+1. Select a client without projects, then select **Details**.<br>
+   Expected: Projects shows its empty state, and Details still shows the client's contact information and other saved
+   fields.
+1. Open the command guide with its header button, the Help menu and `F1` in turn.<br>
+   Expected: Each route opens the command guide. Close it, enter `view 1` in the bottom command bar and press Enter.<br>
+   Expected: The command runs and updates the selected client's workspace without moving the command bar from the
+   bottom of the window.
+
+1. Resize the main window to its minimum size and drag the divider towards either side.<br>
+   Expected: The tabs, command input and result area remain available. Client fields and project titles wrap;
+   projects and tags remain scrollable. For a client with a long name or email, use **Details** to read and select the
+   full value. A client with many tags must not push the tabs out of the window.
+1. Relaunch ClientDesk and type a command without clicking the input first.<br>
+   Expected: The command field receives initial keyboard focus and Enter executes the command.
 
 ### Viewing help
 
