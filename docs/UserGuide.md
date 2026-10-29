@@ -117,7 +117,7 @@ For example, `t/VIP` is rejected with `Tag must be 1–30 lowercase letters, num
 
 A duplicate has the same email (ignoring case), or the same name (ignoring case,
 outer spaces and repeated internal spaces) **and** normalized phone. The same name
-alone is allowed. Duplicates report `This client already exists: <name>.`
+alone is allowed. Unicode case variants such as `Işık` and `IŞIK` are also duplicates when their phones match. Duplicates report `This client already exists: <name>.`
 Missing required fields report `Usage: add-client n/NAME p/PHONE e/EMAIL [t/TAG]...`.
 If saving fails, ClientDesk reports `Client could not be saved. No changes were made.`
 and keeps the existing data and displayed list.
@@ -126,6 +126,8 @@ New email values cannot contain Unicode spaces, including non-breaking spaces co
 
 The inherited address field displays `Not provided` for a new client because
 `add-client` does not require an address.
+Existing v1.4 records that differ only by previously missed Unicode case variants remain readable and editable; they are not merged or removed. New additions and edits cannot introduce another such duplicate.
+
 Adding a client preserves existing clients' projects and their next project IDs.
 The new client starts with no projects; its first project receives ID 1.
 
@@ -363,7 +365,7 @@ Email | 3–254 characters, exactly one `@`, no spaces, and a dotted domain whos
 Address | A non-blank value.
 Tag | 1–30 letters, numbers or internal hyphens. Uppercase is accepted and preserved; `add-client` requires lowercase tags.
 
-A duplicate is a client with the same email ignoring case, or the same normalized name and phone. The same name alone is allowed. A new legacy record starts with no projects or remark.
+A duplicate is a client with the same email ignoring case, or the same normalized name and phone. The same name alone is allowed. A new legacy record starts with no projects or remark. Unicode name case variants use the same duplicate check as `add-client`.
 
 ### Listing all persons: `list`
 

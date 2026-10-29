@@ -254,7 +254,9 @@ removed and tags are lowercase. The new client has the address `Not provided`, n
 
 `AddClientCommand` checks duplicates against all stored clients, including clients hidden by the current filter.
 A duplicate has the same email ignoring case, or the same normalized name and phone. A matching name alone
-does not prevent creation.
+does not prevent creation. `Person.hasSameClientIdentity()` combines the v1.4 identity comparison with Unicode `equalsIgnoreCase()` on whitespace-normalized names. Both add commands use it against the full stored list; inherited `edit` rejects new collisions, including hidden clients.
+
+`Person.isSamePerson()` and the stored-list invariant retain v1.4 semantics so formerly accepted Unicode case pairs can load, be staged and round-trip without losing records. Unrelated edits may preserve an existing case collision; edits that introduce a new collision or violate the original identity rule are rejected before mutation.
 
 `LogicManager` runs Add Client on a staged model and saves that model before publishing it to the live model.
 If saving fails, the live data and displayed filter stay unchanged. A successful save publishes the new client,
@@ -272,7 +274,10 @@ each existing client's projects and next project ID.
 `FindCommandParser` splits the input into keywords and rejects empty input or keywords longer than 50 Unicode
 code points with `Usage: find KEYWORD [KEYWORD]...`. Validation happens before changing the displayed list.
 
-`PersonContainsKeywordsPredicate` copies the keywords and normalizes them with `Locale.ROOT`.
+`PersonContainsKeywordsPredicate` copies the original keywords and compiles each as a `Pattern` with
+`LITERAL | CASE_INSENSITIVE | UNICODE_CASE`. `Matcher.find()` applies locale-independent Unicode case matching to
+substrings, including Turkish I variants, Greek sigma variants and supplementary letters. Literal patterns preserve
+punctuation; matching does not remove accents or expand `ß` to `ss`.
 Every keyword must be a substring of the same client's name, phone, email, or tags. Keywords may match different
 fields. Separate field, tag, and substring helpers keep matching at one level of abstraction.
 
@@ -891,6 +896,20 @@ normal ClientDesk data. Start the application with `java -jar addressbook.jar` f
    Expected: The search filter is cleared and the full client list is shown.
 1. Enter `list-clients extra`.<br>
    Expected: A usage error is shown and the displayed list is unchanged.
+
+### Finding clients with Unicode names
+
+In a disposable data folder, run `add-client n/Işık Studio p/81234567 e/isik@example.com t/startup` and
+`add-client n/Beacon Design p/82345678 e/beacon@example.com`. Record the saved data file's contents before searching.
+
+1. Enter `find IŞIK`.<br>
+   Expected: Only `Işık Studio` is shown, with `Found 1 matching clients.`. The saved file is unchanged.
+1. Enter `find ŞI START`.<br>
+   Expected: The same client is found through partial matches across its name and tag.
+1. Enter `find IŞIK missing`.<br>
+   Expected: `No clients matched: IŞIK missing.` is shown and the full list is restored. The saved file is unchanged.
+1. Add a client named `ΟΣ`, then enter `find ς`.<br>
+   Expected: `ΟΣ` is found despite the different Unicode sigma case form.
 
 ### Adding projects
 
