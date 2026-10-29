@@ -124,6 +124,23 @@ public class ParserUtilTest {
     }
 
     @Test
+    public void parseEmail_invalidUnquotedDots_rejectsNewInputButRetainsStorageCompatibility() throws Exception {
+        for (String email : List.of(".alice@example.com", "alice.@example.com", "a..b@example.com")) {
+            assertThrows(ParseException.class, () -> ParserUtil.parseEmail(email));
+            assertEquals(email, new Email(email).value);
+        }
+        assertEquals(new Email("alice.smith@example.com"), ParserUtil.parseEmail("alice.smith@example.com"));
+    }
+
+    @Test
+    public void parseEmail_quotedLocalPart_preservesDotsButRequiresClosingQuoteForExemption() throws Exception {
+        for (String email : List.of("\".alice\"@example.com", "\"alice.\"@example.com", "\"a..b\"@example.com")) {
+            assertEquals(new Email(email), ParserUtil.parseEmail(email));
+        }
+        assertThrows(ParseException.class, () -> ParserUtil.parseEmail("\"a..b@example.com"));
+    }
+
+    @Test
     public void parseEmail_null_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> ParserUtil.parseEmail((String) null));
     }

@@ -484,3 +484,11 @@ Action | Format, Examples
 **Delete (legacy)** | `delete INDEX`<br>e.g., `delete 3`
 **Clear** | `clear`
 **Exit** | `exit`
+
+### Email dot validation
+
+New email input through `add-client`, `add`, `edit-client` and `edit` rejects an unquoted
+local part (the text before `@`) that starts or ends with a dot or contains consecutive dots.
+For example, `alice.smith@example.com` is accepted, while `.alice@example.com` and
+`a..b@example.com` are rejected. Existing saved records remain readable; correct an old
+address by supplying a valid replacement. This validation does not verify deliverability.

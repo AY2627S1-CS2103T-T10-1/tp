@@ -74,6 +74,13 @@ Automated coverage: NameTest.
 These manual GUI cases require JavaFX. The Trackie text UI runner is incompatible
 with this repository's GUI test plan; automated JavaFX tests exercise panel behavior.
 
+## New email dot validation (#119)
+
+In disposable data, try `.alice@example.com`, `alice.@example.com` and `a..b@example.com`
+through add-client, add, edit and edit-client. Expect an email error and unchanged data.
+`alice.smith@example.com` must succeed. Existing stored dotted-local-part records still load.
+Automated coverage: EmailDotValidationTest and ParserUtilTest.
+
 ## Project changes retain client selection (Week 10 Y1)
 
 Use disposable client data with two clients. Repeat with `find` restricting the list
