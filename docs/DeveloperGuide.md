@@ -802,7 +802,12 @@ testers are expected to do more *exploratory* testing.
    1. Relaunch the app by double-clicking the JAR file.<br>
        Expected: The most recent window size and location are retained.
 
-1. _{ more test cases …​ }_
+1. Launching from the command line
+
+   1. Open a terminal in the folder containing the JAR and run `java -jar addressbook.jar` using Java 25.
+
+   1. Enter `exit` in the command box.<br>
+      Expected: ClientDesk displays its exit acknowledgement and closes normally.
 
 ### Viewing help
 
@@ -865,7 +870,14 @@ normal ClientDesk data. Start the application with `java -jar addressbook.jar` f
    1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
       Expected: Similar to previous.
 
-1. _{ more test cases …​ }_
+1. Deleting a person from search results
+
+   1. Enter `find Bernice`, then enter `delete 1`.<br>
+      Expected: Bernice is deleted. Entering `list` shows the remaining people without deleting anyone who was
+      hidden by the search.
+
+   1. Close and restart ClientDesk, then enter `find Bernice`.<br>
+      Expected: Bernice remains deleted and ClientDesk restores the full list because there are no matches.
 
 ### Deleting a client
 
@@ -948,11 +960,30 @@ to see their current indexes.
 
 ### Saving data
 
-1. Dealing with missing/corrupted data files
+Use a disposable folder containing the JAR for these tests. Close ClientDesk before moving or editing its data file.
 
-   1. _{Explain how to simulate missing or corrupted data files and state the expected behavior.}_
+1. Persisting successful changes
 
-1. _{ more test cases …​ }_
+   1. Enter `add-client n/Persistence Test p/91234567 e/persistence@example.com`, then add a project to that
+      client. Close and restart ClientDesk.<br>
+      Expected: The client and project remain available with the same values and project ID.
+
+1. Starting without a data file
+
+   1. Move `data/addressbook.json` out of the disposable folder, then start ClientDesk.<br>
+      Expected: ClientDesk starts with sample clients. The moved file remains unchanged.
+
+   1. Make a successful data-changing command, close ClientDesk and inspect `data/addressbook.json`.<br>
+      Expected: ClientDesk creates a valid data file containing the change.
+
+1. Starting with a corrupted data file
+
+   1. Back up `data/addressbook.json`, replace its contents with `{ invalid json`, then start ClientDesk.<br>
+      Expected: ClientDesk shows an error identifying the data file and closes without opening the command window.
+      The corrupted file is not overwritten.
+
+   1. Restore the backup and restart ClientDesk.<br>
+      Expected: ClientDesk opens with the restored clients and projects.
 
 ### Editing a project
 
