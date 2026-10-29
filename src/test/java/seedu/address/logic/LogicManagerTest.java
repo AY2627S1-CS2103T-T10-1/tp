@@ -91,7 +91,8 @@ public class LogicManagerTest {
         ReadOnlyAddressBook original = new AddressBook(model.getAddressBook());
         String originalFile = Files.readString(file);
 
-        for (String blank : List.of("\u0085", "\u2003", "\u3000", "\u00a0", " \u2003\t\u00a0 ")) {
+        for (String blank : List.of("\u0085", "\u2003", "\u3000", "\u00a0",
+                " \u2003\t\u00a0 ", "\u2003\u001c\u2003")) {
             for (String command : List.of("add n/New Client p/81234567 e/new@example.com a/" + blank,
                     "edit 1 a/" + blank)) {
                 assertThrows(ParseException.class, () -> logic.execute(command));

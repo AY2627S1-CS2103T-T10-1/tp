@@ -74,7 +74,7 @@ public class ParserUtil {
     public static Address parseAddress(String address) throws ParseException {
         requireNonNull(address);
         String trimmedAddress = address.trim();
-        boolean isBlank = trimmedAddress.matches("\\p{IsWhite_Space}*");
+        boolean isBlank = trimmedAddress.matches("[\\p{IsWhite_Space}\\p{javaWhitespace}]*");
         if (!Address.isValidAddress(trimmedAddress) || isBlank) {
             throw new ParseException(Address.MESSAGE_CONSTRAINTS);
         }
