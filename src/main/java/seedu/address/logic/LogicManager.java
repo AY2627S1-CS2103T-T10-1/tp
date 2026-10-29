@@ -25,7 +25,6 @@ import seedu.address.logic.commands.RemarkCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
-import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.person.Person;
@@ -187,21 +186,23 @@ public class LogicManager implements Logic {
     }
 
     /**
-     * Saves an email update before returning success and restores the record if saving fails.
+     * Saves a proposed email update before publishing changes to the live model and selection.
      * Unchanged emails do not trigger a save. The current list filter is preserved.
      */
     private CommandResult executeEditClient(EditClientCommand command) throws CommandException {
-        AddressBook previousData = new AddressBook(model.getAddressBook());
-        CommandResult result = command.execute(model);
-        if (previousData.equals(model.getAddressBook())) {
+        Model proposedModel = new ModelManager(model.getAddressBook(), model.getUserPrefs());
+        Set<Person> displayedClients = new HashSet<>(model.getFilteredPersonList());
+        proposedModel.updateFilteredPersonList(displayedClients::contains);
+        CommandResult result = command.execute(proposedModel);
+        if (model.getAddressBook().equals(proposedModel.getAddressBook())) {
             return result;
         }
         try {
-            storage.saveAddressBook(model.getAddressBook());
+            storage.saveAddressBook(proposedModel.getAddressBook());
         } catch (IOException ioe) {
-            model.setAddressBook(previousData);
             throw new CommandException(EditClientCommand.MESSAGE_SAVE_FAILURE, ioe);
         }
+        model.setAddressBook(proposedModel.getAddressBook());
         return result;
     }
 

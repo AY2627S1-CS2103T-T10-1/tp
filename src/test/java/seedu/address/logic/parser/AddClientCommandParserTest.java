@@ -10,7 +10,6 @@ import seedu.address.logic.commands.AddClientCommand;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
-import seedu.address.model.tag.Tag;
 import seedu.address.testutil.PersonBuilder;
 
 public class AddClientCommandParserTest {
@@ -107,8 +106,17 @@ public class AddClientCommandParserTest {
     public void parse_invalidTags_reportsConstraint() {
         for (String tag : new String[] {"", "Startup", "-startup", "startup-", "web design", "a".repeat(31)}) {
             assertParseFailure(parser, " n/Acme p/91234567 e/bob@acme.com t/" + tag,
-                    Tag.MESSAGE_CONSTRAINTS);
+                    AddClientCommandParser.MESSAGE_TAG_CONSTRAINTS);
         }
+    }
+
+    @Test
+    public void parse_uppercaseTag_explainsHowToCorrectInput() {
+        String args = " n/Acme Studio p/6591234567 e/Bob@acme.com t/";
+        assertParseFailure(parser, args + "VIP",
+                "Tag must be 1–30 lowercase letters, numbers, or internal hyphens.");
+        assertParseSuccess(parser, args + "vip",
+                new AddClientCommand(new PersonBuilder(client).withTags("vip").build()));
     }
 
     @Test
