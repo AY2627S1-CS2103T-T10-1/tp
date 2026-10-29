@@ -257,6 +257,12 @@ If saving fails, the live data and displayed filter stay unchanged. A successful
 restores the full list and selects the new entry. Copying the existing address book into the staged model retains
 each existing client's projects and next project ID.
 
+### Editing a client's email safely
+
+`LogicManager` executes `edit-client` against a proposed model carrying the currently displayed clients. An unchanged email skips saving. Otherwise, storage must succeed before the proposed records replace the live records. This preserves the live filter, selection and details when saving fails; successful publication re-evaluates the existing filter against the new email.
+
+`EditClientUiTest` covers a selected client found by their old email. Its failing storage stub verifies that a rejected email change cannot clear the selection or details.
+
 ### Find clients
 
 `FindCommandParser` splits the input into keywords and rejects empty input or keywords longer than 50 Unicode
@@ -800,6 +806,15 @@ testers are expected to do more *exploratory* testing.
    Expected: The first two report an unknown command. The last reports `Usage: help [COMMAND]`.
 1. Enter `find alex`, note the displayed clients, then open Help through the command, Help menu and `F1`.<br>
    Expected: Each route opens Help. Closing it leaves the displayed clients and their data unchanged.
+
+### Setting a remark
+
+1. On disposable data with a displayed client, enter `remark 1 r/Keep this reminder`, then `view 1`.<br>
+   Expected: the selected client has that remark.
+1. Enter `remark 1 r/Call Monday r/Call Tuesday`, then `remark 1 r/Important reminder r/`.<br>
+   Expected: both commands report a repeated `r/` prefix; `view 1` still shows `Keep this reminder`.
+1. Enter `remark 1 r/`, then `view 1`.<br>
+   Expected: the remark is empty. The legacy `remark 1` shorthand also clears it.
 
 ### Adding a client
 
