@@ -801,7 +801,17 @@ testers are expected to do more *exploratory* testing.
    1. Resize the window to an optimal size. Move the window to a different location. Close the window.
 
    1. Relaunch the app by double-clicking the JAR file.<br>
-       Expected: The most recent window size and location are retained.
+       Expected: The most recent window size and location are retained when they fit the available screen area.
+       After changing screen resolution or disconnecting a screen, the window is resized or moved to remain visible.
+
+1. Using a smaller display
+
+   1. Set the display to 1280x720 with 150% scaling, then launch the app. Repeat after saving a larger window size.
+
+   1. Enter `view 1` for a client with several projects and scroll to the last project. Enter an invalid command,
+      then open `help` and resize the Help window if needed.<br>
+      Expected: The main window fits the available desktop area. Command entry, results, client list, project details
+      and their scrollbars remain usable. Help instructions and Copy URL remain accessible.
 
 1. Launching from the command line
 
