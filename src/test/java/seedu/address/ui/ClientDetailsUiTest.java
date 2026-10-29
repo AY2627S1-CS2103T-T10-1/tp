@@ -37,6 +37,7 @@ import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
 import seedu.address.testutil.JavaFxTestUtil;
+import seedu.address.testutil.PersonBuilder;
 
 /**
  * Exercises the details panel through the real command box and list selection.
@@ -140,6 +141,58 @@ public class ClientDetailsUiTest {
                 checkClientDeletion(command, filtered, filtered ? 3 : 4, 1);
             }
         }
+    }
+
+    @Test
+    public void clientUpdates_selectedClient_refreshDetails() throws Exception {
+        for (String filter : List.of("list-clients", "find Alice")) {
+            for (String command : List.of("remark 1 r/New note", "remark 1 r/",
+                    "edit-client 1 e/updated@example.com")) {
+                checkClientUpdate(filter, 1, command, 1);
+            }
+        }
+    }
+
+    @Test
+    public void clientUpdates_otherClientOrFilteredOut_preservesAppropriateSelection() throws Exception {
+        checkClientUpdate("list-clients", 2, "remark 1 r/New note", 2);
+        checkClientUpdate("list-clients", 2, "edit-client 1 e/updated@example.com", 2);
+        checkClientUpdate("find " + ALICE.getEmail(), 1, "edit-client 1 e/updated@example.com", 0);
+    }
+
+    /** Checks that successful field updates retain the displayed client rather than a stale snapshot. */
+    private void checkClientUpdate(String filter, int selectedIndex, String command, int expectedIndex)
+            throws Exception {
+        ModelManager model = new ModelManager();
+        model.addPerson(new PersonBuilder(ALICE).withRemark("Original note").build());
+        model.addPerson(BENSON);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(testFolder.resolve("update-clients.json"));
+        LogicManager logic = new LogicManager(model, new StorageManager(storage,
+                new JsonUserPrefsStorage(testFolder.resolve("update-preferences.json"))));
+        JavaFxTestUtil.runOnFxThread(() -> {
+            MainWindow window = new MainWindow(new Stage(), logic, storage.getAddressBookFilePath());
+            try {
+                window.fillInnerParts();
+                window.show();
+                TextField input = (TextField) window.getPrimaryStage().getScene().lookup("#commandTextField");
+                TextArea details = (TextArea) window.getPrimaryStage().getScene().lookup("#clientDetails");
+                enter(input, filter);
+                enter(input, "view " + selectedIndex);
+                enter(input, command);
+                assertTrue(input.getText().isEmpty());
+                Person expected = expectedIndex == 0 ? null : model.getFilteredPersonList().get(expectedIndex - 1);
+                assertEquals(expected, window.getPersonListPanel().selectedClientProperty().get());
+                if (expected == null) {
+                    assertEquals(ClientDetailsPanel.MESSAGE_EMPTY, details.getText());
+                } else {
+                    assertTrue(details.getText().contains("Name: " + expected.getName()));
+                    assertTrue(details.getText().contains("Email: " + expected.getEmail()));
+                    assertTrue(details.getText().contains("Remark: " + expected.getRemark() + "\nTags:"));
+                }
+            } finally {
+                List.copyOf(Window.getWindows()).forEach(Window::hide);
+            }
+        });
     }
 
     /** Checks selection, details and failure atomicity for deletion from the displayed list. */

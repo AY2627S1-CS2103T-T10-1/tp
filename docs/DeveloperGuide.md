@@ -131,7 +131,9 @@ list replacement and refreshes the details without another `view` command. Add a
 use the same result mechanism as edit; the UI does not parse command text to identify them.
 
 When a successful command does not request a selection, `MainWindow` restores the previously
-selected client if it is still displayed. Otherwise, it clears selection. Deleting a client
+selected client's current record by its stored identity if it is still displayed. This keeps
+remark and email updates selected without retaining an outdated record. Otherwise, it clears selection. Deleting a
+client
 therefore cannot select the unrelated client that moves into the deleted row; deleting another
 client preserves the current selection.
 
