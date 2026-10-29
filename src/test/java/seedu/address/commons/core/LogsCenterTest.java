@@ -83,6 +83,69 @@ public class LogsCenterTest {
     }
 
     @Test
+    public void addFileHandler_unicodeCaseFoldedRotationAndLockLinks_preservesExternalFiles() throws Exception {
+        for (String suffix : List.of(".0", ".0.lck")) {
+            Path home = Files.createDirectory(temporaryFolder.resolve("unicode-case-home" + suffix));
+            Path outside = temporaryFolder.resolve("unicode-case-outside" + suffix);
+            String originalContents = "Keep this external file";
+            Files.writeString(outside, originalContents);
+            String aliasPrefix = suffix.endsWith(".lck") ? "addreßbook.log" : "addreſſbook.log";
+            Path alias = home.resolve(aliasPrefix + suffix);
+            try {
+                Files.createSymbolicLink(alias, outside);
+            } catch (UnsupportedOperationException | FileSystemException exception) {
+                assumeTrue(false, "Symbolic links are unavailable: " + exception);
+            }
+            assumeTrue(Files.exists(home.resolve("addressbook.log" + suffix), LinkOption.NOFOLLOW_LINKS),
+                    "The filesystem does not apply this Unicode filename case fold.");
+
+            Logger targetLogger = Logger.getAnonymousLogger();
+            targetLogger.setUseParentHandlers(false);
+            try {
+                LogsCenter.addFileHandler(targetLogger, home.resolve("addressbook.log"));
+
+                assertEquals(0, targetLogger.getHandlers().length);
+                assertEquals(originalContents, Files.readString(outside));
+            } finally {
+                for (Handler handler : targetLogger.getHandlers()) {
+                    handler.close();
+                    targetLogger.removeHandler(handler);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void addFileHandler_unrelatedExternalRotationLink_doesNotBlockInternalLogging() throws Exception {
+        Path home = Files.createDirectory(temporaryFolder.resolve("unrelated-log-home"));
+        Path outside = temporaryFolder.resolve("unrelated-outside.log");
+        String originalContents = "Keep unrelated external file";
+        Files.writeString(outside, originalContents);
+        try {
+            Files.createSymbolicLink(home.resolve("unrelated.log.0"), outside);
+        } catch (UnsupportedOperationException | FileSystemException exception) {
+            assumeTrue(false, "Symbolic links are unavailable: " + exception);
+        }
+        Logger targetLogger = Logger.getAnonymousLogger();
+        targetLogger.setUseParentHandlers(false);
+        targetLogger.setLevel(Level.INFO);
+        try {
+            LogsCenter.addFileHandler(targetLogger, home.resolve("addressbook.log"));
+            assertEquals(1, targetLogger.getHandlers().length);
+            targetLogger.info("Internal log entry");
+            targetLogger.getHandlers()[0].flush();
+
+            assertTrue(Files.readString(home.resolve("addressbook.log.0")).contains("Internal log entry"));
+            assertEquals(originalContents, Files.readString(outside));
+        } finally {
+            for (Handler handler : targetLogger.getHandlers()) {
+                handler.close();
+                targetLogger.removeHandler(handler);
+            }
+        }
+    }
+
+    @Test
     public void addFileHandler_existingLog_preservesAndAppendsEntries() throws Exception {
         Path existingLog = temporaryFolder.resolve("addressbook.log.0");
         String previousEntry = "Existing log entry\n";

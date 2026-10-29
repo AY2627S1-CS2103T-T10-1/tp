@@ -1,15 +1,18 @@
 package seedu.address.ui;
 
+import java.awt.Point;
 import java.nio.file.Path;
 import java.util.logging.Logger;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
@@ -139,14 +142,34 @@ public class MainWindow extends UiPart<Stage> {
     }
 
     /**
-     * Sets the default size based on {@code guiSettings}.
+     * Restores the saved geometry on its screen, or on the primary screen if that screen is unavailable.
      */
     private void setWindowDefaultSize(GuiSettings guiSettings) {
-        primaryStage.setHeight(guiSettings.getWindowHeight());
-        primaryStage.setWidth(guiSettings.getWindowWidth());
-        if (guiSettings.getWindowCoordinates() != null) {
-            primaryStage.setX(guiSettings.getWindowCoordinates().getX());
-            primaryStage.setY(guiSettings.getWindowCoordinates().getY());
+        Point coordinates = guiSettings.getWindowCoordinates();
+        Screen screen = Screen.getPrimary();
+        if (coordinates != null) {
+            screen = Screen.getScreensForRectangle(coordinates.getX(), coordinates.getY(), 1, 1)
+                    .stream().findFirst().orElse(screen);
+        }
+        setWindowDefaultSize(guiSettings, screen.getVisualBounds());
+    }
+
+    /**
+     * Fits the saved window geometry inside the available screen area.
+     */
+    void setWindowDefaultSize(GuiSettings guiSettings, Rectangle2D visualBounds) {
+        double width = Math.min(visualBounds.getWidth(),
+                Math.max(primaryStage.getMinWidth(), guiSettings.getWindowWidth()));
+        double height = Math.min(visualBounds.getHeight(),
+                Math.max(primaryStage.getMinHeight(), guiSettings.getWindowHeight()));
+        primaryStage.setWidth(width);
+        primaryStage.setHeight(height);
+        Point coordinates = guiSettings.getWindowCoordinates();
+        if (coordinates != null) {
+            primaryStage.setX(Math.max(visualBounds.getMinX(),
+                    Math.min(coordinates.getX(), visualBounds.getMaxX() - width)));
+            primaryStage.setY(Math.max(visualBounds.getMinY(),
+                    Math.min(coordinates.getY(), visualBounds.getMaxY() - height)));
         }
     }
 
