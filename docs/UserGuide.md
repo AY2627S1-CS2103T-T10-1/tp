@@ -207,7 +207,7 @@ Stores one free-text remark for a client, such as contact preferences or a remin
 Format: `remark INDEX r/[REMARK]`
 
 * `INDEX` is a positive number from the currently displayed client list, including `find` results.
-* Use lowercase `r/`, preceded by a space. Leading and trailing spaces around the remark are removed.
+* Supply at most one lowercase `r/`, preceded by a space. Repeated `r/` prefixes are rejected without changing the remark. Leading and trailing spaces around the remark are removed.
 * Use an **empty `r/`** to clear the remark. The legacy shorthand `remark 1` also clears the first displayed client's remark.
 * A successful update shows all clients and preserves the client's other fields and projects. Check the displayed indexes again after the list refreshes.
 * Use `view CLIENT_INDEX` to inspect the updated remark. A missing or out-of-range client index reports an error without updating any record.
