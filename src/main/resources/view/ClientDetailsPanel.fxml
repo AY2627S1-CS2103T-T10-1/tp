@@ -40,7 +40,7 @@
   </VBox>
 
   <TabPane id="clientTabs" fx:id="clientTabs" tabClosingPolicy="UNAVAILABLE" styleClass="workspace-tabs"
-           minHeight="90" VBox.vgrow="ALWAYS">
+           minHeight="80" VBox.vgrow="ALWAYS">
     <tabs>
       <Tab id="projectsTab" fx:id="projectsTab" text="Projects">
         <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="project-scroll">
