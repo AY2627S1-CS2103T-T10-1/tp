@@ -4,7 +4,7 @@
 
 ClientDesk is a keyboard-first desktop CRM for freelancers and independent professionals who type fast and prefer typing to mouse interactions. It is designed to keep client details, projects, deadlines and follow-ups in one place.
 
-ClientDesk v1.4 is the alpha release. It supports client management and recording, viewing, editing and deleting
+ClientDesk v1.5 is the release candidate. It supports client management and recording, viewing, editing and deleting
 projects with deadlines, status and priority. This release improves data-file safety, command help and project selection
 in the details panel. Notes, follow-ups, agenda and undo are planned for later releases.
 
