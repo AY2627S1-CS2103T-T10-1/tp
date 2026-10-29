@@ -126,6 +126,19 @@ public class JsonAdaptedPersonProjectsTest {
     }
 
     @Test
+    public void toModelType_duplicateLegacyLowercaseKey_throwsIllegalValueException() throws Exception {
+        ObjectNode json = personJson(PERSON);
+        ArrayNode projects = (ArrayNode) json.get("projects");
+        ObjectNode original = (ObjectNode) projects.get(0);
+        original.put("title", "İ Website");
+        ObjectNode duplicate = original.deepCopy();
+        duplicate.put("id", 8);
+        duplicate.put("title", "i\u0307 WEBSITE");
+        projects.add(duplicate);
+        assertInvalid(json);
+    }
+
+    @Test
     public void toModelType_nullProject_throwsIllegalValueException() throws Exception {
         ObjectNode json = personJson(PERSON);
         ArrayNode projects = (ArrayNode) json.get("projects");
