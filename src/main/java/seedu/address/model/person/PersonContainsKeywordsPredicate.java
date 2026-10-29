@@ -3,8 +3,8 @@ package seedu.address.model.person;
 import static java.util.Objects.requireNonNull;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 import seedu.address.commons.util.ToStringBuilder;
 
@@ -14,7 +14,7 @@ import seedu.address.commons.util.ToStringBuilder;
  */
 public class PersonContainsKeywordsPredicate implements Predicate<Person> {
     private final List<String> keywords;
-    private final List<String> normalizedKeywords;
+    private final List<Pattern> keywordPatterns;
 
     /**
      * Creates a predicate with a defensive copy of the given {@code keywords}.
@@ -23,8 +23,9 @@ public class PersonContainsKeywordsPredicate implements Predicate<Person> {
      */
     public PersonContainsKeywordsPredicate(List<String> keywords) {
         this.keywords = List.copyOf(keywords);
-        normalizedKeywords = this.keywords.stream()
-                .map(keyword -> keyword.toLowerCase(Locale.ROOT))
+        keywordPatterns = this.keywords.stream()
+                .map(keyword -> Pattern.compile(keyword,
+                        Pattern.LITERAL | Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE))
                 .toList();
     }
 
@@ -38,14 +39,14 @@ public class PersonContainsKeywordsPredicate implements Predicate<Person> {
     @Override
     public boolean test(Person person) {
         requireNonNull(person);
-        return !normalizedKeywords.isEmpty()
-                && normalizedKeywords.stream().allMatch(keyword -> hasMatchingField(person, keyword));
+        return !keywordPatterns.isEmpty()
+                && keywordPatterns.stream().allMatch(keyword -> hasMatchingField(person, keyword));
     }
 
     /**
-     * Returns whether any searchable field contains the normalized {@code keyword}.
+     * Returns whether any searchable field contains the literal {@code keyword}.
      */
-    private boolean hasMatchingField(Person person, String keyword) {
+    private boolean hasMatchingField(Person person, Pattern keyword) {
         return containsKeyword(person.getName().fullName, keyword)
                 || containsKeyword(person.getPhone().value, keyword)
                 || containsKeyword(person.getEmail().value, keyword)
@@ -53,17 +54,18 @@ public class PersonContainsKeywordsPredicate implements Predicate<Person> {
     }
 
     /**
-     * Returns whether any tag contains the normalized {@code keyword}.
+     * Returns whether any tag contains the literal {@code keyword}.
      */
-    private boolean hasMatchingTag(Person person, String keyword) {
+    private boolean hasMatchingTag(Person person, Pattern keyword) {
         return person.getTags().stream().anyMatch(tag -> containsKeyword(tag.tagName, keyword));
     }
 
     /**
-     * Returns whether {@code value} contains the normalized {@code keyword}, independently of the default locale.
+     * Returns whether {@code value} contains the literal {@code keyword}, using locale-independent Unicode case
+     * matching.
      */
-    private boolean containsKeyword(String value, String keyword) {
-        return value.toLowerCase(Locale.ROOT).contains(keyword);
+    private boolean containsKeyword(String value, Pattern keyword) {
+        return keyword.matcher(value).find();
     }
 
     @Override
