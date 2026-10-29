@@ -44,13 +44,29 @@ public class PersonContainsKeywordsPredicate implements Predicate<Person> {
     }
 
     /**
-     * Returns whether any searchable field contains the literal {@code keyword}.
+     * Returns whether any searchable field matches {@code keyword}, allowing formatting in phone keywords.
      */
     private boolean hasMatchingField(Person person, Pattern keyword) {
         return containsKeyword(person.getName().fullName, keyword)
-                || containsKeyword(person.getPhone().value, keyword)
+                || hasMatchingPhone(person.getPhone().value, keyword)
                 || containsKeyword(person.getEmail().value, keyword)
                 || hasMatchingTag(person, keyword);
+    }
+
+    /**
+     * Matches stored digits using a phone keyword with an optional plus and formatting hyphens.
+     * Other fields still match the original keyword literally.
+     */
+    private boolean hasMatchingPhone(String phone, Pattern keyword) {
+        if (containsKeyword(phone, keyword)) {
+            return true;
+        }
+        String phoneKeyword = keyword.pattern();
+        if (!phoneKeyword.matches("\\+?[0-9 -]+")) {
+            return false;
+        }
+        String digits = phoneKeyword.replaceAll("[+ -]", "");
+        return !digits.isEmpty() && phone.contains(digits);
     }
 
     /**
