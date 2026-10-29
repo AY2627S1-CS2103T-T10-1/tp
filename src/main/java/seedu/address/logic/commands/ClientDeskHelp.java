@@ -114,6 +114,7 @@ public class ClientDeskHelp {
                 "Set, replace or clear a client's remark.",
                 "remark INDEX r/[REMARK]",
                 "INDEX is a positive integer from the currently displayed client list. "
+                + "Supply at most one r/ prefix; repeated r/ prefixes are rejected. "
                 + "The remark replaces any existing text; an empty r/ clears it. "
                 + "A successful update shows all clients.",
                 "remark 1 r/Prefers email contact.; remark 1 r/"));
