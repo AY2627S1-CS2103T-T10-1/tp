@@ -369,10 +369,12 @@ Field | Legacy Add/Edit rules
 Name | 1–80 Unicode code points containing at least one letter or number; allows letters, combining marks, numbers, spaces, straight or curly apostrophes, hyphens, periods, ampersands and parentheses. Combining marks count towards the limit and the supplied spelling is preserved.
 Phone | At least 3 digits, with no spaces, hyphens or leading `+`. This differs from `add-client`'s 7–15-digit formatted-phone rule.
 Email | 3–254 characters, exactly one `@`, no spaces, and a dotted domain whose labels do not start or end with a hyphen.
-Address | A non-blank value.
+Address | A non-blank value; an address containing only spaces, including Unicode spaces, is rejected.
 Tag | 1–30 letters, numbers or internal hyphens. Uppercase is accepted and preserved; `add-client` requires lowercase tags.
 
 A duplicate is a client with the same email ignoring case, or the same normalized name and phone. The same name alone is allowed. A new legacy record starts with no projects or remark. Unicode name case variants use the same duplicate check as `add-client`.
+
+Previously saved addresses remain readable. Use `edit INDEX a/ADDRESS` to correct an older blank address.
 
 ### Listing all persons: `list`
 

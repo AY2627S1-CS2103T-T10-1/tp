@@ -14,7 +14,8 @@ public class ClientDeskHelp {
             + "spaces, apostrophes, hyphens, periods, & and parentheses are allowed.\n"
             + "Phone: at least 3 digits, without spaces, hyphens or +. Email: 3–254 characters, "
             + "one @, no spaces and a dotted domain whose labels do not start or end with a hyphen.\n"
-            + "Address must not be blank. Tags: 1–30 letters, numbers or internal hyphens; case is preserved.\n"
+            + "Address must not be blank, including Unicode spaces. "
+            + "Tags: 1–30 letters, numbers or internal hyphens; case is preserved.\n"
             + "Use lowercase prefixes separated by spaces. Do not repeat n/, p/, e/ or a/. "
             + "Duplicates: same email ignoring case, or the same normalized name and phone.";
 
