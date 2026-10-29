@@ -1,6 +1,7 @@
 package seedu.address.commons.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -37,6 +38,18 @@ public class JsonUtilTest {
         assertEquals(serializableTestClass.getName(), SerializableTestClass.getNameTestValue());
         assertEquals(serializableTestClass.getListOfLocalDateTimes(), SerializableTestClass.getListTestValues());
         assertEquals(serializableTestClass.getMapOfIntegerToString(), SerializableTestClass.getHashMapTestValues());
+    }
+
+    @Test
+    public void fromJsonString_singleRootAllowsTrailingWhitespaceAndPrimitiveValues() throws IOException {
+        assertEquals(42, JsonUtil.fromJsonString("42 \n\t", Integer.class));
+        assertEquals("ClientDesk", JsonUtil.fromJsonString("\"ClientDesk\" \r\n", String.class));
+    }
+
+    @Test
+    public void fromJsonString_rejectsTrailingGarbageAndSecondRoot() {
+        assertThrows(IOException.class, () -> JsonUtil.fromJsonString("{\"value\":1} trailing", Object.class));
+        assertThrows(IOException.class, () -> JsonUtil.fromJsonString("{\"value\":1} {\"value\":2}", Object.class));
     }
 
     //TODO: @Test jsonUtil_readJsonStringToObjectInstance_correctObject()
