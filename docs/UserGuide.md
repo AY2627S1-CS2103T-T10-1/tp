@@ -429,11 +429,16 @@ Format: `exit`
 ClientDesk automatically saves successful data changes. You do not need to save manually.
 `add-project` saves before displaying success, and projects survive restarting the application.
 `find`, `help` and `list-clients` do not write the data file.
+If another ClientDesk instance has saved changes since this window loaded the data, a save is rejected to
+preserve those newer changes. Close and reopen this window to reload the latest data before continuing.
+ClientDesk may leave an `addressbook.json.lock` sidecar file beside the data file; do not remove it while
+ClientDesk is running. It is reused for subsequent saves.
 
 ### Editing the data file
 
 ClientDesk data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are
-welcome to update data directly by editing that file. Back up the file first. Each client's `projects` array stores
+welcome to update data directly by editing that file. Close all ClientDesk windows and back up the file first.
+Each client's `projects` array stores
 project IDs, titles, deadlines, status and priority. Preserve the `nextProjectId` counter, which must be greater than
 every existing project ID. Files created before project support still load with no projects.
 
