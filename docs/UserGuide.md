@@ -193,6 +193,8 @@ details.
 
 Successful `add-project`, `edit-project` and `delete-project` commands select the affected client and refresh their details automatically, including when using a filtered list. Invalid project commands and failed project saves retain the previous selection and details. Deleting the last project shows `Projects: No projects yet.`; deleting the selected client clears the panel to its instructions.
 
+Successful legacy `add` and `edit` commands select the newly added or edited client after the list refreshes. An edit that changes the client's name keeps that client selected even when its row moves. A failed save retains the previous selection and details.
+
 ### Editing a client's email: `edit-client`
 
 Updates a client's email while preserving their other fields, remark, projects and the current search filter.
