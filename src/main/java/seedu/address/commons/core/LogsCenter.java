@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
@@ -98,8 +99,9 @@ public class LogsCenter {
             Path home = normalizedLogFile.getParent().toRealPath();
             AppPaths.resolveWithinHome(normalizedLogFile, home);
             // FileHandler adds rotation numbers, instance suffixes and a lock suffix to this name.
+            String logFilePrefix = (normalizedLogFile.getFileName() + ".").toLowerCase(Locale.ROOT);
             try (var files = Files.newDirectoryStream(home,
-                    path -> path.getFileName().toString().startsWith(normalizedLogFile.getFileName() + "."))) {
+                    path -> path.getFileName().toString().toLowerCase(Locale.ROOT).startsWith(logFilePrefix))) {
                 for (Path path : files) {
                     AppPaths.resolveWithinHome(path, home);
                 }

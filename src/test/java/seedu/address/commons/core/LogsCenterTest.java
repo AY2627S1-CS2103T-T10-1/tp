@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import java.io.IOException;
 import java.nio.file.FileSystemException;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +42,37 @@ public class LogsCenterTest {
                 LogsCenter.addFileHandler(targetLogger, home.resolve("addressbook.log"));
                 assertEquals(0, targetLogger.getHandlers().length);
                 assertEquals("Keep this external log", Files.readString(outside));
+            } finally {
+                for (Handler handler : targetLogger.getHandlers()) {
+                    handler.close();
+                    targetLogger.removeHandler(handler);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void addFileHandler_caseVariantExternalRotationAndLockLinks_preservesExternalFiles() throws Exception {
+        for (String suffix : List.of(".0", ".0.lck")) {
+            Path home = Files.createDirectory(temporaryFolder.resolve("case-home" + suffix));
+            Path outside = temporaryFolder.resolve("case-outside" + suffix);
+            String originalContents = "Keep this external file";
+            Files.writeString(outside, originalContents);
+            try {
+                Files.createSymbolicLink(home.resolve("ADDRESSBOOK.LOG" + suffix), outside);
+            } catch (UnsupportedOperationException | FileSystemException exception) {
+                assumeTrue(false, "Symbolic links are unavailable: " + exception);
+            }
+            assumeTrue(Files.exists(home.resolve("addressbook.log" + suffix), LinkOption.NOFOLLOW_LINKS),
+                    "The filesystem does not treat filename case variants as aliases.");
+
+            Logger targetLogger = Logger.getAnonymousLogger();
+            targetLogger.setUseParentHandlers(false);
+            try {
+                LogsCenter.addFileHandler(targetLogger, home.resolve("addressbook.log"));
+
+                assertEquals(0, targetLogger.getHandlers().length);
+                assertEquals(originalContents, Files.readString(outside));
             } finally {
                 for (Handler handler : targetLogger.getHandlers()) {
                     handler.close();
