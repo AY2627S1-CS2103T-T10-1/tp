@@ -237,6 +237,35 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_combiningMarkNames_surviveClientAndLegacyCommandsAndReload() throws Exception {
+        JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(
+                temporaryFolder.resolve("combiningNames.json"));
+        for (String name : List.of("अनिल", "วิชัย", "Jose\u0301")) {
+            model = new ModelManager();
+            logic = createLogic(addressBookStorage);
+
+            logic.execute("add-client n/" + name + " p/91234567 e/client@example.com");
+            assertEquals(name, addressBookStorage.readAddressBook().orElseThrow()
+                    .getPersonList().getFirst().getName().fullName);
+
+            logic.execute("edit-client 1 e/updated@example.com");
+            assertEquals(name, addressBookStorage.readAddressBook().orElseThrow()
+                    .getPersonList().getFirst().getName().fullName);
+            assertEquals("updated@example.com", addressBookStorage.readAddressBook().orElseThrow()
+                    .getPersonList().getFirst().getEmail().value);
+
+            logic.execute("edit 1 n/" + name + " & Co.");
+            assertEquals(name + " & Co.", addressBookStorage.readAddressBook().orElseThrow()
+                    .getPersonList().getFirst().getName().fullName);
+
+            logic.execute("add n/" + name + " p/87654321 e/legacy@example.com a/Somewhere");
+            ReadOnlyAddressBook reloaded = addressBookStorage.readAddressBook().orElseThrow();
+            assertEquals(name, reloaded.getPersonList().getLast().getName().fullName);
+            assertEquals(model.getAddressBook(), reloaded);
+        }
+    }
+
+    @Test
     public void execute_listAndExit_doNotSaveAddressBook() throws Exception {
         SwitchableJsonAddressBookStorage addressBookStorage = new SwitchableJsonAddressBookStorage(
                 temporaryFolder.resolve("readOnlyCommands.json"));
