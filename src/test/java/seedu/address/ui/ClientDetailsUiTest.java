@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
+import static seedu.address.testutil.TypicalPersons.CARL;
+import static seedu.address.testutil.TypicalPersons.DANIEL;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -22,6 +24,7 @@ import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import seedu.address.logic.LogicManager;
+import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.person.Person;
@@ -117,6 +120,83 @@ public class ClientDetailsUiTest {
     @Test
     public void projectChanges_filteredList_refreshCorrectClientAndPreserveDetailsOnFailure() throws Exception {
         checkProjectRefresh(true);
+    }
+
+    @Test
+    public void clientDeletion_selectedClient_clearsDetails() throws Exception {
+        for (String command : List.of("delete-client", "delete")) {
+            for (boolean filtered : List.of(false, true)) {
+                for (int index : List.of(1, 2, filtered ? 3 : 4)) {
+                    checkClientDeletion(command, filtered, index, index);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void clientDeletion_otherClient_preservesSelection() throws Exception {
+        for (String command : List.of("delete-client", "delete")) {
+            for (boolean filtered : List.of(false, true)) {
+                checkClientDeletion(command, filtered, filtered ? 3 : 4, 1);
+            }
+        }
+    }
+
+    /** Checks selection, details and failure atomicity for deletion from the displayed list. */
+    private void checkClientDeletion(String command, boolean filtered, int selectedIndex, int deletedIndex)
+            throws Exception {
+        ModelManager model = new ModelManager();
+        for (Person client : List.of(ALICE, BENSON, CARL, DANIEL)) {
+            model.addPerson(client);
+        }
+        ReadOnlyAddressBook original = new AddressBook(model.getAddressBook());
+        AtomicBoolean failSave = new AtomicBoolean();
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(testFolder.resolve("deletion-clients.json")) {
+            @Override
+            public void saveAddressBook(ReadOnlyAddressBook data) throws IOException {
+                if (failSave.get()) {
+                    throw new IOException("Simulated write failure");
+                }
+                super.saveAddressBook(data);
+            }
+        };
+        LogicManager logic = new LogicManager(model, new StorageManager(storage,
+                new JsonUserPrefsStorage(testFolder.resolve("deletion-preferences.json"))));
+        JavaFxTestUtil.runOnFxThread(() -> {
+            MainWindow window = new MainWindow(new Stage(), logic, storage.getAddressBookFilePath());
+            try {
+                window.fillInnerParts();
+                window.show();
+                TextField input = (TextField) window.getPrimaryStage().getScene().lookup("#commandTextField");
+                TextArea details = (TextArea) window.getPrimaryStage().getScene().lookup("#clientDetails");
+                if (filtered) {
+                    enter(input, "find friends");
+                }
+                enter(input, "view " + selectedIndex);
+                Person selected = window.getPersonListPanel().selectedClientProperty().get();
+                String previousDetails = details.getText();
+                List<Person> previousList = List.copyOf(model.getFilteredPersonList());
+                enter(input, command + " 999");
+                failSave.set(true);
+                enter(input, command + " " + deletedIndex);
+                assertTrue(input.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
+                assertEquals(selected, window.getPersonListPanel().selectedClientProperty().get());
+                assertEquals(previousDetails, details.getText());
+                assertEquals(previousList, model.getFilteredPersonList());
+                assertEquals(original, model.getAddressBook());
+
+                failSave.set(false);
+                enter(input, command + " " + deletedIndex);
+                assertTrue(input.getText().isEmpty());
+                assertEquals(previousList.size() - 1, model.getFilteredPersonList().size());
+                assertEquals(selectedIndex == deletedIndex ? null : selected,
+                        window.getPersonListPanel().selectedClientProperty().get());
+                assertEquals(selectedIndex == deletedIndex ? ClientDetailsPanel.MESSAGE_EMPTY : previousDetails,
+                        details.getText());
+            } finally {
+                List.copyOf(Window.getWindows()).forEach(Window::hide);
+            }
+        });
     }
 
     /**
