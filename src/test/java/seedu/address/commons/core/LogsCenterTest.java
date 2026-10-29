@@ -51,6 +51,31 @@ public class LogsCenterTest {
     }
 
     @Test
+    public void addFileHandler_existingLog_preservesAndAppendsEntries() throws Exception {
+        Path existingLog = temporaryFolder.resolve("addressbook.log.0");
+        String previousEntry = "Existing log entry\n";
+        Files.writeString(existingLog, previousEntry);
+        Logger targetLogger = Logger.getAnonymousLogger();
+        targetLogger.setUseParentHandlers(false);
+        targetLogger.setLevel(Level.INFO);
+        try {
+            LogsCenter.addFileHandler(targetLogger, temporaryFolder.resolve("addressbook.log"));
+            assertEquals(1, targetLogger.getHandlers().length);
+            targetLogger.info("Appended after restart");
+            targetLogger.getHandlers()[0].flush();
+
+            String contents = Files.readString(existingLog);
+            assertTrue(contents.startsWith(previousEntry));
+            assertTrue(contents.contains("Appended after restart"));
+        } finally {
+            for (Handler handler : targetLogger.getHandlers()) {
+                handler.close();
+                targetLogger.removeHandler(handler);
+            }
+        }
+    }
+
+    @Test
     public void addFileHandler_folderWithPatternCharacters_writesInsideLiteralFolder() throws Exception {
         Path logFolder = Files.createDirectory(temporaryFolder.resolve("ClientDesk %t %h"));
         Logger targetLogger = Logger.getAnonymousLogger();
