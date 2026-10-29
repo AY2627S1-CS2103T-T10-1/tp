@@ -49,6 +49,13 @@ text UI runner is not available in this tP repository.
 9. Save failure is covered by an automated storage-failure test; expect the
    prior record and filter to remain, with `Client could not be saved. No changes were made.`
 
+## Typographic apostrophes (#118)
+
+In disposable data, enter `add-client n/O’Connor p/91234567 e/oconnor@example.com`.
+Expect success; `view` and restart must preserve the curly apostrophe.
+A name containing only apostrophes or more than 80 characters must still fail.
+Automated coverage: NameTest.
+
 ## Client details panel
 
 1. Start the app: expect ClientDesk title, client list, and a right-hand details
