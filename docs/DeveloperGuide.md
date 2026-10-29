@@ -16,6 +16,7 @@ title: Developer Guide
 * The `delete-client` command and save-before-publish flow follow the command and atomic-save structure introduced for `add-client` in [team commit 332b415](https://github.com/AY2627S1-CS2103T-T10-1/tp/commit/332b415a1e13cf5dd3f1d6b8c1eeb62451060542). No source code was copied verbatim.
 * The `list-clients` command and parser follow the separate client command structure established by [team commit 332b415](https://github.com/AY2627S1-CS2103T-T10-1/tp/commit/332b415a1e13cf5dd3f1d6b8c1eeb62451060542). No source code was copied verbatim.
 * The atomic legacy deletion explanation and sequence diagram were developed for [issue #79](https://github.com/AY2627S1-CS2103T-T10-1/tp/issues/79). They document the save-before-publish behavior introduced by [issue #77](https://github.com/AY2627S1-CS2103T-T10-1/tp/issues/77); no external source was copied.
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## **Setting up, getting started**
@@ -243,6 +244,9 @@ The parser checks the requested name against `ClientDeskHelp` before creating a 
 With no command name, `help` returns the catalogue overview instead. The Help menu and `F1` call `MainWindow.handleHelp()` directly with the same overview, bypassing command parsing and storage. An unknown name or more than one argument causes a `ParseException` before a Help command is created; the command box displays the error and the Help window's content is unchanged. The existing Help parser, integration and UI tests cover these paths.
 
 ### Add client
+
+`ParserUtil.parseEmail` rejects Unicode whitespace and separator characters in new command input, including `edit-client`. The stored `Email` representation retains its existing validation so records accepted by v1.4 still load and round-trip unchanged. `EmailInputIntegrationTest` checks all four email-entry commands and legacy storage compatibility.
+
 
 `AddClientCommandParser` requires name, phone and email, accepts repeated tags, and rejects repeated required
 prefixes or unknown prefixes. It validates the creation rules before building a `Person`. Phone formatting is
@@ -812,6 +816,15 @@ testers are expected to do more *exploratory* testing.
 1. Enter `find alex`, note the displayed clients, then open Help through the command, Help menu and `F1`.<br>
    Expected: Each route opens Help. Closing it leaves the displayed clients and their data unchanged.
 
+### Setting a remark
+
+1. On disposable data with a displayed client, enter `remark 1 r/Keep this reminder`, then `view 1`.<br>
+   Expected: the selected client has that remark.
+1. Enter `remark 1 r/Call Monday r/Call Tuesday`, then `remark 1 r/Important reminder r/`.<br>
+   Expected: both commands report a repeated `r/` prefix; `view 1` still shows `Keep this reminder`.
+1. Enter `remark 1 r/`, then `view 1`.<br>
+   Expected: the remark is empty. The legacy `remark 1` shorthand also clears it.
+
 ### Adding a client
 
 Run these cases in a disposable folder containing the JAR, using Java 25. Keep that folder separate from your
@@ -862,8 +875,17 @@ normal ClientDesk data. Start the application with `java -jar addressbook.jar` f
    Expected: The first client in the displayed list is removed, a success message names the client, and the change is saved.
 1. Test case: `delete-client 0` or `delete-client x`.<br>
    Expected: A usage error is shown and no client is deleted.
-1. Search with `find acme`, then enter `delete-client 1`.<br>
-   Expected: The first matching client is deleted, and other displayed matches remain.
+1. Test deletion from a filtered list using disposable test data:
+   1. Add `add-client n/AlphaDeleteTarget p/91234567 e/alpha-delete-target@example.com` and
+      `add-client n/AlphaDeleteKeep p/92345678 e/alpha-delete-keep@example.com`.
+      Both commands must succeed; start with fresh test data if either client already exists.
+   1. Enter `find AlphaDeleteTarget`.<br>
+      Expected: Exactly one match, named AlphaDeleteTarget. Check this before deleting;
+      a search with no matches restores the full list and is not a valid setup for this test.
+   1. Enter `delete-client 1`.<br>
+      Expected: `Deleted client: AlphaDeleteTarget.` and an empty filtered list.
+   1. Enter `find AlphaDeleteKeep`.<br>
+      Expected: Exactly one match, named AlphaDeleteKeep. Other clients remain unchanged.
 1. Enter `delete-client 999` when fewer than 999 clients are displayed.<br>
    Expected: An invalid client index error is shown and no client is deleted.
 ### Listing clients
