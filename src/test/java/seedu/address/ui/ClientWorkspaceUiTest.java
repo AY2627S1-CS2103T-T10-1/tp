@@ -361,13 +361,24 @@ public class ClientWorkspaceUiTest {
 
     private void assertVisibleWithinScene(Node node, Scene scene) {
         Bounds bounds = node.localToScene(node.getBoundsInLocal());
-        assertTrue(node.isVisible());
-        assertTrue(bounds.getWidth() > 0);
-        assertTrue(bounds.getHeight() > 0);
-        assertTrue(bounds.getMinX() >= 0);
-        assertTrue(bounds.getMinY() >= 0);
-        assertTrue(bounds.getMaxX() <= scene.getWidth());
-        assertTrue(bounds.getMaxY() <= scene.getHeight());
+        Node parent = node.getParent();
+        String parentInfo = parent == null ? "none" : parent.getClass().getSimpleName() + "#" + parent.getId()
+                + " styles=" + parent.getStyleClass() + " bounds="
+                + parent.localToScene(parent.getBoundsInLocal());
+        Window window = scene.getWindow();
+        String windowSize = window == null ? "unattached" : window.getWidth() + "x" + window.getHeight();
+        String diagnostic = "node=" + node.getClass().getSimpleName() + "#" + node.getId()
+                + " styles=" + node.getStyleClass() + " localBounds=" + node.getBoundsInLocal()
+                + " sceneBounds=" + bounds + " parent=" + parentInfo
+                + " sceneSize=" + scene.getWidth() + "x" + scene.getHeight()
+                + " windowSize=" + windowSize;
+        assertTrue(node.isVisible(), "not visible: " + diagnostic);
+        assertTrue(bounds.getWidth() > 0, "zero scene width: " + diagnostic);
+        assertTrue(bounds.getHeight() > 0, "zero scene height: " + diagnostic);
+        assertTrue(bounds.getMinX() >= 0, "left of scene: " + diagnostic);
+        assertTrue(bounds.getMinY() >= 0, "above scene: " + diagnostic);
+        assertTrue(bounds.getMaxX() <= scene.getWidth(), "right of scene: " + diagnostic);
+        assertTrue(bounds.getMaxY() <= scene.getHeight(), "below scene: " + diagnostic);
     }
 
     private void enter(TextField input, String command) {

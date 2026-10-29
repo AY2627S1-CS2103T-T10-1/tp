@@ -31,6 +31,9 @@ checkstyle {
 test {
     useJUnitPlatform()
     finalizedBy jacocoTestReport
+    testLogging {
+        exceptionFormat = 'full'
+    }
 }
 
 task coverage(type: JacocoReport) {
