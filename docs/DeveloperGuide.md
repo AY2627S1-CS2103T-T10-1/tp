@@ -284,8 +284,9 @@ code points with `Usage: find KEYWORD [KEYWORD]...`. Validation happens before c
 `LITERAL | CASE_INSENSITIVE | UNICODE_CASE`. `Matcher.find()` applies locale-independent Unicode case matching to
 substrings, including Turkish I variants, Greek sigma variants and supplementary letters. Literal patterns preserve
 punctuation; matching does not remove accents or expand `ß` to `ss`.
-Every keyword must be a substring of the same client's name, phone, email, or tags. Keywords may match different
-fields. Separate field, tag, and substring helpers keep matching at one level of abstraction.
+Every keyword must match a field of the same client. Name, email and tag matching uses literal substrings; phone
+matching also accepts phone-like keywords after removing a leading plus and formatting spaces or hyphens. Keywords
+may match different fields. Separate field, phone, tag and substring helpers keep matching at one level of abstraction.
 
 `ModelManager` wraps its `FilteredList` in a `SortedList`, ordered case-insensitively by name and then by the client's
 position in the stored address book. Sorting leaves stored records in creation order. The UI and indexed commands

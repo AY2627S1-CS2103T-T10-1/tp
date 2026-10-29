@@ -44,7 +44,7 @@ public class PersonContainsKeywordsPredicate implements Predicate<Person> {
     }
 
     /**
-     * Returns whether any searchable field contains the literal {@code keyword}.
+     * Returns whether any searchable field matches {@code keyword}, allowing formatting in phone keywords.
      */
     private boolean hasMatchingField(Person person, Pattern keyword) {
         return containsKeyword(person.getName().fullName, keyword)
