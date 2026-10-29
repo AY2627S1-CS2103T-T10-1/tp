@@ -193,6 +193,8 @@ details.
 
 Successful `add-project`, `edit-project` and `delete-project` commands select the affected client and refresh their details automatically, including when using a filtered list. Invalid project commands and failed project saves retain the previous selection and details. Deleting the last project shows `Projects: No projects yet.`; deleting the selected client clears the panel to its instructions.
 
+Successful legacy `add` and `edit` commands select the newly added or edited client after the list refreshes. An edit that changes the client's name keeps that client selected even when its row moves. A failed save retains the previous selection and details.
+
 ### Editing a client's email: `edit-client`
 
 Updates a client's email while preserving their other fields, remark, projects and the current search filter.
@@ -427,11 +429,16 @@ Format: `exit`
 ClientDesk automatically saves successful data changes. You do not need to save manually.
 `add-project` saves before displaying success, and projects survive restarting the application.
 `find`, `help` and `list-clients` do not write the data file.
+If another ClientDesk instance has saved changes since this window loaded the data, a save is rejected to
+preserve those newer changes. Close and reopen this window to reload the latest data before continuing.
+ClientDesk may leave an `addressbook.json.lock` sidecar file beside the data file; do not remove it while
+ClientDesk is running. It is reused for subsequent saves.
 
 ### Editing the data file
 
 ClientDesk data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are
-welcome to update data directly by editing that file. Back up the file first. Each client's `projects` array stores
+welcome to update data directly by editing that file. Close all ClientDesk windows and back up the file first.
+Each client's `projects` array stores
 project IDs, titles, deadlines, status and priority. Preserve the `nextProjectId` counter, which must be greater than
 every existing project ID. Files created before project support still load with no projects.
 
