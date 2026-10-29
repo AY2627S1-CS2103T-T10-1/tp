@@ -284,8 +284,9 @@ code points with `Usage: find KEYWORD [KEYWORD]...`. Validation happens before c
 `LITERAL | CASE_INSENSITIVE | UNICODE_CASE`. `Matcher.find()` applies locale-independent Unicode case matching to
 substrings, including Turkish I variants, Greek sigma variants and supplementary letters. Literal patterns preserve
 punctuation; matching does not remove accents or expand `ß` to `ss`.
-Every keyword must be a substring of the same client's name, phone, email, or tags. Keywords may match different
-fields. Separate field, tag, and substring helpers keep matching at one level of abstraction.
+Every keyword must match a field of the same client. Name, email and tag matching uses literal substrings; phone
+matching also accepts phone-like keywords after removing a leading plus and formatting spaces or hyphens. Keywords
+may match different fields. Separate field, phone, tag and substring helpers keep matching at one level of abstraction.
 
 `ModelManager` wraps its `FilteredList` in a `SortedList`, ordered case-insensitively by name and then by the client's
 position in the stored address book. Sorting leaves stored records in creation order. The UI and indexed commands
@@ -669,20 +670,17 @@ professional, unless specified otherwise.)
 
     Use case resumes at step 7.
 
-#### UC03: Recover a mistakenly deleted client
+#### UC03: Delete a client permanently
 
-**Preconditions:** At least one client exists and there is no more recent data-changing command to undo.
+**Preconditions:** At least one client exists.
 
 **MSS**
 
 1.  User lists all clients.
 2.  ClientDesk shows the clients with their current indexes.
 3.  User deletes a client by index.
-4.  ClientDesk deletes the client and all associated projects, notes, tags and follow-up details.
-5.  ClientDesk informs the user that the client was deleted and can be restored using undo.
-6.  User requests to undo the deletion.
-7.  ClientDesk restores and saves the client and all associated data with their original IDs.
-8.  ClientDesk informs the user that the deletion was undone.
+4.  ClientDesk saves the deletion of the client and all associated projects, remarks and tags.
+5.  ClientDesk confirms that the client was deleted.
 
     Use case ends.
 
@@ -699,12 +697,6 @@ professional, unless specified otherwise.)
   * 4a1. ClientDesk informs the user that the client could not be deleted and makes no changes.
 
     Use case resumes at step 3.
-
-* 7a. ClientDesk cannot save the restored state.
-
-  * 7a1. ClientDesk keeps the current state unchanged and retains the undo entry for another attempt.
-
-    Use case resumes at step 6.
 
 #### UC04: Update an existing project
 
@@ -781,7 +773,7 @@ professional, unless specified otherwise.)
 * **Customer relationship management (CRM)**: The practice of organizing client information and interactions to manage ongoing professional relationships.
 * **Follow-up**: A dated action that the user plans to carry out for a client.
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
-* **Project**: A piece of work undertaken for a client and tracked by its status, priority, and optional deadline.
+* **Project**: A piece of work undertaken for a client and tracked by its required deadline, status and priority.
 
 --------------------------------------------------------------------------------------------------------------------
 

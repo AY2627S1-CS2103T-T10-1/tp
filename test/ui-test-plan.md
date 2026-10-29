@@ -27,6 +27,14 @@ The Trackie text UI runner is not available in this JavaFX tP repository.
 These GUI checks require manual execution; automated command/parser tests cover
 view output, filtered indexes, invalid indexes and input validation.
 
+## Unicode search separators (#117)
+
+In disposable data, add Acme Studio and Benson with different emails.
+Run `find Acme Studio`, then paste `find Acme Studio` (U+00A0).
+Both must report `Found 1 matching clients.` and show only Acme Studio.
+Repeat with U+2003 and U+202F. A whitespace-only search reports usage and preserves the list.
+Automated coverage: FindCommandParserTest.
+
 ## Edit client email (first increment)
 
 Run the JavaFX app with Java 25. These are manual checks; the iP Trackie
@@ -49,6 +57,13 @@ text UI runner is not available in this tP repository.
 9. Save failure is covered by an automated storage-failure test; expect the
    prior record and filter to remain, with `Client could not be saved. No changes were made.`
 
+## Typographic apostrophes (#118)
+
+In disposable data, enter `add-client n/O’Connor p/91234567 e/oconnor@example.com`.
+Expect success; `view` and restart must preserve the curly apostrophe.
+A name containing only apostrophes or more than 80 characters must still fail.
+Automated coverage: NameTest.
+
 ## Client details panel
 
 1. Start the app: expect ClientDesk title, client list, and a right-hand details
@@ -67,6 +82,13 @@ text UI runner is not available in this tP repository.
 These manual GUI cases require JavaFX. The Trackie text UI runner is incompatible
 with this repository's GUI test plan; automated JavaFX tests exercise panel behavior.
 
+## New email dot validation (#119)
+
+In disposable data, try `.alice@example.com`, `alice.@example.com` and `a..b@example.com`
+through add-client, add, edit and edit-client. Expect an email error and unchanged data.
+`alice.smith@example.com` must succeed. Existing stored dotted-local-part records still load.
+Automated coverage: EmailDotValidationTest and ParserUtilTest.
+
 ## Project changes retain client selection (Week 10 Y1)
 
 Use disposable client data with two clients. Repeat with `find` restricting the list
@@ -82,3 +104,11 @@ before viewing the target client. Use displayed indexes, not the full-list index
 
 Automated coverage: ClientDetailsUiTest runs real command-box actions for both
 full and filtered client lists, using temporary JSON storage and simulated IO failures.
+
+## Formatted phone search (#120)
+
+In disposable data, add Benson with `p/8123-4567` and another client with a different phone.
+`find 8123-4567`, `find 81234567` and `find +8123-4567` must each find Benson.
+`find Benson 8123-4567` must retain AND semantics; `find missing 8123-4567` must not match.
+`find +` and `find -` must not match every phone. Search must not save data.
+Automated coverage: PersonContainsKeywordsPredicateTest.
