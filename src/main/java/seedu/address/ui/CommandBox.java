@@ -32,6 +32,13 @@ public class CommandBox extends UiPart<Region> {
     }
 
     /**
+     * Focuses the command input so typing can begin as soon as the main window opens.
+     */
+    public void requestFocus() {
+        commandTextField.requestFocus();
+    }
+
+    /**
      * Handles the Enter button pressed event.
      */
     @FXML

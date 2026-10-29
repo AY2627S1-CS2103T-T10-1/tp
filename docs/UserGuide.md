@@ -25,7 +25,7 @@ and records their projects, deadlines, status and priority, with a graphical cli
    A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.<br>
    ![Ui](images/Ui.png)
 
-1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
+1. Type a command in the bottom command bar and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
    Some example commands you can try:
 
    * `list-clients` : Lists all clients.
@@ -39,6 +39,10 @@ and records their projects, deadlines, status and priority, with a graphical cli
    * `exit` : Exits the app.
 
 1. Refer to the [Features](#features) section below for details of each command.
+
+The workspace opens on the **Projects** tab. Select a client from the list to see their header and projects; choose
+**Details** to read their full contact information and remark. Open the command guide from the header button, the
+Help menu or `F1`.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -182,16 +186,14 @@ Example: `view 1` displays the first client in the current list.
 
 ### Client details panel
 
-Enter `view INDEX` to select a client from the currently displayed list and show
-contact information and saved projects in the right-hand details panel. Projects
-are ordered by their stable IDs and include title, deadline, status and priority.
-You can also select a client directly from the list. The panel is read-only;
-scroll to read longer records and drag the divider to adjust the panel widths.
-Clients without projects show `Projects: No projects yet.` When no client is
-selected, the panel shows instructions. Invalid view commands retain the previous
-details.
+Enter `view INDEX` to select a client from the currently displayed list, or click a client in the list. The header
+shows the client's name and contact summary. The **Projects** tab displays project cards in stable ID order, with
+each project's title, deadline, status and priority. The **Details** tab shows the full contact details, remark, tags
+and projects in text form. The workspace is read-only; scroll to read longer content and drag the divider to adjust
+the panel widths. Clients without projects show an empty-state message on the Projects tab. When no client is
+selected, the workspace shows instructions. Invalid `view` commands retain the previous selection and details.
 
-Successful `add-project`, `edit-project` and `delete-project` commands select the affected client and refresh their details automatically, including when using a filtered list. Invalid project commands and failed project saves retain the previous selection and details. Deleting the last project shows `Projects: No projects yet.`; deleting the selected client clears the panel to its instructions.
+Successful `add-project`, `edit-project` and `delete-project` commands select the affected client and refresh their details automatically, including when using a filtered list. Invalid project commands and failed project saves retain the previous selection and details. Deleting the last project shows the no-projects empty state; deleting the selected client clears the workspace to its instructions.
 
 Successful legacy `add` and `edit` commands select the newly added or edited client after the list refreshes. An edit that changes the client's name keeps that client selected even when its row moves. A failed save retains the previous selection and details.
 
@@ -449,6 +451,11 @@ a different working directory, back up and copy its `data` folder and `preferenc
 the new JAR before starting this version. Data, preferences and logs now use the JAR's folder regardless of the
 terminal's working directory.
 
+Keep these files and folders inside the ClientDesk home folder. Symbolic links that point outside it are rejected.
+If a data or lock-file link prevents loading or saving, close ClientDesk and replace the link with a file or folder
+inside the home folder before restarting. An outside preference-file link uses default preferences without changing
+its target; an outside log-file link disables file logging while console messages remain available.
+
 <div markdown="span" class="alert alert-warning">:exclamation: **Caution:**
 If ClientDesk cannot read or validate an existing data file, it shows an error identifying the file and closes
 without opening the command window. The original file remains unchanged. Back it up, then restore a valid copy
@@ -466,12 +473,6 @@ and keep field values within the documented limits.
 `data/addressbook.json` from the folder containing your old ClientDesk JAR to the corresponding `data` folder beside
 the new JAR, replacing the file there. Keep a backup of both files until you have opened ClientDesk and verified the
 transferred clients and projects.
-
---------------------------------------------------------------------------------------------------------------------
-
-## Known issues
-
-1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
 
 --------------------------------------------------------------------------------------------------------------------
 

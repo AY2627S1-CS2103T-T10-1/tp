@@ -1,29 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import java.net.URL?>
-<?import javafx.geometry.Insets?>
 <?import javafx.scene.Scene?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.image.Image?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
 <fx:root type="javafx.stage.Stage" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-         title="ClientDesk" minWidth="650" minHeight="600" onCloseRequest="#handleExit">
+         title="ClientDesk" minWidth="650" minHeight="400" onCloseRequest="#handleExit">
   <icons>
     <Image url="@/images/address_book_32.png" />
   </icons>
   <scene>
     <Scene>
       <stylesheets>
-        <URL value="@DarkTheme.css" />
+        <URL value="@ClientDesk.css" />
         <URL value="@Extensions.css" />
       </stylesheets>
-
-      <VBox>
+      <VBox styleClass="app-root">
         <MenuBar fx:id="menuBar" VBox.vgrow="NEVER">
           <Menu mnemonicParsing="false" text="File">
             <MenuItem mnemonicParsing="false" onAction="#handleExit" text="Exit" />
@@ -32,31 +34,28 @@
             <MenuItem fx:id="helpMenuItem" mnemonicParsing="false" onAction="#handleHelp" text="Help" />
           </Menu>
         </MenuBar>
-
-        <StackPane VBox.vgrow="NEVER" fx:id="commandBoxPlaceholder" styleClass="pane-with-border">
-          <padding>
-            <Insets top="5" right="10" bottom="5" left="10" />
-          </padding>
-        </StackPane>
-
-        <StackPane VBox.vgrow="NEVER" fx:id="resultDisplayPlaceholder" styleClass="pane-with-border"
-                   minHeight="100" prefHeight="100" maxHeight="100">
-          <padding>
-            <Insets top="5" right="10" bottom="5" left="10" />
-          </padding>
-        </StackPane>
-
-        <SplitPane dividerPositions="0.4" VBox.vgrow="ALWAYS">
-          <VBox fx:id="personList" styleClass="pane-with-border" minWidth="250" prefWidth="340">
-            <padding>
-              <Insets top="10" right="10" bottom="10" left="10" />
-            </padding>
-            <StackPane fx:id="personListPanelPlaceholder" VBox.vgrow="ALWAYS"/>
+        <HBox fx:id="workspaceHeader" alignment="CENTER_LEFT" spacing="12" styleClass="workspace-header">
+          <Label text="CD" styleClass="brand-mark" />
+          <VBox spacing="1">
+            <Label text="ClientDesk" styleClass="brand-title" />
+            <Label text="Clients &amp; projects" styleClass="brand-description" />
           </VBox>
-          <StackPane fx:id="clientDetailsPlaceholder" minWidth="200" />
+          <Region HBox.hgrow="ALWAYS" />
+          <Button text="Command guide" onAction="#handleHelp" />
+        </HBox>
+        <SplitPane dividerPositions="0.29" VBox.vgrow="ALWAYS" styleClass="workspace-split-pane">
+          <VBox fx:id="personList" styleClass="client-sidebar" minWidth="220" prefWidth="280" spacing="6">
+            <Label text="Clients" styleClass="panel-heading" />
+            <Label text="Use find to search your clients" styleClass="helper-text" wrapText="true" />
+            <StackPane fx:id="personListPanelPlaceholder" VBox.vgrow="ALWAYS" />
+          </VBox>
+          <StackPane fx:id="clientDetailsPlaceholder" minWidth="300" styleClass="details-host" />
         </SplitPane>
-
-        <StackPane fx:id="statusbarPlaceholder" VBox.vgrow="NEVER" />
+        <VBox styleClass="command-dock" VBox.vgrow="NEVER" spacing="4">
+          <StackPane fx:id="commandBoxPlaceholder" />
+          <StackPane fx:id="resultDisplayPlaceholder" minHeight="32" prefHeight="58" maxHeight="90" />
+        </VBox>
+        <StackPane fx:id="statusbarPlaceholder" VBox.vgrow="NEVER" styleClass="status-footer" />
       </VBox>
     </Scene>
   </scene>

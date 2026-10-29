@@ -1,10 +1,65 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TextArea?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
 <VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-      spacing="8" style="-fx-padding: 10;" minWidth="200">
-  <Label text="Client details" styleClass="label-bright" />
-  <TextArea fx:id="clientDetails" editable="false" wrapText="true" styleClass="result-display" VBox.vgrow="ALWAYS" />
+      styleClass="client-details-panel" minWidth="300">
+
+  <VBox spacing="12" styleClass="client-header">
+    <HBox alignment="CENTER_LEFT" spacing="14">
+      <Label fx:id="clientAvatar" text="?" styleClass="client-avatar" />
+      <VBox spacing="5" HBox.hgrow="ALWAYS" minWidth="0">
+        <Label fx:id="clientName" text="No client selected" styleClass="client-title" wrapText="false" textOverrun="ELLIPSIS"
+               minWidth="0" maxWidth="Infinity" />
+        <HBox spacing="7" alignment="CENTER_LEFT" styleClass="client-contact-row">
+          <Label text="PHONE" styleClass="client-contact-label" />
+          <Label fx:id="clientPhone" styleClass="client-contact-value" wrapText="false" textOverrun="ELLIPSIS"
+                 minWidth="0" maxWidth="Infinity" HBox.hgrow="ALWAYS" />
+        </HBox>
+        <HBox spacing="7" alignment="CENTER_LEFT" styleClass="client-contact-row">
+          <Label text="EMAIL" styleClass="client-contact-label" />
+          <Label fx:id="clientEmail" styleClass="client-contact-value" wrapText="false" textOverrun="ELLIPSIS"
+                 minWidth="0" maxWidth="Infinity" HBox.hgrow="ALWAYS" />
+        </HBox>
+      </VBox>
+    </HBox>
+    <ScrollPane fx:id="clientTagScroll" fitToWidth="true" hbarPolicy="NEVER"
+                minHeight="24" prefHeight="24" maxHeight="52"
+                styleClass="client-tag-scroll">
+      <content>
+        <FlowPane fx:id="clientTags" hgap="7" vgap="6" styleClass="client-tags" />
+      </content>
+    </ScrollPane>
+  </VBox>
+
+  <TabPane id="clientTabs" fx:id="clientTabs" tabClosingPolicy="UNAVAILABLE" styleClass="workspace-tabs"
+           minHeight="80" VBox.vgrow="ALWAYS">
+    <tabs>
+      <Tab id="projectsTab" fx:id="projectsTab" text="Projects">
+        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="project-scroll">
+          <content>
+            <VBox spacing="12" fillWidth="true">
+              <VBox fx:id="projectEmptyState" alignment="CENTER" spacing="7" styleClass="empty-state">
+                <Label fx:id="projectEmptyTitle" text="Select a client" styleClass="empty-state-title"
+                       wrapText="true" />
+                <Label fx:id="projectEmptyDescription" text="Choose a client from the list to see their projects."
+                       styleClass="empty-state-description" wrapText="true" />
+              </VBox>
+              <VBox fx:id="projectCards" spacing="12" fillWidth="true" styleClass="project-list" />
+            </VBox>
+          </content>
+        </ScrollPane>
+      </Tab>
+      <Tab id="detailsTab" fx:id="detailsTab" text="Details">
+        <TextArea fx:id="clientDetails" editable="false" wrapText="true" styleClass="record-text" />
+      </Tab>
+    </tabs>
+  </TabPane>
 </VBox>

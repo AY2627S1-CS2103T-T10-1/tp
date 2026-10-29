@@ -73,7 +73,7 @@ Any warnings or errors will be printed out to the console.
 
 Here are the steps to create a new release.
 
-1. Update the version number in [`MainApp.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/MainApp.java).
-1. Generate a fat JAR file using Gradle (i.e., `./gradlew shadowJar`).
-1. Tag the repo with the version number. e.g. `v0.1`
-1. [Create a new release using GitHub](https://help.github.com/articles/creating-releases/). Upload the JAR file you created.
+1. Update the version number in [`MainApp.java`](https://github.com/AY2627S1-CS2103T-T10-1/tp/blob/master/src/main/java/seedu/address/MainApp.java) and the README in a reviewed PR. Merge it and the intended release fixes into team `master`.
+1. From the final team `master`, run `./gradlew check coverage` and `./.github/run-checks.sh`, then build the JAR with `./gradlew shadowJar`. Smoke-test the packaged JAR using disposable data.
+1. Tag that tested commit with the required version number, for example `v1.5`.
+1. [Create a new release using GitHub](https://help.github.com/articles/creating-releases/) and upload the tested JAR. Confirm that the published website, User Guide and Developer Guide match the release, then reconcile its milestone.
