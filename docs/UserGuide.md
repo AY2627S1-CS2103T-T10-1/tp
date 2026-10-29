@@ -113,12 +113,16 @@ Phone | 7–15 digits, with an optional leading `+`, spaces or hyphens. Formatti
 Email | 3–254 characters, exactly one `@`, non-empty local and domain parts, no spaces and a dot in the domain. Domain labels cannot start or end with a hyphen.
 Tag | 1–30 lowercase letters, numbers or internal hyphens; no leading or trailing hyphen. Repeated tags are stored once.
 
+For example, `t/VIP` is rejected with `Tag must be 1–30 lowercase letters, numbers, or internal hyphens.` Use `t/vip` instead.
+
 A duplicate has the same email (ignoring case), or the same name (ignoring case,
 outer spaces and repeated internal spaces) **and** normalized phone. The same name
 alone is allowed. Unicode case variants such as `Işık` and `IŞIK` are also duplicates when their phones match. Duplicates report `This client already exists: <name>.`
 Missing required fields report `Usage: add-client n/NAME p/PHONE e/EMAIL [t/TAG]...`.
 If saving fails, ClientDesk reports `Client could not be saved. No changes were made.`
 and keeps the existing data and displayed list.
+
+New email values cannot contain Unicode spaces, including non-breaking spaces copied from documents. This applies to `add-client`, `edit-client`, `add` and `edit`. Older saved email values remain readable; correct them using an edit command.
 
 The inherited address field displays `Not provided` for a new client because
 `add-client` does not require an address.
@@ -196,7 +200,7 @@ Example: `edit-client 1 e/new@example.com`
 
 Use a positive index from the currently displayed list, including search results. Supply exactly one lowercase `e/` parameter. The email must be 3–254 characters, contain exactly one `@` and no spaces, and have a dotted domain whose labels do not start or end with a hyphen. Email duplicates are checked case-insensitively against all clients, including those hidden by a search.
 
-Success reports `Updated client: <name>.`; an identical email reports `No changes needed for <name>.` without saving. A save failure restores the previous record. If the updated email no longer matches your search, the client may disappear from those results; use `list-clients` to find it again.
+Success reports `Updated client: <name>.`; an identical email reports `No changes needed for <name>.` without saving. A save failure leaves the previous record, selected client and details unchanged. If the updated email no longer matches your search, the client may disappear from those results; use `list-clients` to find it again.
 
 This command supports email editing only. Use the existing [Edit command](#editing-a-person-edit) to change a name, phone, address or tags. ClientDesk has no undo command.
 
@@ -207,7 +211,7 @@ Stores one free-text remark for a client, such as contact preferences or a remin
 Format: `remark INDEX r/[REMARK]`
 
 * `INDEX` is a positive number from the currently displayed client list, including `find` results.
-* Use lowercase `r/`, preceded by a space. Leading and trailing spaces around the remark are removed.
+* Supply at most one lowercase `r/`, preceded by a space. Repeated `r/` prefixes are rejected without changing the remark. Leading and trailing spaces around the remark are removed.
 * Use an **empty `r/`** to clear the remark. The legacy shorthand `remark 1` also clears the first displayed client's remark.
 * A successful update shows all clients and preserves the client's other fields and projects. Check the displayed indexes again after the list refreshes.
 * Use `view CLIENT_INDEX` to inspect the updated remark. A missing or out-of-range client index reports an error without updating any record.
