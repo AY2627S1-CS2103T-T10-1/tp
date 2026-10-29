@@ -6,8 +6,7 @@ jobs:
   build:
     strategy:
       matrix:
-        # Use Intel macOS runners while the ARM64 pool has capacity constraints.
-        platform: [ubuntu-latest, macos-15-intel, windows-latest]
+        platform: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.platform }}
 
     steps:
@@ -36,18 +35,6 @@ jobs:
       - name: Build and check with Gradle
         if: runner.os != 'Linux'
         run: ./gradlew check coverage
-
-      - name: Preserve test failure diagnostics
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: test-failure-${{ matrix.platform }}
-          path: |
-            build/reports/tests/
-            build/test-results/
-            hs_err_pid*.log
-            ~/Library/Logs/DiagnosticReports/java*
-          retention-days: 7
 
       - name: Upload coverage reports to Codecov
         if: runner.os == 'Linux'
