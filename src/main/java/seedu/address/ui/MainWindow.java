@@ -199,7 +199,7 @@ public class MainWindow extends UiPart<Stage> {
         try {
             Person previouslySelected = personListPanel.selectedClientProperty().get();
             CommandResult commandResult = logic.execute(commandText);
-            logger.info("Result: " + commandResult.getFeedbackToUser());
+            logger.info("Command completed.");
             resultDisplay.setFeedbackToUser(commandResult.getFeedbackToUser());
 
             commandResult.getClientToSelect().ifPresentOrElse(
@@ -215,7 +215,7 @@ public class MainWindow extends UiPart<Stage> {
 
             return commandResult;
         } catch (CommandException | ParseException e) {
-            logger.info("An error occurred while executing command: " + commandText);
+            logger.info("Command rejected: " + e.getClass().getSimpleName());
             resultDisplay.setFeedbackToUser(e.getMessage());
             throw e;
         }

@@ -64,7 +64,7 @@ public class AddressBookParser {
         // Note to developers: Change LOG_LEVEL in LogsCenter to enable lower level (i.e., FINE, FINER and lower)
         // log messages such as the one below.
         // Lower level log messages are used sparingly to minimize noise in the code.
-        logger.fine("Command word: " + commandWord + "; Arguments: " + arguments);
+        logger.fine("Parsing a command.");
 
         return switch (commandWord) {
             case AddClientCommand.COMMAND_WORD -> new AddClientCommandParser().parse(arguments);
@@ -85,7 +85,7 @@ public class AddressBookParser {
             case RemarkCommand.COMMAND_WORD -> new RemarkCommandParser().parse(arguments);
             case HelpCommand.COMMAND_WORD -> new HelpCommandParser().parse(arguments);
             default -> {
-                logger.finer("This user input caused a ParseException: " + userInput);
+                logger.finer("Command name was not recognized.");
                 throw new ParseException(MESSAGE_UNKNOWN_COMMAND);
             }
         };
