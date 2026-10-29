@@ -254,7 +254,9 @@ removed and tags are lowercase. The new client has the address `Not provided`, n
 
 `AddClientCommand` checks duplicates against all stored clients, including clients hidden by the current filter.
 A duplicate has the same email ignoring case, or the same normalized name and phone. A matching name alone
-does not prevent creation.
+does not prevent creation. `Person.hasSameClientIdentity()` combines the v1.4 identity comparison with Unicode `equalsIgnoreCase()` on whitespace-normalized names. Both add commands use it against the full stored list; inherited `edit` rejects new collisions, including hidden clients.
+
+`Person.isSamePerson()` and the stored-list invariant retain v1.4 semantics so formerly accepted Unicode case pairs can load, be staged and round-trip without losing records. Unrelated edits may preserve an existing case collision; edits that introduce a new collision or violate the original identity rule are rejected before mutation.
 
 `LogicManager` runs Add Client on a staged model and saves that model before publishing it to the live model.
 If saving fails, the live data and displayed filter stay unchanged. A successful save publishes the new client,
