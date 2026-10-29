@@ -781,7 +781,7 @@ professional, unless specified otherwise.)
 * **Customer relationship management (CRM)**: The practice of organizing client information and interactions to manage ongoing professional relationships.
 * **Follow-up**: A dated action that the user plans to carry out for a client.
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
-* **Project**: A piece of work undertaken for a client and tracked by its status, priority, and optional deadline.
+* **Project**: A piece of work undertaken for a client and tracked by its required deadline, status and priority.
 
 --------------------------------------------------------------------------------------------------------------------
 
