@@ -19,6 +19,14 @@ The Trackie text UI runner is not available in this JavaFX tP repository.
 These GUI checks require manual execution; automated command/parser tests cover
 view output, filtered indexes, invalid indexes and input validation.
 
+## Unicode search separators (#117)
+
+In disposable data, add Acme Studio and Benson with different emails.
+Run `find Acme Studio`, then paste `find Acme Studio` (U+00A0).
+Both must report `Found 1 matching clients.` and show only Acme Studio.
+Repeat with U+2003 and U+202F. A whitespace-only search reports usage and preserves the list.
+Automated coverage: FindCommandParserTest.
+
 ## Edit client email (first increment)
 
 Run the JavaFX app with Java 25. These are manual checks; the iP Trackie

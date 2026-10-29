@@ -32,6 +32,15 @@ public class FindCommandParserTest {
     }
 
     @Test
+    public void parse_unicodeWhitespace_separatesKeywords() {
+        FindCommand expected = new FindCommand(new PersonContainsKeywordsPredicate(List.of("Acme", "Studio")));
+        for (String separator : List.of("\u00a0", "\u2003", "\u202f")) {
+            assertParseSuccess(parser, separator + "Acme" + separator + "Studio" + separator, expected);
+            assertParseFailure(parser, separator, FindCommand.MESSAGE_USAGE);
+        }
+    }
+
+    @Test
     public void parse_keywordLengthBoundaries_returnsFindCommand() {
         assertParseSuccess(parser, "a", new FindCommand(new PersonContainsKeywordsPredicate(List.of("a"))));
         String longestKeyword = "a".repeat(50);

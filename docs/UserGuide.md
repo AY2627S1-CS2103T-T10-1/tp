@@ -147,7 +147,7 @@ Finds clients using partial names, phone numbers, email addresses, or tags.
 
 Format: `find KEYWORD [KEYWORD]...`
 
-* Supply at least one keyword, each containing 1 to 50 characters. Separate keywords with whitespace.
+* Supply at least one keyword, each containing 1 to 50 characters. Separate keywords with whitespace, including non-breaking spaces pasted from documents.
 * Matching is case-insensitive and uses substrings; for example, `cme` matches `Acme Studio`.
 * **Every keyword must match the same client** (an `AND` search). Keywords may match different fields.
   For example, `find acme startup` matches `Acme Studio` with the tag `startup`. Each client appears once.
@@ -450,7 +450,10 @@ and keep field values within the documented limits.
 ## FAQ
 
 **Q**: How do I transfer my data to another computer?<br>
-**A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous AddressBook home folder.
+**A**: Close ClientDesk on both computers. Install ClientDesk on the new computer, then copy
+`data/addressbook.json` from the folder containing your old ClientDesk JAR to the corresponding `data` folder beside
+the new JAR, replacing the file there. Keep a backup of both files until you have opened ClientDesk and verified the
+transferred clients and projects.
 
 --------------------------------------------------------------------------------------------------------------------
 
