@@ -123,8 +123,8 @@ The `UI` component,
 and projects; a null selection shows instructions, and a client with no projects shows
 the project empty state.
 
-`view`, Add Project, Edit Project and Delete Project return a `CommandResult` containing
-the client to select. For project mutations, `LogicManager` saves the proposed data before
+`view`, legacy Add and Edit, Add Project, Edit Project and Delete Project return a `CommandResult` containing
+the client to select. For legacy Add/Edit and project mutations, `LogicManager` saves the proposed data before
 publishing it to the live model. After successful execution, `MainWindow` calls
 `PersonListPanel.selectClient` with the updated client. This restores selection after the
 list replacement and refreshes the details without another `view` command. Add and delete
@@ -140,9 +140,10 @@ client and details unchanged. Deleting the selected client clears the selection 
 the panel to its instructions. The selection is based on the actual updated client, so it
 works with filtered lists and multiple clients rather than assuming the first row.
 
-`ClientDetailsUiTest` exercises add/delete refresh, remaining and empty project lists,
+`ClientDetailsUiTest` exercises project refresh, remaining and empty project lists,
 invalid commands, failed saves, and selected-client deletion with both full and filtered
-lists. Manual checks are recorded in `test/ui-test-plan.md`.
+lists. `LegacyClientSelectionUiTest` covers legacy add/edit selection after list reorder
+and failed-save retention. Manual checks are recorded in `test/ui-test-plan.md`.
 
 ### Logic component
 
