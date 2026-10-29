@@ -57,6 +57,11 @@ public class AddClientCommand extends Command {
     }
 
     @Override
+    public int hashCode() {
+        return toAdd.hashCode();
+    }
+
+    @Override
     public String toString() {
         return new ToStringBuilder(this).add("toAdd", toAdd).toString();
     }
