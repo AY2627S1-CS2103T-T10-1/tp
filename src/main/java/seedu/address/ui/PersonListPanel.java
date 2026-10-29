@@ -39,6 +39,17 @@ public class PersonListPanel extends UiPart<Region> {
     }
 
     /**
+     * Restores the previous client's current record if still displayed, or clears selection when it is absent.
+     */
+    public void restoreSelection(Person client) {
+        personListView.getItems().stream()
+                .filter(current -> client != null && current.isSamePerson(client))
+                .findFirst()
+                .ifPresentOrElse(personListView.getSelectionModel()::select,
+                        personListView.getSelectionModel()::clearSelection);
+    }
+
+    /**
      * Exposes selection changes so the details panel follows the displayed client.
      */
     public ReadOnlyObjectProperty<Person> selectedClientProperty() {
