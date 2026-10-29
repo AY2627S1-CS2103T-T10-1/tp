@@ -79,6 +79,15 @@ Automated coverage: NameTest.
 7. Clear the selection: expect the initial instructions, with no stale record.
 8. Resize the window and drag the divider: both panes remain accessible.
 
+## Legacy add/edit selection
+
+Use disposable data with at least three clients. Select a client, then add a new client
+whose name sorts before the existing rows: expect the added client selected with its
+details shown. Filter the list to one client, edit its name so it moves to the end of the
+full list: expect the edited client selected after the filter resets. Simulate a failed
+save for legacy add and edit: expect the prior selection, details and saved records to
+remain unchanged.
+
 These manual GUI cases require JavaFX. The Trackie text UI runner is incompatible
 with this repository's GUI test plan; automated JavaFX tests exercise panel behavior.
 
