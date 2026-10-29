@@ -38,6 +38,7 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.Address;
 import seedu.address.model.person.Person;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
@@ -79,6 +80,41 @@ public class LogicManagerTest {
     public void execute_validCommand_success() throws Exception {
         String listCommand = ListCommand.COMMAND_WORD;
         assertCommandSuccess(listCommand, ListCommand.MESSAGE_SUCCESS, model);
+    }
+
+    @Test
+    public void execute_unicodeBlankAddress_rejectsAddAndEditWithoutChangingData() throws Exception {
+        model.addPerson(AMY);
+        Path file = temporaryFolder.resolve("blank-address.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
+        storage.saveAddressBook(model.getAddressBook());
+        logic = createLogic(storage);
+        ReadOnlyAddressBook original = new AddressBook(model.getAddressBook());
+        String originalFile = Files.readString(file);
+
+        for (String blank : List.of("\u2003", "\u3000", "\u00a0", " \u2003\t\u00a0 ")) {
+            for (String command : List.of("add n/New Client p/81234567 e/new@example.com a/" + blank,
+                    "edit 1 a/" + blank)) {
+                assertThrows(ParseException.class, Address.MESSAGE_CONSTRAINTS, () -> logic.execute(command));
+                assertEquals(original, model.getAddressBook());
+                assertEquals(originalFile, Files.readString(file));
+            }
+        }
+    }
+
+    @Test
+    public void execute_legacyBlankAddress_loadsAndCanBeCorrected() throws Exception {
+        model.addPerson(new PersonBuilder(AMY).withAddress("\u2003").build());
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("old-address.json"));
+        storage.saveAddressBook(model.getAddressBook());
+        model = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
+        logic = createLogic(storage);
+
+        logic.execute("remark 1 r/Updated note");
+        assertEquals("\u2003", storage.readAddressBook().orElseThrow().getPersonList().getFirst().getAddress().value);
+        logic.execute("edit 1 a/1\u00a0Main Street");
+        assertEquals("1\u00a0Main Street",
+                storage.readAddressBook().orElseThrow().getPersonList().getFirst().getAddress().value);
     }
 
     @Test

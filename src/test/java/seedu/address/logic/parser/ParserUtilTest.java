@@ -111,6 +111,16 @@ public class ParserUtilTest {
     }
 
     @Test
+    public void parseAddress_unicodeBlank_rejectsNewInputAndPreservesNonblankText() throws Exception {
+        for (String blank : List.of("\u2003", "\u3000", "\u00a0", "\u202f", " \u2003\t\u00a0 ")) {
+            assertThrows(ParseException.class, Address.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseAddress(blank));
+        }
+        for (String address : List.of("1\u2003Main Street", "1\u00a0Main Street")) {
+            assertEquals(address, ParserUtil.parseAddress(address).value);
+        }
+    }
+
+    @Test
     public void parseAddress_validValueWithoutWhitespace_returnsAddress() throws Exception {
         Address expectedAddress = new Address(VALID_ADDRESS);
         assertEquals(expectedAddress, ParserUtil.parseAddress(VALID_ADDRESS));
