@@ -56,9 +56,8 @@ public class LogicManager implements Logic {
 
     @Override
     public CommandResult execute(String commandText) throws CommandException, ParseException {
-        logger.info("----------------[USER COMMAND][" + commandText + "]");
-
         Command command = addressBookParser.parseCommand(commandText);
+        logger.info("Executing command: " + command.getClass().getSimpleName());
         if (command instanceof AddClientCommand) {
             return executeAddClient(command);
         }
