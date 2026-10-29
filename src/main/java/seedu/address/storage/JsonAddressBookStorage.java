@@ -23,6 +23,7 @@ import java.util.logging.Logger;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.commons.exceptions.IllegalValueException;
+import seedu.address.commons.util.AppPaths;
 import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.ReadOnlyAddressBook;
 
@@ -35,9 +36,24 @@ public class JsonAddressBookStorage {
     private final Map<Path, FileSnapshot> observedFiles = new ConcurrentHashMap<>();
 
     private Path filePath;
+    private final Path allowedHome;
 
+    /**
+     * Creates storage for a caller-managed path without a runtime home boundary.
+     */
     public JsonAddressBookStorage(Path filePath) {
         this.filePath = filePath;
+        this.allowedHome = null;
+    }
+
+    /**
+     * Creates storage limited to the current real location of {@code allowedHome}.
+     *
+     * @throws IOException if the home folder cannot be resolved
+     */
+    public JsonAddressBookStorage(Path filePath, Path allowedHome) throws IOException {
+        this.filePath = filePath;
+        this.allowedHome = allowedHome.toRealPath();
     }
 
     public Path getAddressBookFilePath() {
@@ -64,14 +80,14 @@ public class JsonAddressBookStorage {
         requireNonNull(filePath);
 
         Path normalizedPath = normalize(filePath);
-        if (Files.notExists(normalizedPath, LinkOption.NOFOLLOW_LINKS)) {
-            observedFiles.put(normalizedPath, FileSnapshot.missing());
-            return Optional.empty();
-        }
-
         byte[] contents;
         JsonSerializableAddressBook jsonAddressBook;
         try {
+            checkFilePath(normalizedPath);
+            if (Files.notExists(normalizedPath, LinkOption.NOFOLLOW_LINKS)) {
+                observedFiles.put(normalizedPath, FileSnapshot.missing());
+                return Optional.empty();
+            }
             contents = Files.readAllBytes(normalizedPath);
             String json = StandardCharsets.UTF_8.newDecoder()
                     .onMalformedInput(CodingErrorAction.REPORT)
@@ -114,8 +130,11 @@ public class JsonAddressBookStorage {
         requireNonNull(filePath);
 
         Path destination = normalize(filePath);
+        checkFilePath(destination.getParent());
+        checkFilePath(destination);
         Files.createDirectories(destination.getParent());
         Path lockPath = destination.resolveSibling(destination.getFileName() + ".lock");
+        checkFilePath(lockPath);
         try (FileChannel channel = FileChannel.open(lockPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE)) {
             FileLock lock;
             try {
@@ -168,6 +187,12 @@ public class JsonAddressBookStorage {
 
     private static Path normalize(Path path) {
         return path.toAbsolutePath().normalize();
+    }
+
+    private void checkFilePath(Path path) throws IOException {
+        if (allowedHome != null) {
+            AppPaths.resolveWithinHome(path, allowedHome);
+        }
     }
 
     private static final class FileSnapshot {

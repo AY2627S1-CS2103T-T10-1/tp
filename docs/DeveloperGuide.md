@@ -211,6 +211,14 @@ The `Storage` component,
   Stored project fields and IDs are validated before a `Person` is created, so invalid project data is rejected on load.
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
 
+`MainApp` supplies the JAR's home folder to both JSON storage implementations, which capture its real location once.
+Before each runtime read or save, `AppPaths.resolveWithinHome` resolves the normalized path's existing target or
+nearest existing ancestor against that fixed home folder. This rejects outside targets, including links above a
+missing data file. Saving also checks the destination's parent before creating temporary files, and the data sidecar
+lock before opening it. File logging checks existing rotation, instance and lock filenames
+before opening a `FileHandler`; console logging remains available when that check fails. These checks handle existing
+links and changes detected between storage operations; they do not claim protection against concurrent filesystem changes.
+
 ### Common classes
 
 Classes used by multiple components are in the `seedu.address.commons` package.
@@ -985,6 +993,19 @@ Use a disposable folder containing the JAR for these tests. Close ClientDesk bef
 
    1. Restore the backup and restart ClientDesk.<br>
       Expected: ClientDesk opens with the restored clients and projects.
+
+1. Keeping runtime files inside the home folder (on systems supporting symbolic links)
+
+   1. Close ClientDesk. In disposable folders, link the JAR folder's `data` directory to a sibling directory
+      containing a valid `addressbook.json`. Start ClientDesk.<br>
+      Expected: Loading is rejected; the sibling data file remains unchanged. Replace the link with an ordinary
+      `data` folder inside the JAR folder and retry: loading works normally. A link to another directory inside the
+      JAR folder is also allowed.
+
+   1. With ClientDesk closed, link `preferences.json` or `addressbook.log.0` to a disposable file outside the JAR
+      folder, then start and close ClientDesk.<br>
+      Expected: Neither outside file changes. Defaults replace unavailable preferences in memory; unavailable
+      file logging leaves console logging available. Remove these test links before continuing.
 
 ### Editing a project
 

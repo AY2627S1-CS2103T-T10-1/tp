@@ -2,8 +2,10 @@ package seedu.address.commons.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.IOException;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -21,6 +23,32 @@ public class LogsCenterTest {
 
     @TempDir
     Path temporaryFolder;
+
+    @Test
+    public void addFileHandler_externalRotationLinks_preservesExternalFile() throws Exception {
+        Path outside = temporaryFolder.resolve("outside.log");
+        Files.writeString(outside, "Keep this external log");
+        for (String suffix : List.of(".0", ".4", ".0.1", ".0.lck")) {
+            Path home = Files.createDirectory(temporaryFolder.resolve("home" + suffix));
+            try {
+                Files.createSymbolicLink(home.resolve("addressbook.log" + suffix), outside);
+            } catch (UnsupportedOperationException | FileSystemException exception) {
+                assumeTrue(false, "Symbolic links are unavailable: " + exception);
+            }
+            Logger targetLogger = Logger.getAnonymousLogger();
+            targetLogger.setUseParentHandlers(false);
+            try {
+                LogsCenter.addFileHandler(targetLogger, home.resolve("addressbook.log"));
+                assertEquals(0, targetLogger.getHandlers().length);
+                assertEquals("Keep this external log", Files.readString(outside));
+            } finally {
+                for (Handler handler : targetLogger.getHandlers()) {
+                    handler.close();
+                    targetLogger.removeHandler(handler);
+                }
+            }
+        }
+    }
 
     @Test
     public void addFileHandler_folderWithPatternCharacters_writesInsideLiteralFolder() throws Exception {

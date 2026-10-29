@@ -3,6 +3,7 @@ package seedu.address.commons.core;
 import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.logging.ConsoleHandler;
@@ -93,7 +94,17 @@ public class LogsCenter {
      */
     static void addFileHandler(Logger targetLogger, Path logFile) {
         try {
-            String filePattern = logFile.toString().replace("%", "%%");
+            Path normalizedLogFile = logFile.toAbsolutePath().normalize();
+            Path home = normalizedLogFile.getParent().toRealPath();
+            AppPaths.resolveWithinHome(normalizedLogFile, home);
+            // FileHandler adds rotation numbers, instance suffixes and a lock suffix to this name.
+            try (var files = Files.newDirectoryStream(home,
+                    path -> path.getFileName().toString().startsWith(normalizedLogFile.getFileName() + "."))) {
+                for (Path path : files) {
+                    AppPaths.resolveWithinHome(path, home);
+                }
+            }
+            String filePattern = normalizedLogFile.toString().replace("%", "%%");
             FileHandler fileHandler = new FileHandler(filePattern, MAX_FILE_SIZE_IN_BYTES, MAX_FILE_COUNT, true);
             fileHandler.setFormatter(new SimpleFormatter());
             fileHandler.setLevel(Level.ALL);
