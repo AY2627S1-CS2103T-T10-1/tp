@@ -42,6 +42,7 @@ import seedu.address.model.person.Person;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
+import seedu.address.testutil.PersonBuilder;
 
 public class LogicManagerTest {
     private static final IOException DUMMY_IO_EXCEPTION = new IOException("dummy IO exception");
@@ -284,6 +285,38 @@ public class LogicManagerTest {
         assertEquals(List.of(BENSON, DANIEL), logic.getFilteredPersonList());
         assertEquals(List.of(DANIEL, BENSON), model.getAddressBook().getPersonList());
         assertFalse(Files.exists(temporaryFolder.resolve("addressBook.json")));
+    }
+
+    @Test
+    public void execute_unicodeFind_preservesSavedDataAndRestoresFullListOnlyForNoMatches() throws Exception {
+        Person unicodeClient = new PersonBuilder().withName("Işık Studio").withEmail("isik@example.com")
+                .withTags("startup").build();
+        model.addPerson(DANIEL);
+        model.addPerson(unicodeClient);
+        Path dataFile = temporaryFolder.resolve("unicodeFind.json");
+        SwitchableJsonAddressBookStorage addressBookStorage = new SwitchableJsonAddressBookStorage(dataFile);
+        addressBookStorage.saveAddressBook(model.getAddressBook());
+        model = new ModelManager(addressBookStorage.readAddressBook().orElseThrow(), new UserPrefs());
+        logic = createLogic(addressBookStorage);
+        AddressBook originalData = new AddressBook(model.getAddressBook());
+        String originalFile = Files.readString(dataFile);
+        addressBookStorage.setFailOnSave(true);
+
+        for (String command : List.of("find IŞIK", "find ŞI 535 ISIK@ START")) {
+            CommandResult result = logic.execute(command);
+            assertEquals("Found 1 matching clients.", result.getFeedbackToUser());
+            assertEquals(List.of(unicodeClient), logic.getFilteredPersonList());
+            assertEquals(originalData, model.getAddressBook());
+            assertEquals(originalFile, Files.readString(dataFile));
+        }
+
+        CommandResult noMatches = logic.execute("find IŞIK missing");
+        assertEquals("No clients matched: IŞIK missing.", noMatches.getFeedbackToUser());
+        assertEquals(List.of(DANIEL, unicodeClient), logic.getFilteredPersonList());
+        assertEquals(originalData, model.getAddressBook());
+        assertEquals(originalFile, Files.readString(dataFile));
+        assertEquals(1, addressBookStorage.getSaveAttempts());
+        assertEquals(originalData, new AddressBook(addressBookStorage.readAddressBook().orElseThrow()));
     }
 
     @Test
