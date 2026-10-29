@@ -36,7 +36,8 @@ public class AddClientCommand extends Command {
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
 
-        if (model.hasPerson(toAdd)) {
+        if (model.hasPerson(toAdd) || model.getAddressBook().getPersonList().stream()
+                .anyMatch(toAdd::hasSameClientIdentity)) {
             throw new CommandException(String.format(MESSAGE_DUPLICATE_CLIENT, toAdd.getName().fullName));
         }
 

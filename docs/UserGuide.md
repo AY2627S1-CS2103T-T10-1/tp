@@ -108,20 +108,26 @@ Repeated name, phone or email prefixes and unknown prefixes are rejected.
 
 Field | Rules
 ------|------
-Name | 1–80 characters with at least one letter or number. Letters, numbers, spaces, apostrophes, hyphens, periods, ampersands and parentheses are allowed.
+Name | 1–80 Unicode code points with at least one letter or number. Letters, combining marks, numbers, spaces, apostrophes, hyphens, periods, ampersands and parentheses are allowed. Combining marks count towards the limit; names such as `अनिल`, `วิชัย` and `José` are accepted with their spelling preserved.
 Phone | 7–15 digits, with an optional leading `+`, spaces or hyphens. Formatting is removed before storage.
 Email | 3–254 characters, exactly one `@`, non-empty local and domain parts, no spaces and a dot in the domain. Domain labels cannot start or end with a hyphen.
 Tag | 1–30 lowercase letters, numbers or internal hyphens; no leading or trailing hyphen. Repeated tags are stored once.
 
+For example, `t/VIP` is rejected with `Tag must be 1–30 lowercase letters, numbers, or internal hyphens.` Use `t/vip` instead.
+
 A duplicate has the same email (ignoring case), or the same name (ignoring case,
 outer spaces and repeated internal spaces) **and** normalized phone. The same name
-alone is allowed. Duplicates report `This client already exists: <name>.`
+alone is allowed. Unicode case variants such as `Işık` and `IŞIK` are also duplicates when their phones match. Duplicates report `This client already exists: <name>.`
 Missing required fields report `Usage: add-client n/NAME p/PHONE e/EMAIL [t/TAG]...`.
 If saving fails, ClientDesk reports `Client could not be saved. No changes were made.`
 and keeps the existing data and displayed list.
 
+New email values cannot contain Unicode spaces, including non-breaking spaces copied from documents. This applies to `add-client`, `edit-client`, `add` and `edit`. Older saved email values remain readable; correct them using an edit command.
+
 The inherited address field displays `Not provided` for a new client because
 `add-client` does not require an address.
+Existing v1.4 records that differ only by previously missed Unicode case variants remain readable and editable; they are not merged or removed. New additions and edits cannot introduce another such duplicate.
+
 Adding a client preserves existing clients' projects and their next project IDs.
 The new client starts with no projects; its first project receives ID 1.
 
@@ -194,7 +200,7 @@ Example: `edit-client 1 e/new@example.com`
 
 Use a positive index from the currently displayed list, including search results. Supply exactly one lowercase `e/` parameter. The email must be 3–254 characters, contain exactly one `@` and no spaces, and have a dotted domain whose labels do not start or end with a hyphen. Email duplicates are checked case-insensitively against all clients, including those hidden by a search.
 
-Success reports `Updated client: <name>.`; an identical email reports `No changes needed for <name>.` without saving. A save failure restores the previous record. If the updated email no longer matches your search, the client may disappear from those results; use `list-clients` to find it again.
+Success reports `Updated client: <name>.`; an identical email reports `No changes needed for <name>.` without saving. A save failure leaves the previous record, selected client and details unchanged. If the updated email no longer matches your search, the client may disappear from those results; use `list-clients` to find it again.
 
 This command supports email editing only. Use the existing [Edit command](#editing-a-person-edit) to change a name, phone, address or tags. ClientDesk has no undo command.
 
@@ -205,7 +211,7 @@ Stores one free-text remark for a client, such as contact preferences or a remin
 Format: `remark INDEX r/[REMARK]`
 
 * `INDEX` is a positive number from the currently displayed client list, including `find` results.
-* Use lowercase `r/`, preceded by a space. Leading and trailing spaces around the remark are removed.
+* Supply at most one lowercase `r/`, preceded by a space. Repeated `r/` prefixes are rejected without changing the remark. Leading and trailing spaces around the remark are removed.
 * Use an **empty `r/`** to clear the remark. The legacy shorthand `remark 1` also clears the first displayed client's remark.
 * A successful update shows all clients and preserves the client's other fields and projects. Check the displayed indexes again after the list refreshes.
 * Use `view CLIENT_INDEX` to inspect the updated remark. A missing or out-of-range client index reports an error without updating any record.
@@ -251,7 +257,8 @@ On success, ClientDesk reports `Added project #<id> to <client>.` Project IDs st
 A project is a duplicate when the same client already has its title and deadline. Title comparison ignores case,
 surrounding spaces and repeated spaces, including Unicode spaces. Status and priority do not affect duplicate
 handling. A duplicate reports `This project already exists for <client>.`; matching projects under different clients
-are allowed.
+are allowed. Unicode case variants such as `IşıkWebsite` and `IŞIKWEBSITE` match regardless of your computer's
+language settings. `Straße` and `STRASSE` remain distinct.
 
 Invalid input reports the relevant title, deadline, status, priority or index constraint. Missing required parameters
 report `Usage: add-project CLIENT_INDEX title/TITLE deadline/DATE [status/STATUS] [priority/PRIORITY]`.
@@ -293,7 +300,9 @@ Updated project #11 for Acme Studio: Website launch | Deadline: 2026-10-30 | Sta
 
 The updated client is selected and the current client filter is preserved. Use `view 1` again to inspect its projects. Changes are saved automatically and survive restarting ClientDesk. Other clients and projects are unchanged.
 
-Two projects for the same client cannot have the same normalized title and deadline. Title comparison ignores case and repeated spaces, regardless of status or priority. The same title with a different deadline, or matching work under another client, is allowed.
+Adding a project or changing its title or deadline cannot duplicate another project for the same client. Title comparison ignores case and repeated spaces, regardless of status or priority. The same title with a different deadline, or matching work under another client, is allowed.
+
+Projects saved in v1.4 remain available even if their Unicode title variants now match. You can update their status or priority and delete them. Changing their title or deadline must satisfy the current duplicate rule.
 
 | Situation | Result |
 | --- | --- |
@@ -350,13 +359,13 @@ Name, phone, email and address are required. Tags are optional and repeatable. U
 
 Field | Legacy Add/Edit rules
 ------|------
-Name | 1–80 characters containing at least one letter or number; allows letters, numbers, spaces, apostrophes, hyphens, periods, ampersands and parentheses.
+Name | 1–80 Unicode code points containing at least one letter or number; allows letters, combining marks, numbers, spaces, apostrophes, hyphens, periods, ampersands and parentheses. Combining marks count towards the limit and the supplied spelling is preserved.
 Phone | At least 3 digits, with no spaces, hyphens or leading `+`. This differs from `add-client`'s 7–15-digit formatted-phone rule.
 Email | 3–254 characters, exactly one `@`, no spaces, and a dotted domain whose labels do not start or end with a hyphen.
 Address | A non-blank value.
 Tag | 1–30 letters, numbers or internal hyphens. Uppercase is accepted and preserved; `add-client` requires lowercase tags.
 
-A duplicate is a client with the same email ignoring case, or the same normalized name and phone. The same name alone is allowed. A new legacy record starts with no projects or remark.
+A duplicate is a client with the same email ignoring case, or the same normalized name and phone. The same name alone is allowed. A new legacy record starts with no projects or remark. Unicode name case variants use the same duplicate check as `add-client`.
 
 ### Listing all persons: `list`
 
