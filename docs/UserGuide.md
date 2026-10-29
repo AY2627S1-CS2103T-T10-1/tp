@@ -147,7 +147,7 @@ Finds clients using partial names, phone numbers, email addresses, or tags.
 
 Format: `find KEYWORD [KEYWORD]...`
 
-* Supply at least one keyword, each containing 1 to 50 characters. Separate keywords with whitespace.
+* Supply at least one keyword, each containing 1 to 50 characters. Separate keywords with whitespace, including non-breaking spaces pasted from documents.
 * Matching is case-insensitive and uses substrings; for example, `cme` matches `Acme Studio`.
 * **Every keyword must match the same client** (an `AND` search). Keywords may match different fields.
   For example, `find acme startup` matches `Acme Studio` with the tag `startup`. Each client appears once.
