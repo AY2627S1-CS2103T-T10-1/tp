@@ -807,6 +807,15 @@ testers are expected to do more *exploratory* testing.
 1. Enter `find alex`, note the displayed clients, then open Help through the command, Help menu and `F1`.<br>
    Expected: Each route opens Help. Closing it leaves the displayed clients and their data unchanged.
 
+### Setting a remark
+
+1. On disposable data with a displayed client, enter `remark 1 r/Keep this reminder`, then `view 1`.<br>
+   Expected: the selected client has that remark.
+1. Enter `remark 1 r/Call Monday r/Call Tuesday`, then `remark 1 r/Important reminder r/`.<br>
+   Expected: both commands report a repeated `r/` prefix; `view 1` still shows `Keep this reminder`.
+1. Enter `remark 1 r/`, then `view 1`.<br>
+   Expected: the remark is empty. The legacy `remark 1` shorthand also clears it.
+
 ### Adding a client
 
 Run these cases in a disposable folder containing the JAR, using Java 25. Keep that folder separate from your
