@@ -122,6 +122,8 @@ Missing required fields report `Usage: add-client n/NAME p/PHONE e/EMAIL [t/TAG]
 If saving fails, ClientDesk reports `Client could not be saved. No changes were made.`
 and keeps the existing data and displayed list.
 
+New email values cannot contain Unicode spaces, including non-breaking spaces copied from documents. This applies to `add-client`, `edit-client`, `add` and `edit`. Older saved email values remain readable; correct them using an edit command.
+
 The inherited address field displays `Not provided` for a new client because
 `add-client` does not require an address.
 Adding a client preserves existing clients' projects and their next project IDs.

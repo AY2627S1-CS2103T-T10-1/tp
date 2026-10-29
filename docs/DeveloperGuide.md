@@ -244,6 +244,9 @@ With no command name, `help` returns the catalogue overview instead. The Help me
 
 ### Add client
 
+`ParserUtil.parseEmail` rejects Unicode whitespace and separator characters in new command input, including `edit-client`. The stored `Email` representation retains its existing validation so records accepted by v1.4 still load and round-trip unchanged. `EmailInputIntegrationTest` checks all four email-entry commands and legacy storage compatibility.
+
+
 `AddClientCommandParser` requires name, phone and email, accepts repeated tags, and rejects repeated required
 prefixes or unknown prefixes. It validates the creation rules before building a `Person`. Phone formatting is
 removed and tags are lowercase. The new client has the address `Not provided`, no projects and next project ID 1.
