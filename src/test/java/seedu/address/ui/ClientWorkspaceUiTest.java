@@ -87,7 +87,7 @@ public class ClientWorkspaceUiTest {
                 assertEquals("Select a client", emptyTitle.getText());
                 assertTrue(cards.getChildren().isEmpty());
                 assertTrue(window.getPrimaryStage().getMinWidth() >= 650);
-                assertTrue(window.getPrimaryStage().getMinHeight() >= 600);
+                assertEquals(400, window.getPrimaryStage().getMinHeight());
 
                 window.getPersonListPanel().selectClient(alice);
                 window.getPrimaryStage().getScene().getRoot().applyCss();

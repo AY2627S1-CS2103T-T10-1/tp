@@ -177,6 +177,7 @@ public class ClientDetailsUiTest {
                 window.fillInnerParts();
                 window.show();
                 TextField input = (TextField) window.getPrimaryStage().getScene().lookup("#commandTextField");
+                ClientWorkspaceTestUtil.selectDetailsTab(window);
                 TextArea details = (TextArea) window.getPrimaryStage().getScene().lookup("#clientDetails");
                 enter(input, filter);
                 enter(input, "view " + selectedIndex);
@@ -223,6 +224,7 @@ public class ClientDetailsUiTest {
                 window.fillInnerParts();
                 window.show();
                 TextField input = (TextField) window.getPrimaryStage().getScene().lookup("#commandTextField");
+                ClientWorkspaceTestUtil.selectDetailsTab(window);
                 TextArea details = (TextArea) window.getPrimaryStage().getScene().lookup("#clientDetails");
                 if (filtered) {
                     enter(input, "find friends");
