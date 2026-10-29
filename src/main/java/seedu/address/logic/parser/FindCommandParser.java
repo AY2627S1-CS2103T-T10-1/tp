@@ -18,7 +18,8 @@ public class FindCommandParser implements Parser<FindCommand> {
      * @throws ParseException if no keywords are provided or a keyword is invalid.
      */
     public FindCommand parse(String args) throws ParseException {
-        String trimmedArgs = args.trim();
+        // Unicode separators occur frequently in names pasted from documents.
+        String trimmedArgs = args.replaceAll("(?U)\\s+", " ").trim();
         if (trimmedArgs.isEmpty()) {
             throw new ParseException(FindCommand.MESSAGE_USAGE);
         }

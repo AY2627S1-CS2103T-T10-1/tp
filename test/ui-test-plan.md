@@ -19,6 +19,14 @@ The Trackie text UI runner is not available in this JavaFX tP repository.
 These GUI checks require manual execution; automated command/parser tests cover
 view output, filtered indexes, invalid indexes and input validation.
 
+## Unicode search separators (#117)
+
+In disposable data, add Acme Studio and Benson with different emails.
+Run `find Acme Studio`, then paste `find Acme Studio` (U+00A0).
+Both must report `Found 1 matching clients.` and show only Acme Studio.
+Repeat with U+2003 and U+202F. A whitespace-only search reports usage and preserves the list.
+Automated coverage: FindCommandParserTest.
+
 ## Edit client email (first increment)
 
 Run the JavaFX app with Java 25. These are manual checks; the iP Trackie
@@ -40,6 +48,13 @@ text UI runner is not available in this tP repository.
    Expect an error and unchanged data.
 9. Save failure is covered by an automated storage-failure test; expect the
    prior record and filter to remain, with `Client could not be saved. No changes were made.`
+
+## Typographic apostrophes (#118)
+
+In disposable data, enter `add-client n/O’Connor p/91234567 e/oconnor@example.com`.
+Expect success; `view` and restart must preserve the curly apostrophe.
+A name containing only apostrophes or more than 80 characters must still fail.
+Automated coverage: NameTest.
 
 ## Client details panel
 
