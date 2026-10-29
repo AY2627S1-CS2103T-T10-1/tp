@@ -18,6 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import seedu.address.commons.core.GuiSettings;
 import seedu.address.model.UserPrefs;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
@@ -106,6 +107,69 @@ public class MainAppTest {
     @Test
     public void init_nullJsonRoot_blocksCommandsAndPreservesBytes() throws Exception {
         assertFailedStartupPreservesFile("null-root.json", "null");
+    }
+
+    @Test
+    public void init_nullGuiSettings_usesDefaultsWithoutChangingClientData() throws Exception {
+        Path dataFile = temporaryFolder.resolve("clients.json");
+        JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(dataFile);
+        addressBookStorage.saveAddressBook(getTypicalAddressBook());
+        byte[] originalClientData = Files.readAllBytes(dataFile);
+        Path prefsFile = temporaryFolder.resolve("preferences.json");
+        Files.writeString(prefsFile, "{\"guiSettings\":null}");
+        PreferencesTestMainApp app = new PreferencesTestMainApp(dataFile, prefsFile);
+
+        app.init();
+
+        assertEquals(getTypicalAddressBook(), app.model.getAddressBook());
+        assertEquals(new GuiSettings(), app.model.getGuiSettings());
+        assertNotNull(app.logic);
+        assertNotNull(app.ui);
+        assertArrayEquals(originalClientData, Files.readAllBytes(dataFile));
+        assertEquals(new GuiSettings(), new JsonUserPrefsStorage(prefsFile)
+                .readUserPrefs().orElseThrow().getGuiSettings());
+    }
+
+    @Test
+    public void init_validGuiSettings_preservesSavedValuesAndClientData() throws Exception {
+        Path dataFile = temporaryFolder.resolve("clients.json");
+        JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(dataFile);
+        addressBookStorage.saveAddressBook(getTypicalAddressBook());
+        byte[] originalClientData = Files.readAllBytes(dataFile);
+        Path prefsFile = temporaryFolder.resolve("preferences.json");
+        GuiSettings savedSettings = new GuiSettings(1111, 777, 12, 34);
+        UserPrefs savedPrefs = new UserPrefs();
+        savedPrefs.setGuiSettings(savedSettings);
+        new JsonUserPrefsStorage(prefsFile).saveUserPrefs(savedPrefs);
+        PreferencesTestMainApp app = new PreferencesTestMainApp(dataFile, prefsFile);
+
+        app.init();
+
+        assertEquals(savedSettings, app.model.getGuiSettings());
+        assertArrayEquals(originalClientData, Files.readAllBytes(dataFile));
+        assertEquals(savedSettings, new JsonUserPrefsStorage(prefsFile)
+                .readUserPrefs().orElseThrow().getGuiSettings());
+    }
+
+    @Test
+    public void init_missingGuiSettings_usesDefaults() throws Exception {
+        Path dataFile = temporaryFolder.resolve("clients.json");
+        Path prefsFile = temporaryFolder.resolve("preferences.json");
+        Files.writeString(prefsFile, "{}");
+        PreferencesTestMainApp app = new PreferencesTestMainApp(dataFile, prefsFile);
+
+        app.init();
+
+        assertEquals(new GuiSettings(), app.model.getGuiSettings());
+        assertNotNull(app.logic);
+
+        Path emptySettingsFile = temporaryFolder.resolve("empty-settings.json");
+        Files.writeString(emptySettingsFile, "{\"guiSettings\":{}}");
+        PreferencesTestMainApp emptySettingsApp = new PreferencesTestMainApp(dataFile, emptySettingsFile);
+        emptySettingsApp.init();
+
+        assertEquals(new GuiSettings(), emptySettingsApp.model.getGuiSettings());
+        assertNotNull(emptySettingsApp.logic);
     }
 
     @Test
@@ -211,6 +275,27 @@ public class MainAppTest {
         protected void showDataLoadingError(Path dataFilePath) {
             errorShown = true;
             errorPath = dataFilePath;
+        }
+    }
+
+    private static class PreferencesTestMainApp extends MainApp {
+        private final Path dataFile;
+        private final Path prefsFile;
+
+        PreferencesTestMainApp(Path dataFile, Path prefsFile) {
+            this.dataFile = dataFile;
+            this.prefsFile = prefsFile;
+        }
+
+        @Override
+        protected UserPrefs initPrefs(JsonUserPrefsStorage ignored) {
+            return super.initPrefs(new JsonUserPrefsStorage(prefsFile));
+        }
+
+        @Override
+        protected Storage createStorage(JsonAddressBookStorage ignoredData,
+                JsonUserPrefsStorage ignoredPrefs) {
+            return super.createStorage(new JsonAddressBookStorage(dataFile), new JsonUserPrefsStorage(prefsFile));
         }
     }
 }
