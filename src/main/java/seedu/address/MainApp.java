@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 
 import javafx.application.Application;
 import javafx.stage.Stage;
+import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.commons.util.AppPaths;
@@ -115,6 +116,10 @@ public class MainApp extends Application {
             logger.warning("Preference file at " + prefsFilePath + " could not be loaded."
                     + " Using default preferences.");
             initializedPrefs = new UserPrefs();
+        }
+
+        if (initializedPrefs.getGuiSettings() == null) {
+            initializedPrefs.setGuiSettings(new GuiSettings());
         }
 
         //Update prefs file in case it was missing to begin with or there are new/unused fields
