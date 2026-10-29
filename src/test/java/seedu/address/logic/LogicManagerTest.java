@@ -38,7 +38,6 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
-import seedu.address.model.person.Address;
 import seedu.address.model.person.Person;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
@@ -92,10 +91,10 @@ public class LogicManagerTest {
         ReadOnlyAddressBook original = new AddressBook(model.getAddressBook());
         String originalFile = Files.readString(file);
 
-        for (String blank : List.of("\u2003", "\u3000", "\u00a0", " \u2003\t\u00a0 ")) {
+        for (String blank : List.of("\u0085", "\u2003", "\u3000", "\u00a0", " \u2003\t\u00a0 ")) {
             for (String command : List.of("add n/New Client p/81234567 e/new@example.com a/" + blank,
                     "edit 1 a/" + blank)) {
-                assertThrows(ParseException.class, Address.MESSAGE_CONSTRAINTS, () -> logic.execute(command));
+                assertThrows(ParseException.class, () -> logic.execute(command));
                 assertEquals(original, model.getAddressBook());
                 assertEquals(originalFile, Files.readString(file));
             }
