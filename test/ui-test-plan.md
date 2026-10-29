@@ -1,5 +1,13 @@
 # ClientDesk UI test plan
 
+## Find help explains no-match reset (#121)
+
+Run `help find` and expect an explicit explanation that no matches restore the full list,
+and a reminder to check displayed indexes before indexed commands.
+In disposable data, find one existing client, then search for a nonexistent keyword.
+Expect the full list, matching the help text. Help itself must preserve the list and saved data.
+Automated coverage: HelpCommandTest.
+
 ## View client details
 
 Run ClientDesk with Java 25 and its sample data.
