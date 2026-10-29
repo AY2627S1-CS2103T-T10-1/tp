@@ -1,6 +1,9 @@
 package seedu.address.commons.util;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -9,8 +12,6 @@ import java.nio.file.Path;
  * Writes and reads files
  */
 public class FileUtil {
-
-    private static final String CHARSET = "UTF-8";
 
     /**
      * Creates a file if it does not exist along with its missing parent directories.
@@ -51,7 +52,13 @@ public class FileUtil {
      * Will create the file if it does not exist yet.
      */
     public static void writeToFile(Path file, String content) throws IOException {
-        Files.write(file, content.getBytes(CHARSET));
+        ByteBuffer encoded = StandardCharsets.UTF_8.newEncoder()
+                .onMalformedInput(CodingErrorAction.REPORT)
+                .onUnmappableCharacter(CodingErrorAction.REPORT)
+                .encode(CharBuffer.wrap(content));
+        byte[] bytes = new byte[encoded.remaining()];
+        encoded.get(bytes);
+        Files.write(file, bytes);
     }
 
 }
