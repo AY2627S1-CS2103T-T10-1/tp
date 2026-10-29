@@ -31,6 +31,7 @@ import seedu.address.model.project.ProjectTitle;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
+import seedu.address.testutil.ClientWorkspaceTestUtil;
 import seedu.address.testutil.JavaFxTestUtil;
 
 public class MainWindowLayoutTest {
@@ -54,6 +55,7 @@ public class MainWindowLayoutTest {
                     TextField input = (TextField) scene.lookup("#commandTextField");
                     input.setText("view 1");
                     input.getOnAction().handle(new ActionEvent());
+                    ClientWorkspaceTestUtil.selectDetailsTab(window);
                     scene.getRoot().applyCss();
                     scene.getRoot().layout();
                     scene.snapshot(null);

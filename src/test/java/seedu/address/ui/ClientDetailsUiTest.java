@@ -36,6 +36,7 @@ import seedu.address.model.project.ProjectTitle;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
+import seedu.address.testutil.ClientWorkspaceTestUtil;
 import seedu.address.testutil.JavaFxTestUtil;
 import seedu.address.testutil.PersonBuilder;
 
@@ -73,6 +74,7 @@ public class ClientDetailsUiTest {
                 window.fillInnerParts();
                 window.show();
                 assertEquals("ClientDesk", window.getPrimaryStage().getTitle());
+                ClientWorkspaceTestUtil.selectDetailsTab(window);
                 TextArea details = (TextArea) window.getPrimaryStage().getScene().lookup("#clientDetails");
                 TextField input = (TextField) window.getPrimaryStage().getScene().lookup("#commandTextField");
                 assertEquals(ClientDetailsPanel.MESSAGE_EMPTY, details.getText());
@@ -95,7 +97,7 @@ public class ClientDetailsUiTest {
                 enter(input, "find Benson");
                 enter(input, "view 1");
                 assertTrue(details.getText().contains("Name: Benson Meier"));
-                assertTrue(details.getText().contains("Projects: No projects yet."));
+                assertFalse(details.getText().contains("Projects:"));
                 assertFalse(details.getText().contains("Website launch"));
                 assertFalse(details.getText().contains("Initial draft"));
                 assertEquals(0, details.getCaretPosition());
@@ -175,6 +177,7 @@ public class ClientDetailsUiTest {
                 window.fillInnerParts();
                 window.show();
                 TextField input = (TextField) window.getPrimaryStage().getScene().lookup("#commandTextField");
+                ClientWorkspaceTestUtil.selectDetailsTab(window);
                 TextArea details = (TextArea) window.getPrimaryStage().getScene().lookup("#clientDetails");
                 enter(input, filter);
                 enter(input, "view " + selectedIndex);
@@ -221,6 +224,7 @@ public class ClientDetailsUiTest {
                 window.fillInnerParts();
                 window.show();
                 TextField input = (TextField) window.getPrimaryStage().getScene().lookup("#commandTextField");
+                ClientWorkspaceTestUtil.selectDetailsTab(window);
                 TextArea details = (TextArea) window.getPrimaryStage().getScene().lookup("#clientDetails");
                 if (filtered) {
                     enter(input, "find friends");
@@ -276,6 +280,7 @@ public class ClientDetailsUiTest {
             try {
                 window.fillInnerParts();
                 window.show();
+                ClientWorkspaceTestUtil.selectDetailsTab(window);
                 TextArea details = (TextArea) window.getPrimaryStage().getScene().lookup("#clientDetails");
                 TextField input = (TextField) window.getPrimaryStage().getScene().lookup("#commandTextField");
                 if (filtered) {
@@ -312,7 +317,7 @@ public class ClientDetailsUiTest {
                 assertFalse(details.getText().contains("#1 | Website"));
                 assertTrue(details.getText().contains("#2 | Second"));
                 enter(input, "delete-project " + index + " 2");
-                assertTrue(details.getText().contains("Projects: No projects yet."));
+                assertFalse(details.getText().contains("Projects:"));
                 assertTrue(details.getText().contains("Name: Benson Meier"));
                 enter(input, "delete-client " + index);
                 assertTrue(input.getText().isEmpty());
@@ -329,4 +334,5 @@ public class ClientDetailsUiTest {
         input.setText(command);
         input.fireEvent(new ActionEvent());
     }
+
 }

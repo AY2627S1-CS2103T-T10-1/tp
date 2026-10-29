@@ -11,6 +11,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
@@ -44,6 +45,9 @@ public class MainWindow extends UiPart<Stage> {
     private HelpWindow helpWindow;
 
     @FXML
+    private HBox workspaceHeader;
+
+    @FXML
     private StackPane commandBoxPlaceholder;
 
     @FXML
@@ -74,6 +78,9 @@ public class MainWindow extends UiPart<Stage> {
         this.dataFilePath = dataFilePath;
 
         // Configure the UI
+        // Keep client tabs available when the window is fitted to a short screen.
+        workspaceHeader.managedProperty().bind(primaryStage.heightProperty().greaterThanOrEqualTo(550));
+        workspaceHeader.visibleProperty().bind(workspaceHeader.managedProperty());
         setWindowDefaultSize(logic.getGuiSettings());
 
         setAccelerators();
@@ -139,6 +146,7 @@ public class MainWindow extends UiPart<Stage> {
 
         CommandBox commandBox = new CommandBox(this::executeCommand);
         commandBoxPlaceholder.getChildren().add(commandBox.getRoot());
+        commandBox.requestFocus();
     }
 
     /**
