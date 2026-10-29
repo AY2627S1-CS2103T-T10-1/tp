@@ -37,6 +37,18 @@ jobs:
         if: runner.os != 'Linux'
         run: ./gradlew check coverage
 
+      - name: Preserve test failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-failure-${{ matrix.platform }}
+          path: |
+            build/reports/tests/
+            build/test-results/
+            hs_err_pid*.log
+            ~/Library/Logs/DiagnosticReports/java*
+          retention-days: 7
+
       - name: Upload coverage reports to Codecov
         if: runner.os == 'Linux'
         uses: codecov/codecov-action@v7
