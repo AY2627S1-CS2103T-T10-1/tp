@@ -257,6 +257,12 @@ If saving fails, the live data and displayed filter stay unchanged. A successful
 restores the full list and selects the new entry. Copying the existing address book into the staged model retains
 each existing client's projects and next project ID.
 
+### Editing a client's email safely
+
+`LogicManager` executes `edit-client` against a proposed model carrying the currently displayed clients. An unchanged email skips saving. Otherwise, storage must succeed before the proposed records replace the live records. This preserves the live filter, selection and details when saving fails; successful publication re-evaluates the existing filter against the new email.
+
+`EditClientUiTest` covers a selected client found by their old email. Its failing storage stub verifies that a rejected email change cannot clear the selection or details.
+
 ### Find clients
 
 `FindCommandParser` splits the input into keywords and rejects empty input or keywords longer than 50 Unicode
