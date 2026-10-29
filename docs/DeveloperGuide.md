@@ -669,20 +669,17 @@ professional, unless specified otherwise.)
 
     Use case resumes at step 7.
 
-#### UC03: Recover a mistakenly deleted client
+#### UC03: Delete a client permanently
 
-**Preconditions:** At least one client exists and there is no more recent data-changing command to undo.
+**Preconditions:** At least one client exists.
 
 **MSS**
 
 1.  User lists all clients.
 2.  ClientDesk shows the clients with their current indexes.
 3.  User deletes a client by index.
-4.  ClientDesk deletes the client and all associated projects, notes, tags and follow-up details.
-5.  ClientDesk informs the user that the client was deleted and can be restored using undo.
-6.  User requests to undo the deletion.
-7.  ClientDesk restores and saves the client and all associated data with their original IDs.
-8.  ClientDesk informs the user that the deletion was undone.
+4.  ClientDesk saves the deletion of the client and all associated projects, remarks and tags.
+5.  ClientDesk confirms that the client was deleted.
 
     Use case ends.
 
@@ -699,12 +696,6 @@ professional, unless specified otherwise.)
   * 4a1. ClientDesk informs the user that the client could not be deleted and makes no changes.
 
     Use case resumes at step 3.
-
-* 7a. ClientDesk cannot save the restored state.
-
-  * 7a1. ClientDesk keeps the current state unchanged and retains the undo entry for another attempt.
-
-    Use case resumes at step 6.
 
 #### UC04: Update an existing project
 
