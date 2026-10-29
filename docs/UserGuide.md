@@ -108,7 +108,7 @@ Repeated name, phone or email prefixes and unknown prefixes are rejected.
 
 Field | Rules
 ------|------
-Name | 1–80 Unicode code points with at least one letter or number. Letters, combining marks, numbers, spaces, apostrophes, hyphens, periods, ampersands and parentheses are allowed. Combining marks count towards the limit; names such as `अनिल`, `วิชัย` and `José` are accepted with their spelling preserved.
+Name | 1–80 Unicode code points with at least one letter or number. Letters, combining marks, numbers, spaces, straight or curly apostrophes, hyphens, periods, ampersands and parentheses are allowed. Combining marks count towards the limit; names such as `अनिल`, `วิชัย` and `José` are accepted with their spelling preserved.
 Phone | 7–15 digits, with an optional leading `+`, spaces or hyphens. Formatting is removed before storage.
 Email | 3–254 characters, exactly one `@`, non-empty local and domain parts, no spaces and a dot in the domain. Domain labels cannot start or end with a hyphen.
 Tag | 1–30 lowercase letters, numbers or internal hyphens; no leading or trailing hyphen. Repeated tags are stored once.
@@ -147,7 +147,7 @@ Finds clients using partial names, phone numbers, email addresses, or tags.
 
 Format: `find KEYWORD [KEYWORD]...`
 
-* Supply at least one keyword, each containing 1 to 50 characters. Separate keywords with whitespace.
+* Supply at least one keyword, each containing 1 to 50 characters. Separate keywords with whitespace, including non-breaking spaces pasted from documents.
 * Matching is case-insensitive and uses substrings; for example, `cme` matches `Acme Studio`.
 * **Every keyword must match the same client** (an `AND` search). Keywords may match different fields.
   For example, `find acme startup` matches `Acme Studio` with the tag `startup`. Each client appears once.
@@ -362,7 +362,7 @@ Name, phone, email and address are required. Tags are optional and repeatable. U
 
 Field | Legacy Add/Edit rules
 ------|------
-Name | 1–80 Unicode code points containing at least one letter or number; allows letters, combining marks, numbers, spaces, apostrophes, hyphens, periods, ampersands and parentheses. Combining marks count towards the limit and the supplied spelling is preserved.
+Name | 1–80 Unicode code points containing at least one letter or number; allows letters, combining marks, numbers, spaces, straight or curly apostrophes, hyphens, periods, ampersands and parentheses. Combining marks count towards the limit and the supplied spelling is preserved.
 Phone | At least 3 digits, with no spaces, hyphens or leading `+`. This differs from `add-client`'s 7–15-digit formatted-phone rule.
 Email | 3–254 characters, exactly one `@`, no spaces, and a dotted domain whose labels do not start or end with a hyphen.
 Address | A non-blank value.
@@ -453,7 +453,10 @@ and keep field values within the documented limits.
 ## FAQ
 
 **Q**: How do I transfer my data to another computer?<br>
-**A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous AddressBook home folder.
+**A**: Close ClientDesk on both computers. Install ClientDesk on the new computer, then copy
+`data/addressbook.json` from the folder containing your old ClientDesk JAR to the corresponding `data` folder beside
+the new JAR, replacing the file there. Keep a backup of both files until you have opened ClientDesk and verified the
+transferred clients and projects.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -484,3 +487,11 @@ Action | Format, Examples
 **Delete (legacy)** | `delete INDEX`<br>e.g., `delete 3`
 **Clear** | `clear`
 **Exit** | `exit`
+
+### Email dot validation
+
+New email input through `add-client`, `add`, `edit-client` and `edit` rejects an unquoted
+local part (the text before `@`) that starts or ends with a dot or contains consecutive dots.
+For example, `alice.smith@example.com` is accepted, while `.alice@example.com` and
+`a..b@example.com` are rejected. Existing saved records remain readable; correct an old
+address by supplying a valid replacement. This validation does not verify deliverability.
