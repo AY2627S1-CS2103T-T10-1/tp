@@ -34,7 +34,7 @@
             <MenuItem fx:id="helpMenuItem" mnemonicParsing="false" onAction="#handleHelp" text="Help" />
           </Menu>
         </MenuBar>
-        <HBox alignment="CENTER_LEFT" spacing="12" styleClass="workspace-header">
+        <HBox fx:id="workspaceHeader" alignment="CENTER_LEFT" spacing="12" styleClass="workspace-header">
           <Label text="CD" styleClass="brand-mark" />
           <VBox spacing="1">
             <Label text="ClientDesk" styleClass="brand-title" />
@@ -53,7 +53,7 @@
         </SplitPane>
         <VBox styleClass="command-dock" VBox.vgrow="NEVER" spacing="4">
           <StackPane fx:id="commandBoxPlaceholder" />
-          <StackPane fx:id="resultDisplayPlaceholder" minHeight="58" prefHeight="58" maxHeight="90" />
+          <StackPane fx:id="resultDisplayPlaceholder" minHeight="32" prefHeight="58" maxHeight="90" />
         </VBox>
         <StackPane fx:id="statusbarPlaceholder" VBox.vgrow="NEVER" styleClass="status-footer" />
       </VBox>

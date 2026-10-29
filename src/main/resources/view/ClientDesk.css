@@ -163,8 +163,8 @@
 }
 
 .client-header {
-    -fx-padding: 20 24 16 24;
-    -fx-spacing: 12;
+    -fx-padding: 12 24 8 24;
+    -fx-spacing: 8;
 }
 
 .client-avatar {

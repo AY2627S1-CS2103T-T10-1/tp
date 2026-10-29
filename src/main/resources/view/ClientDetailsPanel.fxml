@@ -31,7 +31,7 @@
       </VBox>
     </HBox>
     <ScrollPane fx:id="clientTagScroll" fitToWidth="true" hbarPolicy="NEVER"
-                minHeight="24" prefHeight="32" maxHeight="52"
+                minHeight="24" prefHeight="24" maxHeight="52"
                 styleClass="client-tag-scroll">
       <content>
         <FlowPane fx:id="clientTags" hgap="7" vgap="6" styleClass="client-tags" />
@@ -40,7 +40,7 @@
   </VBox>
 
   <TabPane id="clientTabs" fx:id="clientTabs" tabClosingPolicy="UNAVAILABLE" styleClass="workspace-tabs"
-           VBox.vgrow="ALWAYS">
+           minHeight="90" VBox.vgrow="ALWAYS">
     <tabs>
       <Tab id="projectsTab" fx:id="projectsTab" text="Projects">
         <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="project-scroll">

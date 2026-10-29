@@ -81,7 +81,8 @@ for the implemented client and project workflows. The current workspace uses a l
 client's workspace. The workspace header shows
 the client's name and contact summary, with **Projects** and **Details** tabs. Project cards display each project's
 title, deadline, status and priority. The bottom command bar remains available for keyboard-based workflows, and Help
-is available from the menu and by pressing `F1`.
+is available from the menu and by pressing `F1`. On short screens the brand header collapses to keep the tabs
+and command bar visible; Help remains available through the menu, `F1` and the `help` command.
 
 ![ClientDesk workspace showing the client list and selected client's projects](images/Ui.png)
 

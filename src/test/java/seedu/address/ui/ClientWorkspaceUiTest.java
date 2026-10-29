@@ -280,6 +280,77 @@ public class ClientWorkspaceUiTest {
         });
     }
 
+    @Test
+    public void workspace_compactWindowKeepsControlsAndBothTabsInsideScene() throws Exception {
+        ModelManager model = new ModelManager();
+        Person client = new PersonBuilder().withName("Compact View Client").withPhone("81111111")
+                .withEmail("compact@example.com").withTags("vip", "design")
+                .withProjects(List.of(project(1, "Compact project", "2026-12-01",
+                        ProjectStatus.IN_PROGRESS, ProjectPriority.HIGH)), 2).build();
+        model.addPerson(client);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(testFolder.resolve("compact-client.json"));
+        LogicManager logic = new LogicManager(model, new StorageManager(storage,
+                new JsonUserPrefsStorage(testFolder.resolve("compact-client-preferences.json"))));
+        MainWindow[] windowRef = new MainWindow[1];
+
+        JavaFxTestUtil.runOnFxThread(() -> {
+            MainWindow window = new MainWindow(new Stage(), logic, storage.getAddressBookFilePath());
+            windowRef[0] = window;
+            window.show();
+            window.fillInnerParts();
+            window.getPersonListPanel().selectClient(client);
+            window.getPrimaryStage().setMinHeight(400);
+            window.getPrimaryStage().setWidth(853);
+            window.getPrimaryStage().setHeight(400);
+        });
+        Thread.sleep(150);
+
+        JavaFxTestUtil.runOnFxThread(() -> {
+            MainWindow window = windowRef[0];
+            try {
+                Scene scene = window.getPrimaryStage().getScene();
+                scene.getRoot().applyCss();
+                scene.getRoot().layout();
+                assertTrue(window.getPrimaryStage().getWidth() >= 853);
+                assertTrue(window.getPrimaryStage().getWidth() <= 900);
+                assertTrue(window.getPrimaryStage().getHeight() >= 400);
+                assertTrue(window.getPrimaryStage().getHeight() <= 450);
+
+                TabPane tabs = lookup(window, "#clientTabs", TabPane.class);
+                TextField input = lookup(window, "#commandTextField", TextField.class);
+                TextArea feedback = lookup(window, "#resultDisplay", TextArea.class);
+                Node commandPlaceholder = lookup(window, "#commandBoxPlaceholder", Node.class);
+                Node footer = lookup(window, "#statusbarPlaceholder", Node.class);
+                Node footerContent = scene.lookup(".status-bar");
+                ScrollPane projects = lookup(window, ".project-scroll", ScrollPane.class);
+                assertVisibleWithinScene(tabs, scene);
+                assertVisibleWithinScene(input, scene);
+                assertVisibleWithinScene(feedback, scene);
+                assertVisibleWithinScene(footer, scene);
+                assertVisibleWithinScene(footerContent, scene);
+                Node projectViewport = projects.lookup(".viewport");
+                assertTrue(projectViewport.isVisible());
+                assertTrue(tabs.getHeight() >= 80, "both workspace tabs need a usable viewport");
+                assertTrue(projectViewport.localToScene(projectViewport.getBoundsInLocal()).getHeight() >= 32,
+                        "the Projects tab needs a visible card viewport");
+                Bounds tabsBounds = tabs.localToScene(tabs.getBoundsInLocal());
+                Bounds commandBounds = commandPlaceholder.localToScene(commandPlaceholder.getBoundsInLocal());
+                assertTrue(tabsBounds.getMaxY() <= commandBounds.getMinY(),
+                        "the workspace must end above the command dock");
+
+                Tab detailsTab = tabs.getTabs().stream().filter(tab -> "Details".equals(tab.getText()))
+                        .findFirst().orElseThrow();
+                tabs.getSelectionModel().select(detailsTab);
+                TextArea details = lookup(window, "#clientDetails", TextArea.class);
+                assertVisibleWithinScene(details, scene);
+                assertTrue(details.getText().contains("Name: Compact View Client"));
+                assertTrue(details.getText().contains("Projects:\n#1 | Compact project"));
+            } finally {
+                List.copyOf(Window.getWindows()).forEach(Window::hide);
+            }
+        });
+    }
+
     private Project project(int id, String title, String deadline, ProjectStatus status, ProjectPriority priority) {
         return new Project(id, new ProjectTitle(title), new ProjectDeadline(deadline), status, priority);
     }
