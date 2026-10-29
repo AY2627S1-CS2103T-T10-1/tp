@@ -10,14 +10,15 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
 public class Name {
 
     public static final String MESSAGE_CONSTRAINTS =
-            "Name must be 1–80 characters and use letters, numbers, spaces, straight or curly apostrophes, hyphens, "
-                    + "periods, ampersands, or parentheses.";
+            "Name must be 1–80 Unicode code points, contain at least one letter or number, and use letters, "
+                    + "combining marks, numbers, spaces, straight or curly apostrophes, hyphens, periods, "
+                    + "ampersands, or parentheses.";
 
     /*
      * Personal and business names may use punctuation from the MVP specification.
      * At least one letter or number is required.
      */
-    public static final String VALIDATION_REGEX = "[\\p{L}\\p{N} '\u2018\u2019\\-.&()]{1,80}";
+    public static final String VALIDATION_REGEX = "[\\p{L}\\p{M}\\p{N} '\u2018\u2019\\-.&()]{1,80}";
 
     public final String fullName;
 

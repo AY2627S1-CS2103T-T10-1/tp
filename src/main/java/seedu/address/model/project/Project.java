@@ -55,10 +55,10 @@ public final class Project {
     }
 
     /**
-     * Returns whether projects have the same normalized title and deadline, independent of their IDs or progress.
+     * Returns whether projects match by title and deadline, independent of their IDs or progress.
      */
     public boolean isSameProject(Project other) {
-        return other != null && title.normalizedValue().equals(other.title.normalizedValue())
+        return other != null && title.isSameTitle(other.title)
                 && deadline.equals(other.deadline);
     }
 
