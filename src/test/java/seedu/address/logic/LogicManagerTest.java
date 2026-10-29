@@ -237,6 +237,37 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_separateInstancesRejectStaleSaveAndReloadCanContinue() throws Exception {
+        Path dataFile = temporaryFolder.resolve("concurrentInstances.json");
+        new JsonAddressBookStorage(dataFile).saveAddressBook(new AddressBook());
+
+        JsonAddressBookStorage firstStorage = new JsonAddressBookStorage(dataFile);
+        JsonAddressBookStorage secondStorage = new JsonAddressBookStorage(dataFile);
+        Model firstModel = new ModelManager(firstStorage.readAddressBook().orElseThrow(), new UserPrefs());
+        Model secondModel = new ModelManager(secondStorage.readAddressBook().orElseThrow(), new UserPrefs());
+        Logic firstLogic = createLogic(firstModel, firstStorage);
+        Logic secondLogic = createLogic(secondModel, secondStorage);
+
+        firstLogic.execute("add-client n/First Client p/81234567 e/first@example.com");
+        String firstSavedFile = Files.readString(dataFile);
+        String secondAddCommand = "add-client n/Second Client p/87654321 e/second@example.com";
+        String saveFailure = "Client could not be saved. No changes were made.";
+        assertThrows(CommandException.class, saveFailure, () -> secondLogic.execute(secondAddCommand));
+
+        assertTrue(secondModel.getAddressBook().getPersonList().isEmpty());
+        assertEquals(firstSavedFile, Files.readString(dataFile));
+        assertEquals(firstModel.getAddressBook(), firstStorage.readAddressBook().orElseThrow());
+
+        JsonAddressBookStorage reloadedStorage = new JsonAddressBookStorage(dataFile);
+        Model reloadedModel = new ModelManager(reloadedStorage.readAddressBook().orElseThrow(), new UserPrefs());
+        Logic reloadedLogic = createLogic(reloadedModel, reloadedStorage);
+        reloadedLogic.execute(secondAddCommand);
+
+        assertEquals(2, reloadedModel.getAddressBook().getPersonList().size());
+        assertEquals(reloadedModel.getAddressBook(), reloadedStorage.readAddressBook().orElseThrow());
+    }
+
+    @Test
     public void execute_combiningMarkNames_surviveClientAndLegacyCommandsAndReload() throws Exception {
         JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(
                 temporaryFolder.resolve("combiningNames.json"));
@@ -447,7 +478,11 @@ public class LogicManagerTest {
     }
 
     private Logic createLogic(JsonAddressBookStorage addressBookStorage) {
-        return new LogicManager(model, new StorageManager(addressBookStorage,
+        return createLogic(model, addressBookStorage);
+    }
+
+    private Logic createLogic(Model targetModel, JsonAddressBookStorage addressBookStorage) {
+        return new LogicManager(targetModel, new StorageManager(addressBookStorage,
                 new JsonUserPrefsStorage(temporaryFolder.resolve("sharedUserPrefs.json"))));
     }
 
