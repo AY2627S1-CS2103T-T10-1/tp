@@ -58,34 +58,20 @@ public class LogicManager implements Logic {
     public CommandResult execute(String commandText) throws CommandException, ParseException {
         Command command = addressBookParser.parseCommand(commandText);
         logger.info("Executing command: " + command.getClass().getSimpleName());
-        if (command instanceof AddClientCommand) {
-            return executeAddClient(command);
-        }
-        if (command instanceof AddProjectCommand addProjectCommand) {
-            return executeAddProject(addProjectCommand);
-        }
-
-        if (command instanceof DeleteClientCommand deleteClientCommand) {
-            return executeDeleteClient(deleteClientCommand);
-        }
-        if (command instanceof DeleteProjectCommand deleteProjectCommand) {
-            return executeDeleteProject(deleteProjectCommand);
-        }
-
-        if (command instanceof EditClientCommand editClientCommand) {
-            return executeEditClient(editClientCommand);
-        }
-        if (command instanceof EditProjectCommand editProjectCommand) {
-            return executeEditProject(editProjectCommand);
-        }
-        if (isLegacyMutation(command)) {
-            return executeLegacyMutation(command);
+        if (isMutation(command)) {
+            return executeStagedMutation(command);
         }
         return command.execute(model);
     }
 
-    private boolean isLegacyMutation(Command command) {
-        return command instanceof AddCommand
+    private boolean isMutation(Command command) {
+        return command instanceof AddClientCommand
+                || command instanceof AddProjectCommand
+                || command instanceof DeleteClientCommand
+                || command instanceof DeleteProjectCommand
+                || command instanceof EditClientCommand
+                || command instanceof EditProjectCommand
+                || command instanceof AddCommand
                 || command instanceof ClearCommand
                 || command instanceof DeleteCommand
                 || command instanceof EditCommand
@@ -93,136 +79,57 @@ public class LogicManager implements Logic {
     }
 
     /**
-     * Saves a proposed inherited-command mutation before publishing it to the live model.
+     * Executes against a snapshot and publishes it only after storage succeeds.
+     * The snapshot resolves indexes against the same displayed clients as the live model.
      */
-    private CommandResult executeLegacyMutation(Command command) throws CommandException {
-        Model proposedModel = new ModelManager(model.getAddressBook(), model.getUserPrefs());
-        Set<Person> displayedPeople = new HashSet<>(model.getFilteredPersonList());
-        proposedModel.updateFilteredPersonList(displayedPeople::contains);
+    private CommandResult executeStagedMutation(Command command) throws CommandException {
+        Model proposedModel = createProposedModel();
         CommandResult result = command.execute(proposedModel);
-
+        if (canSkipUnchangedSave(command) && model.getAddressBook().equals(proposedModel.getAddressBook())) {
+            return result;
+        }
         try {
             storage.saveAddressBook(proposedModel.getAddressBook());
-        } catch (AccessDeniedException exception) {
-            throw new CommandException(String.format(FILE_OPS_PERMISSION_ERROR_FORMAT, exception.getMessage()),
-                    exception);
         } catch (IOException exception) {
-            throw new CommandException(String.format(FILE_OPS_ERROR_FORMAT, exception.getMessage()), exception);
+            throw new CommandException(getSaveFailureMessage(command, exception), exception);
         }
-
         model.setAddressBook(proposedModel.getAddressBook());
-        if (command instanceof AddCommand || command instanceof EditCommand || command instanceof RemarkCommand) {
+        if (shouldShowAllClients(command)) {
             model.updateFilteredPersonList(Model.PREDICATE_SHOW_ALL_PERSONS);
         }
         return result;
     }
 
-    /**
-     * Saves the proposed client data before publishing it to the live model and UI.
-     */
-    private CommandResult executeAddClient(Command command) throws CommandException {
-        Model proposedModel = new ModelManager(model.getAddressBook(), model.getUserPrefs());
-        CommandResult result = command.execute(proposedModel);
-        try {
-            storage.saveAddressBook(proposedModel.getAddressBook());
-        } catch (IOException error) {
-            throw new CommandException(AddClientCommand.MESSAGE_SAVE_FAILURE, error);
-        }
-        model.setAddressBook(proposedModel.getAddressBook());
-        model.updateFilteredPersonList(Model.PREDICATE_SHOW_ALL_PERSONS);
-        return result;
-    }
-
-    /**
-     * Saves a proposed project before publishing data or ID allocation to the live model.
-     */
-    private CommandResult executeAddProject(AddProjectCommand command) throws CommandException {
+    private Model createProposedModel() {
         Model proposedModel = new ModelManager(model.getAddressBook(), model.getUserPrefs());
         Set<Person> displayedClients = new HashSet<>(model.getFilteredPersonList());
         proposedModel.updateFilteredPersonList(displayedClients::contains);
-        CommandResult result = command.execute(proposedModel);
-        try {
-            storage.saveAddressBook(proposedModel.getAddressBook());
-        } catch (IOException error) {
-            throw new CommandException(AddProjectCommand.MESSAGE_SAVE_FAILURE, error);
-        }
-        model.setAddressBook(proposedModel.getAddressBook());
-        return result;
+        return proposedModel;
+    }
+
+    private boolean canSkipUnchangedSave(Command command) {
+        return command instanceof EditClientCommand || command instanceof EditProjectCommand;
+    }
+
+    private boolean shouldShowAllClients(Command command) {
+        return command instanceof AddClientCommand || command instanceof AddCommand
+                || command instanceof EditCommand || command instanceof RemarkCommand;
     }
 
     /**
-     * Saves a proposed client deletion before publishing it to the live model.
+     * Preserves each command's failure message, including the legacy permission-specific error.
      */
-    private CommandResult executeDeleteClient(DeleteClientCommand command) throws CommandException {
-        Model proposedModel = new ModelManager(model.getAddressBook(), model.getUserPrefs());
-        Set<Person> displayedClients = new HashSet<>(model.getFilteredPersonList());
-        proposedModel.updateFilteredPersonList(displayedClients::contains);
-        CommandResult result = command.execute(proposedModel);
-
-        try {
-            storage.saveAddressBook(proposedModel.getAddressBook());
-        } catch (IOException exception) {
-            throw new CommandException(DeleteClientCommand.MESSAGE_SAVE_FAILURE, exception);
-        }
-
-        model.setAddressBook(proposedModel.getAddressBook());
-        return result;
-    }
-
-    /** Saves a proposed project deletion before publishing it to the live model. */
-    private CommandResult executeDeleteProject(DeleteProjectCommand command) throws CommandException {
-        Model proposedModel = new ModelManager(model.getAddressBook(), model.getUserPrefs());
-        Set<Person> displayedClients = new HashSet<>(model.getFilteredPersonList());
-        proposedModel.updateFilteredPersonList(displayedClients::contains);
-        CommandResult result = command.execute(proposedModel);
-        try {
-            storage.saveAddressBook(proposedModel.getAddressBook());
-        } catch (IOException exception) {
-            throw new CommandException(DeleteProjectCommand.MESSAGE_SAVE_FAILURE, exception);
-        }
-        model.setAddressBook(proposedModel.getAddressBook());
-        return result;
-    }
-
-    /**
-     * Saves a proposed email update before publishing changes to the live model and selection.
-     * Unchanged emails do not trigger a save. The current list filter is preserved.
-     */
-    private CommandResult executeEditClient(EditClientCommand command) throws CommandException {
-        Model proposedModel = new ModelManager(model.getAddressBook(), model.getUserPrefs());
-        Set<Person> displayedClients = new HashSet<>(model.getFilteredPersonList());
-        proposedModel.updateFilteredPersonList(displayedClients::contains);
-        CommandResult result = command.execute(proposedModel);
-        if (model.getAddressBook().equals(proposedModel.getAddressBook())) {
-            return result;
-        }
-        try {
-            storage.saveAddressBook(proposedModel.getAddressBook());
-        } catch (IOException ioe) {
-            throw new CommandException(EditClientCommand.MESSAGE_SAVE_FAILURE, ioe);
-        }
-        model.setAddressBook(proposedModel.getAddressBook());
-        return result;
-    }
-
-    /**
-     * Saves a proposed project edit before publishing data, retaining the live list filter on failure.
-     */
-    private CommandResult executeEditProject(EditProjectCommand command) throws CommandException {
-        Model proposedModel = new ModelManager(model.getAddressBook(), model.getUserPrefs());
-        Set<Person> displayedClients = new HashSet<>(model.getFilteredPersonList());
-        proposedModel.updateFilteredPersonList(displayedClients::contains);
-        CommandResult result = command.execute(proposedModel);
-        if (model.getAddressBook().equals(proposedModel.getAddressBook())) {
-            return result;
-        }
-        try {
-            storage.saveAddressBook(proposedModel.getAddressBook());
-        } catch (IOException exception) {
-            throw new CommandException(EditProjectCommand.MESSAGE_SAVE_FAILURE, exception);
-        }
-        model.setAddressBook(proposedModel.getAddressBook());
-        return result;
+    private String getSaveFailureMessage(Command command, IOException exception) {
+        return switch (command) {
+            case AddClientCommand ignored -> AddClientCommand.MESSAGE_SAVE_FAILURE;
+            case AddProjectCommand ignored -> AddProjectCommand.MESSAGE_SAVE_FAILURE;
+            case DeleteClientCommand ignored -> DeleteClientCommand.MESSAGE_SAVE_FAILURE;
+            case DeleteProjectCommand ignored -> DeleteProjectCommand.MESSAGE_SAVE_FAILURE;
+            case EditClientCommand ignored -> EditClientCommand.MESSAGE_SAVE_FAILURE;
+            case EditProjectCommand ignored -> EditProjectCommand.MESSAGE_SAVE_FAILURE;
+            default -> String.format(exception instanceof AccessDeniedException
+                    ? FILE_OPS_PERMISSION_ERROR_FORMAT : FILE_OPS_ERROR_FORMAT, exception.getMessage());
+        };
     }
 
     @Override
