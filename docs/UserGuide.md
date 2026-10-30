@@ -71,6 +71,10 @@ Help menu or `F1`.
 
 * Indexes refer to the **currently displayed client list**, including search results. Project IDs belong to individual clients and do not change when the list is reordered. ClientDesk has no undo command; deletions and clearing take effect without a confirmation dialog.
 
+* Write indexes and project IDs using the ASCII digits `0`–`9`, and separate command parameters with ordinary
+  spaces. Unicode digits and typographic spaces copied from formatted documents are not supported. Retype an
+  affected digit or space if a pasted command is rejected.
+
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </div>
 
@@ -328,8 +332,10 @@ Removes one project from a client. Use `view CLIENT_INDEX` to find a project's I
 
 Format: `delete-project CLIENT_INDEX PROJECT_ID`
 
-* `CLIENT_INDEX` is a positive integer in the currently displayed client list, including `find` results.
-* `PROJECT_ID` is a positive integer belonging to that client. Project IDs are client-scoped.
+* `CLIENT_INDEX` is a positive integer written with digits `0`–`9` in the currently displayed client list,
+  including `find` results.
+* `PROJECT_ID` is a positive integer written with digits `0`–`9` belonging to that client. Project IDs are
+  client-scoped.
 * A successful deletion is saved immediately. The next project ID is retained, so a deleted ID is not reused.
 * If the client index or project ID is invalid, no data changes. If saving fails, the project remains in the client record.
 
@@ -341,7 +347,7 @@ Removes a client from ClientDesk using the index in the currently displayed list
 
 Format: `delete-client CLIENT_INDEX`
 
-* `CLIENT_INDEX` must be a positive integer shown in the client list.
+* `CLIENT_INDEX` must be a positive integer written with digits `0`–`9` and shown in the client list.
 * Deletion is saved immediately and cannot be undone in the app.
 * If saving fails, ClientDesk reports an error and keeps the client in the list.
 

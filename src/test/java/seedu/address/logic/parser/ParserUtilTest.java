@@ -37,6 +37,8 @@ public class ParserUtilTest {
     @Test
     public void parseIndex_invalidInput_throwsParseException() {
         assertThrows(ParseException.class, () -> ParserUtil.parseIndex("10 a"));
+        assertThrows(ParseException.class, () -> ParserUtil.parseIndex("١"));
+        assertThrows(ParseException.class, () -> ParserUtil.parseIndex("１"));
     }
 
     @Test

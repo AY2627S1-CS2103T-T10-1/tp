@@ -964,6 +964,8 @@ normal ClientDesk data. Start the application with `java -jar addressbook.jar` f
       Expected: Exactly one match, named AlphaDeleteKeep. Other clients remain unchanged.
 1. Enter `delete-client 999` when fewer than 999 clients are displayed.<br>
    Expected: An invalid client index error is shown and no client is deleted.
+1. Enter `delete-client ١` and `delete-client １` using Arabic-Indic and full-width digits.<br>
+   Expected: A usage error is shown and no client is deleted. Retype the index using ASCII digits `0`–`9`.
 1. In disposable data with at least three clients, enter `list-clients`, `view 1`, then `delete-client 1`.<br>
    Expected: The selected client is removed and the details panel shows its instructions, even though
    another client now occupies row 1. Restore the disposable data before repeating with a selected middle
@@ -1025,9 +1027,11 @@ to see their current indexes.
    Expected: the selected project is gone, the filter remains until `list-clients`, and the full client list is intact.
 3. Try project ID 0, an unknown ID, and a client index outside the displayed list.
    Expected: each command reports an error without changing the saved data.
-4. Delete the highest project ID from a client and add another project.
+4. Try `delete-project x 1`, `delete-project 1 0`, `delete-project ١ 1` and `delete-project 1 １`.
+   Expected: the command identifies whether the client index or project ID is invalid, and project data is unchanged.
+5. Delete the highest project ID from a client and add another project.
    Expected: the new project receives the next unused ID; the deleted ID is not reused.
-5. In a disposable copy, make the containing data directory unwritable and attempt deletion.
+6. In a disposable copy, make the containing data directory unwritable and attempt deletion.
    Expected: `Project could not be deleted. No changes were made.`; project data, file bytes and filter remain unchanged.
    Restore permissions and retry; the project is deleted successfully.
 
