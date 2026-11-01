@@ -21,7 +21,8 @@ and records their projects, deadlines, status and priority, with a graphical cli
 
 1. Copy the file to the folder you want to use as the home folder for ClientDesk.
 
-1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar addressbook.jar`.<br>
+1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar addressbook.jar`.
+   Replace `addressbook.jar` with the actual downloaded filename if it differs.<br>
    A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.<br>
    ![Ui](images/Ui.png)
 
@@ -128,6 +129,11 @@ and keeps the existing data and displayed list.
 
 New email values cannot contain Unicode spaces, including non-breaking spaces copied from documents. This applies to `add-client`, `edit-client`, `add` and `edit`. Older saved email values remain readable; correct them using an edit command.
 
+The same commands reject an unquoted email local part (the text before `@`) that starts or ends with a dot or
+contains consecutive dots. For example, `alice.smith@example.com` is accepted, while `.alice@example.com` and
+`a..b@example.com` are rejected. Existing saved records remain readable; correct an old value with a valid replacement.
+Email validation does not verify that the address can receive messages.
+
 The inherited address field displays `Not provided` for a new client because
 `add-client` does not require an address.
 Existing v1.4 records that differ only by previously missed Unicode case variants remain readable and editable; they are not merged or removed. New additions and edits cannot introduce another such duplicate.
@@ -151,14 +157,15 @@ Finds clients using partial names, phone numbers, email addresses, or tags.
 
 Format: `find KEYWORD [KEYWORD]...`
 
-* Supply at least one keyword, each containing 1 to 50 characters. Separate keywords with whitespace, including non-breaking spaces pasted from documents.
-* Matching is case-insensitive and uses substrings; for example, `cme` matches `Acme Studio`.
+* Supply at least one keyword, each containing 1 to 50 Unicode code points. Separate keywords with whitespace, including non-breaking spaces pasted from documents. A supplementary symbol counts as one code point.
+* Matching uses case-insensitive substrings; for example, `cme` matches `Acme Studio`. Unicode case matching does not depend on your computer's language setting. It does not remove accents or expand one letter to several: `Straße` matches `STRAẞE`, but not `STRASSE`.
+  Punctuation is matched literally; it is not a wildcard.
 * **Every keyword must match the same client** (an `AND` search). Keywords may match different fields.
   For example, `find acme startup` matches `Acme Studio` with the tag `startup`. Each client appears once.
 * Results appear in case-insensitive name order, with ties in creation order. Indexed commands use the displayed order.
 * Matches produce `Found <number> matching clients.`. No matches produce `No clients matched: <keywords>.`
   and restore the full client list in name order. Feedback preserves keyword case and uses single spaces.
-* Missing keywords or a keyword exceeding 50 characters produce `Usage: find KEYWORD [KEYWORD]...`.
+* Missing keywords or a keyword exceeding 50 Unicode code points produce `Usage: find KEYWORD [KEYWORD]...`.
   The previously displayed list stays visible.
 * Phone searches also accept a leading `+` and hyphens, such as `find 8123-4567`.
   These are ignored only when matching phone digits; names, emails and tags still match literal text.
@@ -189,9 +196,16 @@ Example: `view 1` displays the first client in the current list.
 Enter `view INDEX` to select a client from the currently displayed list, or click a client in the list. The header
 shows the client's name and contact summary. The **Projects** tab displays project cards in stable ID order, with
 each project's title, deadline, status and priority. The **Details** tab shows the full contact details, remark, tags
-and projects in text form. The workspace is read-only; scroll to read longer content and drag the divider to adjust
-the panel widths. Clients without projects show an empty-state message on the Projects tab. When no client is
-selected, the workspace shows instructions. Invalid `view` commands retain the previous selection and details.
+and projects in text form. You can select and copy text from **Details**; the workspace is otherwise read-only. Scroll
+to read longer content and drag the divider to adjust the panel widths. Switching clients refreshes the current tab
+without changing which tab is open. Clients without projects show an empty-state message on the Projects tab. When
+no client is selected, the workspace shows instructions. Invalid `view` commands retain the previous selection and
+details.
+
+When `find` leaves the selected client in the results, it stays selected. If the search hides that client, the
+selection clears and the workspace shows its instructions; ClientDesk does not automatically select the first result.
+A search with no matches restores the full list. The previous selection remains if it is still present; if there was no
+selection, the workspace stays unselected until you click a client or run `view` on a displayed index.
 
 Successful `add-project`, `edit-project` and `delete-project` commands select the affected client and refresh their details automatically, including when using a filtered list. Invalid project commands and failed project saves retain the previous selection and details. Deleting the last project shows the no-projects empty state; deleting the selected client clears the workspace to its instructions.
 
@@ -246,8 +260,8 @@ Examples:
 
 Parameter | Rules
 ----------|------
-`CLIENT_INDEX` | A positive integer in the currently displayed client list, including `find` results; no sign or decimal.
-`TITLE` | 1–100 printable Unicode characters after surrounding spaces are removed, including at least one letter or number. Titles cannot contain control characters or invisible formatting characters.
+`CLIENT_INDEX` | Unsigned ASCII digits whose value is 1–2,147,483,647, naming a client in the currently displayed list, including `find` results. Leading zeroes are accepted; signs and decimals are not.
+`TITLE` | 1–100 printable Unicode code points after surrounding spaces are removed, including at least one letter or number. Titles cannot contain control characters or invisible formatting characters.
 `DATE` | A real date in exactly `yyyy-MM-dd` form, with a year from `0001` to `9999`.
 `STATUS` | `not-started` (default) or `in-progress`. A new project cannot be `completed`.
 `PRIORITY` | `low`, `medium` (default) or `high`.
@@ -434,17 +448,20 @@ ClientDesk automatically saves successful data changes. You do not need to save 
 `add-project` saves before displaying success, and projects survive restarting the application.
 `find`, `help` and `list-clients` do not write the data file.
 If another ClientDesk instance has saved changes since this window loaded the data, a save is rejected to
-preserve those newer changes. Close and reopen this window to reload the latest data before continuing.
+preserve those newer changes. A direct edit to the data file while ClientDesk is open also makes this window's copy
+stale. Close and reopen this window to reload the latest data before continuing. A save attempted while another
+instance is actively saving is also rejected. After its save finishes, close and reopen this window before trying again.
 ClientDesk may leave an `addressbook.json.lock` sidecar file beside the data file; do not remove it while
 ClientDesk is running. It is reused for subsequent saves.
 
 ### Editing the data file
 
-ClientDesk data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are
-welcome to update data directly by editing that file. Close all ClientDesk windows and back up the file first.
-Each client's `projects` array stores
-project IDs, titles, deadlines, status and priority. Preserve the `nextProjectId` counter, which must be greater than
-every existing project ID. Files created before project support still load with no projects.
+When launched as a packaged JAR, ClientDesk saves data in `[folder containing the JAR]/data/addressbook.json`.
+When launched from an IDE or class directory, it uses the process working directory instead. Advanced users can
+update data directly by editing the file for that launch. Close all ClientDesk windows and make a backup first.
+Each client's `projects` array stores project IDs, titles, deadlines, status and priority. Preserve the
+`nextProjectId` counter, which must be greater than every existing project ID. Otherwise valid legacy client records without project
+fields load with no projects and the next project ID set to 1.
 
 Keep the new JAR in your existing ClientDesk home folder when upgrading. If an older version was launched from
 a different working directory, back up and copy its `data` folder and `preferences.json` into the folder containing
@@ -469,10 +486,11 @@ and keep field values within the documented limits.
 ## FAQ
 
 **Q**: How do I transfer my data to another computer?<br>
-**A**: Close ClientDesk on both computers. Install ClientDesk on the new computer, then copy
-`data/addressbook.json` from the folder containing your old ClientDesk JAR to the corresponding `data` folder beside
-the new JAR, replacing the file there. Keep a backup of both files until you have opened ClientDesk and verified the
-transferred clients and projects.
+**A**: Close ClientDesk on both computers. Install ClientDesk on the new computer, then copy the old installation's
+`data/addressbook.json` into the matching `data` folder beside the new JAR, replacing the file there. With a packaged
+older JAR, its data folder is beside that JAR; if the older version was run from an IDE or class directory, use its
+working directory. Keep a backup until you open ClientDesk and verify the transferred clients and projects. Transfer
+the data file only; preferences and logs are separate from client and project records.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -497,11 +515,3 @@ Action | Format, Examples
 **Delete (legacy)** | `delete INDEX`<br>e.g., `delete 3`
 **Clear** | `clear`
 **Exit** | `exit`
-
-### Email dot validation
-
-New email input through `add-client`, `add`, `edit-client` and `edit` rejects an unquoted
-local part (the text before `@`) that starts or ends with a dot or contains consecutive dots.
-For example, `alice.smith@example.com` is accepted, while `.alice@example.com` and
-`a..b@example.com` are rejected. Existing saved records remain readable; correct an old
-address by supplying a valid replacement. This validation does not verify deliverability.

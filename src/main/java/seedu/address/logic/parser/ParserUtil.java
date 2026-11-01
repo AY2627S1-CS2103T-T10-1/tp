@@ -67,7 +67,7 @@ public class ParserUtil {
 
     /**
      * Parses a newly entered address, rejecting Unicode-only blanks while retaining storage compatibility.
-     * Leading and trailing whitespaces will be trimmed.
+     * Removes only the leading/trailing characters covered by {@link String#trim()}.
      *
      * @throws ParseException if the given {@code address} is invalid.
      */
@@ -83,7 +83,7 @@ public class ParserUtil {
 
     /**
      * Parses a newly entered email, rejecting invalid dots and Unicode spaces while retaining storage compatibility.
-     * Leading and trailing whitespaces will be trimmed.
+     * Removes only the leading/trailing characters covered by {@link String#trim()}.
      *
      * @throws ParseException if the given {@code email} is invalid.
      */

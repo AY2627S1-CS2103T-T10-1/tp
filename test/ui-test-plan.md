@@ -1,5 +1,10 @@
 # ClientDesk UI test plan
 
+Use Java 25 and disposable client data. The current workspace opens on **Projects**; select **Details** when a check
+asks for the full labeled contact/remark/project text. The [Developer Guide manual-testing appendix](../docs/DeveloperGuide.md#appendix-instructions-for-manual-testing)
+contains complete setup fixtures and the search/selection, compact-layout and persistence sequences. This file keeps
+the focused regression checks for the issues below.
+
 ## Find help explains no-match reset (#121)
 
 Run `help find` and expect an explicit explanation that no matches restore the full list,
@@ -12,7 +17,7 @@ Automated coverage: HelpCommandTest.
 
 Run ClientDesk with Java 25 and its sample data.
 
-1. Enter `list`, then `view 1`. Expect labeled name, phone, email, address,
+1. Enter `list`, then `view 1`, and select **Details**. Expect labeled name, phone, email, address,
    remark and tags matching the first client. The list stays unchanged.
 2. Enter `find Bernice`, then `view 1`. Expect Bernice's details; the filtered
    list stays unchanged.
@@ -23,9 +28,8 @@ Run ClientDesk with Java 25 and its sample data.
    Expect the new phone number and all other fields preserved.
 6. Restart the app, then `view 1`. Expect the edited phone number to persist.
 
-The Trackie text UI runner is not available in this JavaFX tP repository.
-These GUI checks require manual execution; automated command/parser tests cover
-view output, filtered indexes, invalid indexes and input validation.
+These are manual checks of the JavaFX application. Automated command/parser tests cover view output and validation;
+`ClientDetailsUiTest` and `ClientWorkspaceUiTest` additionally exercise the real command box and workspace behavior.
 
 ## Unicode search separators (#117)
 
@@ -37,8 +41,7 @@ Automated coverage: FindCommandParserTest.
 
 ## Edit client email (first increment)
 
-Run the JavaFX app with Java 25. These are manual checks; the iP Trackie
-text UI runner is not available in this tP repository.
+Run the JavaFX app with Java 25. These manual checks complement the automated Edit Client integration and UI tests.
 
 1. Enter `list`, note the first client's fields, then
    `edit-client 1 e/updated@example.com`. Expect `Updated client: <name>.`
@@ -61,15 +64,16 @@ text UI runner is not available in this tP repository.
 
 In disposable data, enter `add-client n/O’Connor p/91234567 e/oconnor@example.com`.
 Expect success; `view` and restart must preserve the curly apostrophe.
-A name containing only apostrophes or more than 80 characters must still fail.
+A name containing only apostrophes or more than 80 Unicode code points must still fail.
 Automated coverage: NameTest.
 
 ## Client details panel
 
 1. Start the app: expect ClientDesk title, client list, and a right-hand details
    panel with instructions to enter view INDEX or select a client.
-2. Enter `view 1`: expect first displayed client selected and contact details
-   in the right panel. A client without projects shows `Projects: No projects yet.`
+2. Enter `view 1`: expect the first displayed client selected and its contact header in the right panel. A client
+   without projects shows the empty state in **Projects**. Select **Details** for the complete labeled contact record;
+   its text includes `Projects: No projects yet.` when the client has no projects.
 3. View a client with projects: expect stable IDs, titles, deadlines, statuses
    and priorities; projects are ordered by ID. Scroll to inspect long content.
 4. Enter `find NAME`, then `view 1`: expect the first filtered client, not the
@@ -88,8 +92,7 @@ full list: expect the edited client selected after the filter resets. Simulate a
 save for legacy add and edit: expect the prior selection, details and saved records to
 remain unchanged.
 
-These manual GUI cases require JavaFX. The Trackie text UI runner is incompatible
-with this repository's GUI test plan; automated JavaFX tests exercise panel behavior.
+These manual GUI cases require JavaFX; automated JavaFX tests exercise the same panel and selection behavior.
 
 ## New email dot validation (#119)
 
