@@ -2,6 +2,7 @@ package seedu.address.model.person;
 
 import static java.util.Objects.requireNonNull;
 
+import java.text.Normalizer;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -24,7 +25,7 @@ public class PersonContainsKeywordsPredicate implements Predicate<Person> {
     public PersonContainsKeywordsPredicate(List<String> keywords) {
         this.keywords = List.copyOf(keywords);
         keywordPatterns = this.keywords.stream()
-                .map(keyword -> Pattern.compile(keyword,
+                .map(keyword -> Pattern.compile(Normalizer.normalize(keyword, Normalizer.Form.NFC),
                         Pattern.LITERAL | Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE))
                 .toList();
     }
@@ -54,7 +55,7 @@ public class PersonContainsKeywordsPredicate implements Predicate<Person> {
     }
 
     /**
-     * Matches stored digits using a phone keyword with an optional plus and formatting hyphens.
+     * Matches stored digits using a phone keyword with an optional plus, hyphens and parentheses.
      * Other fields still match the original keyword literally.
      */
     private boolean hasMatchingPhone(String phone, Pattern keyword) {
@@ -62,10 +63,10 @@ public class PersonContainsKeywordsPredicate implements Predicate<Person> {
             return true;
         }
         String phoneKeyword = keyword.pattern();
-        if (!phoneKeyword.matches("\\+?[0-9 -]+")) {
+        if (!phoneKeyword.matches("\\+?[0-9 ()-]+")) {
             return false;
         }
-        String digits = phoneKeyword.replaceAll("[+ -]", "");
+        String digits = phoneKeyword.replaceAll("[+ ()-]", "");
         return !digits.isEmpty() && phone.contains(digits);
     }
 
@@ -81,7 +82,7 @@ public class PersonContainsKeywordsPredicate implements Predicate<Person> {
      * matching.
      */
     private boolean containsKeyword(String value, Pattern keyword) {
-        return keyword.matcher(value).find();
+        return keyword.matcher(Normalizer.normalize(value, Normalizer.Form.NFC)).find();
     }
 
     @Override

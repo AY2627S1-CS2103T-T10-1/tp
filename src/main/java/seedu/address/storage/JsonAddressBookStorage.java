@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
+import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -19,6 +20,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.exceptions.DataLoadingException;
@@ -98,16 +101,17 @@ public class JsonAddressBookStorage {
                 throw new IOException("JSON root must not be null.");
             }
         } catch (IOException error) {
-            logger.warning("Error reading from jsonFile file " + normalizedPath + ": " + error);
-            throw new DataLoadingException(error);
+            String safeMessage = getSafeReadError(error);
+            logger.warning("Error reading from jsonFile file " + normalizedPath + ": " + safeMessage);
+            throw new DataLoadingException(new IOException(safeMessage));
         }
         try {
             ReadOnlyAddressBook addressBook = jsonAddressBook.toModelType();
             observedFiles.put(normalizedPath, FileSnapshot.present(contents));
             return Optional.of(addressBook);
-        } catch (IllegalValueException ive) {
-            logger.info("Illegal values found in " + filePath + ": " + ive.getMessage());
-            throw new DataLoadingException(ive);
+        } catch (IllegalValueException ignored) {
+            logger.info("Illegal values found in " + filePath + ".");
+            throw new DataLoadingException(new IOException("Stored client data contains invalid values."));
         }
     }
 
@@ -187,6 +191,18 @@ public class JsonAddressBookStorage {
 
     private static Path normalize(Path path) {
         return path.toAbsolutePath().normalize();
+    }
+
+    private static String getSafeReadError(IOException error) {
+        if (error instanceof JsonProcessingException jsonError) {
+            var location = jsonError.getLocation();
+            return "Invalid JSON" + (location == null ? "" : " at line " + location.getLineNr()
+                    + ", column " + location.getColumnNr());
+        }
+        if (error instanceof CharacterCodingException) {
+            return "Client data is not valid UTF-8.";
+        }
+        return error.getMessage();
     }
 
     private void checkFilePath(Path path) throws IOException {

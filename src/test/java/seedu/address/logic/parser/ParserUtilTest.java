@@ -52,6 +52,15 @@ public class ParserUtilTest {
 
         // Leading and trailing whitespaces
         assertEquals(INDEX_FIRST_PERSON, ParserUtil.parseIndex("  1  "));
+        assertEquals(INDEX_FIRST_PERSON, ParserUtil.parseIndex("0001"));
+        assertEquals(Integer.MAX_VALUE, ParserUtil.parseIndex("2147483647").getOneBased());
+    }
+
+    @Test
+    public void parseIndex_nonAsciiSignedZeroAndOverflow_rejected() {
+        for (String input : List.of("١", "۱", "１", "+1", "-1", "0", "000", "2147483648", "1.0")) {
+            assertThrows(ParseException.class, MESSAGE_INVALID_INDEX, () -> ParserUtil.parseIndex(input));
+        }
     }
 
     @Test

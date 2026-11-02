@@ -58,6 +58,13 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_slashName_keepsFollowingPrefixesAsSeparateFields() {
+        Person expected = new PersonBuilder(BOB).withName("S/O Ravi Kumar").build();
+        assertParseSuccess(parser, " n/S/O Ravi Kumar" + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB
+                + TAG_DESC_HUSBAND + TAG_DESC_FRIEND, new AddCommand(expected));
+    }
+
+    @Test
     public void parse_allFieldsPresent_success() {
         Person expectedPerson = new PersonBuilder(BOB).withTags(VALID_TAG_FRIEND).build();
 

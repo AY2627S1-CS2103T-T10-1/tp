@@ -3,6 +3,7 @@ package seedu.address.model.person;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
+import java.text.Normalizer;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -149,8 +150,11 @@ public class Person {
      */
     public boolean hasSameClientIdentity(Person otherPerson) {
         return isSamePerson(otherPerson) || (otherPerson != null && phone.equals(otherPerson.phone)
-                && name.fullName.trim().replaceAll("\\s+", " ")
-                        .equalsIgnoreCase(otherPerson.name.fullName.trim().replaceAll("\\s+", " ")));
+                && canonicalClientName(name.fullName).equalsIgnoreCase(canonicalClientName(otherPerson.name.fullName)));
+    }
+
+    private static String canonicalClientName(String value) {
+        return Normalizer.normalize(value.trim().replaceAll("\\s+", " "), Normalizer.Form.NFC);
     }
 
     /**

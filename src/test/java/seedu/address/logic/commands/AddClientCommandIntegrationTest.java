@@ -35,6 +35,26 @@ public class AddClientCommandIntegrationTest {
     Path testFolder;
 
     @Test
+    public void execute_parenthesizedPhone_canBeFoundCopiedAndReloaded() throws Exception {
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(testFolder.resolve("clients.json"));
+        Model model = new ModelManager();
+        LogicManager logic = new LogicManager(model, new StorageManager(storage,
+                new JsonUserPrefsStorage(testFolder.resolve("preferences.json"))));
+        logic.execute("add-client n/Ravi S/O Kumar p/+1 (212) 555-0123 e/ravi@example.com");
+        logic.execute("add-client n/Other p/91234567 e/other@example.com");
+
+        logic.execute("find +1 (212) 555-0123");
+        assertEquals(1, model.getFilteredPersonList().size());
+        Person found = model.getFilteredPersonList().getFirst();
+        assertEquals("Ravi S/O Kumar", found.getName().fullName);
+        assertEquals("12125550123", found.getPhone().value);
+        assertTrue(storage.readAddressBook().orElseThrow().getPersonList().contains(found));
+        assertThrows(CommandException.class, () -> logic.execute(
+                "add-client n/Ravi S/O Kumar p/12125550123 e/duplicate@example.com"));
+        assertEquals(2, storage.readAddressBook().orElseThrow().getPersonList().size());
+    }
+
+    @Test
     public void execute_clientCommand_persistsAndReloadsClient() throws Exception {
         JsonAddressBookStorage storage = new JsonAddressBookStorage(testFolder.resolve("clients.json"));
         Model model = new ModelManager();

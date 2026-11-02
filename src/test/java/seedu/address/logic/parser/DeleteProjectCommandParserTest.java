@@ -21,10 +21,16 @@ public class DeleteProjectCommandParserTest {
 
     @Test
     public void parse_invalidArgumentShapes_reportsUsage() {
-        for (String input : new String[] {"", "1", "1 2 extra", "x 1", "0 1", "000 1", "-1 1", "+1 1",
-            "١ 1", "１ 1", "2147483648 1", "1 0", "1 000", "1 -2", "1 +2", "1 2.0", "1 ١", "1 １",
-            "1 2147483648"}) {
+        for (String input : new String[] {"", "1", "1 2 extra"}) {
             assertParseFailure(parser, input, DeleteProjectCommand.MESSAGE_USAGE);
+        }
+    }
+
+    @Test
+    public void parse_invalidIdentifiers_identifiesTheField() {
+        for (String value : new String[] {"x", "0", "000", "-1", "+1", "١", "۱", "１", "2147483648", "2.0"}) {
+            assertParseFailure(parser, value + " 1", ParserUtil.MESSAGE_INVALID_INDEX);
+            assertParseFailure(parser, "1 " + value, "Project ID must be a positive integer.");
         }
     }
 }

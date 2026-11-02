@@ -32,10 +32,10 @@ public class PersonContainsKeywordsPredicateTest {
 
     @Test
     public void test_formattedPhoneKeywords_matchesStoredDigitsWithoutChangingOtherFields() {
-        for (String keyword : List.of("9812-3456", "+98123456", "98-12", "+98-12")) {
+        for (String keyword : List.of("9812-3456", "+98123456", "98-12", "+98-12", "(9812)3456", "(9812)")) {
             assertTrue(new PersonContainsKeywordsPredicate(List.of(keyword)).test(client));
         }
-        for (String keyword : List.of("+", "-", "+-", "8123-9999", "hello-acme")) {
+        for (String keyword : List.of("+", "-", "+-", "()", "( )", "8123-9999", "hello-acme")) {
             assertFalse(new PersonContainsKeywordsPredicate(List.of(keyword)).test(client));
         }
         assertTrue(new PersonContainsKeywordsPredicate(List.of("acme", "9812-3456")).test(client));
@@ -106,6 +106,17 @@ public class PersonContainsKeywordsPredicateTest {
         assertTrue(new PersonContainsKeywordsPredicate(List.of("STRAẞE", "CAFÉ")).test(unicodeClient));
         assertFalse(new PersonContainsKeywordsPredicate(List.of("STRASSE")).test(unicodeClient));
         assertFalse(new PersonContainsKeywordsPredicate(List.of("CAFE")).test(unicodeClient));
+    }
+
+    @Test
+    public void test_canonicalUnicodeForms_matchWithoutChangingDisplayName() {
+        Person decomposed = new PersonBuilder().withName("Jose\u0301").build();
+        assertTrue(new PersonContainsKeywordsPredicate(List.of("José")).test(decomposed));
+        Person composed = new PersonBuilder().withName("José").build();
+        assertTrue(new PersonContainsKeywordsPredicate(List.of("Jose\u0301")).test(composed));
+        assertEquals("Jose\u0301", decomposed.getName().fullName);
+        assertFalse(new PersonContainsKeywordsPredicate(List.of("Jose"))
+                .test(new PersonBuilder().withName("José").build()));
     }
 
     @Test

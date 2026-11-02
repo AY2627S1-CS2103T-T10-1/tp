@@ -34,11 +34,12 @@ XYZCommandParser ..> CliSyntax
 CliSyntax ..> Prefix
 XYZCommandParser ..> ParserUtil
 note bottom of ProjectParserUtil
-  Shared project parsing:
+  Shared project and index parsing:
   prefixes, whitespace,
   ASCII identifiers.
 end note
 XYZCommandParser ..> ProjectParserUtil : Add/Edit Project only
+ParserUtil ..> ProjectParserUtil : parseIndex
 ArgumentTokenizer .down.> Prefix
 XYZCommand -up-|> Command
 @enduml

@@ -61,6 +61,17 @@ public class PersonTest {
     }
 
     @Test
+    public void hasSameClientIdentity_canonicalUnicodeNames_rejectsNewDuplicateButKeepsStoredIdentity() {
+        Person composed = new PersonBuilder().withName("José").withEmail("first@example.com").build();
+        Person decomposed = new PersonBuilder(composed).withName("Jose\u0301")
+                .withEmail("second@example.com").build();
+        assertFalse(composed.isSamePerson(decomposed));
+        assertTrue(composed.hasSameClientIdentity(decomposed));
+        assertEquals("José", composed.getName().fullName);
+        assertEquals("Jose\u0301", decomposed.getName().fullName);
+    }
+
+    @Test
     public void asObservableList_modifyList_throwsUnsupportedOperationException() {
         Person person = new PersonBuilder().build();
         assertThrows(UnsupportedOperationException.class, () -> person.getTags().remove(0));
@@ -197,6 +208,13 @@ public class PersonTest {
         List<Project> projects = List.of(project(1, "IşıkWebsite", "2026-10-15"),
                 project(2, "IŞIKWEBSITE", "2026-10-15"));
         assertTrue(projects.getFirst().isSameProject(projects.get(1)));
+        assertEquals(projects, ALICE.withProjects(projects, 3).getProjects());
+    }
+
+    @Test
+    public void withProjects_canonicalUnicodeVariants_remainLoadable() {
+        List<Project> projects = List.of(project(1, "Café", "2026-10-15"),
+                project(2, "Cafe\u0301", "2026-10-15"));
         assertEquals(projects, ALICE.withProjects(projects, 3).getProjects());
     }
 
