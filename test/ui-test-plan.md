@@ -1,5 +1,10 @@
 # ClientDesk UI test plan
 
+Use Java 25 and disposable client data. The current workspace opens on **Projects**; select **Details** when a check
+asks for the full labeled contact/remark/project text. The [Developer Guide manual-testing appendix](../docs/DeveloperGuide.md#appendix-instructions-for-manual-testing)
+contains complete setup fixtures and the search/selection, compact-layout and persistence sequences. This file keeps
+the focused regression checks for the issues below.
+
 ## Find help explains no-match reset (#121)
 
 Run `help find` and expect an explicit explanation that no matches restore the full list,
@@ -12,7 +17,7 @@ Automated coverage: HelpCommandTest.
 
 Run ClientDesk with Java 25 and its sample data.
 
-1. Enter `list`, then `view 1`. Expect labeled name, phone, email, address,
+1. Enter `list`, then `view 1`, and select **Details**. Expect labeled name, phone, email, address,
    remark and tags matching the first client. The list stays unchanged.
 2. Enter `find Bernice`, then `view 1`. Expect Bernice's details; the filtered
    list stays unchanged.
@@ -23,9 +28,8 @@ Run ClientDesk with Java 25 and its sample data.
    Expect the new phone number and all other fields preserved.
 6. Restart the app, then `view 1`. Expect the edited phone number to persist.
 
-The Trackie text UI runner is not available in this JavaFX tP repository.
-These GUI checks require manual execution; automated command/parser tests cover
-view output, filtered indexes, invalid indexes and input validation.
+These are manual checks of the JavaFX application. Automated command/parser tests cover view output and validation;
+`ClientDetailsUiTest` and `ClientWorkspaceUiTest` additionally exercise the real command box and workspace behavior.
 
 ## Unicode search separators (#117)
 
@@ -35,10 +39,16 @@ Both must report `Found 1 matching clients.` and show only Acme Studio.
 Repeat with U+2003 and U+202F. A whitespace-only search reports usage and preserves the list.
 Automated coverage: FindCommandParserTest.
 
+## Project title normalization (#168)
+
+In disposable data, add `Café launch` and then try `Café launch` for the same client and deadline.
+The second add should report a duplicate. A pre-existing NFC/NFD pair should load with its saved spelling; a
+status-only update should work, while changing a title/deadline into a duplicate should be rejected.
+Automated coverage: `ProjectTitleTest` and project command tests.
+
 ## Edit client email (first increment)
 
-Run the JavaFX app with Java 25. These are manual checks; the iP Trackie
-text UI runner is not available in this tP repository.
+Run the JavaFX app with Java 25. These manual checks complement the automated Edit Client integration and UI tests.
 
 1. Enter `list`, note the first client's fields, then
    `edit-client 1 e/updated@example.com`. Expect `Updated client: <name>.`
@@ -50,7 +60,7 @@ text UI runner is not available in this tP repository.
    `Update would duplicate client: <other name>.` and no changes.
 5. Try `edit-client 999 e/valid@example.com`. Expect `No client at index 999.`
 6. Try `edit-client 0 e/valid@example.com` and `edit-client -1 e/valid@example.com`.
-   Expect `Client index must be a displayed positive number.`
+   Expect `Index must be a positive integer.`
 7. Try `edit-client 1`. Expect `Specify at least one field to update.`
 8. Try `edit-client`, invalid emails, and repeated e/ prefixes.
    Expect an error and unchanged data.
@@ -61,15 +71,16 @@ text UI runner is not available in this tP repository.
 
 In disposable data, enter `add-client n/O’Connor p/91234567 e/oconnor@example.com`.
 Expect success; `view` and restart must preserve the curly apostrophe.
-A name containing only apostrophes or more than 80 characters must still fail.
+A name containing only apostrophes or more than 80 Unicode code points must still fail.
 Automated coverage: NameTest.
 
 ## Client details panel
 
 1. Start the app: expect ClientDesk title, client list, and a right-hand details
    panel with instructions to enter view INDEX or select a client.
-2. Enter `view 1`: expect first displayed client selected and contact details
-   in the right panel. A client without projects shows `Projects: No projects yet.`
+2. Enter `view 1`: expect the first displayed client selected and its contact header in the right panel. A client
+   without projects shows the empty state in **Projects**. Select **Details** for the complete labeled contact record;
+   its text includes `Projects: No projects yet.` when the client has no projects.
 3. View a client with projects: expect stable IDs, titles, deadlines, statuses
    and priorities; projects are ordered by ID. Scroll to inspect long content.
 4. Enter `find NAME`, then `view 1`: expect the first filtered client, not the
@@ -88,8 +99,7 @@ full list: expect the edited client selected after the filter resets. Simulate a
 save for legacy add and edit: expect the prior selection, details and saved records to
 remain unchanged.
 
-These manual GUI cases require JavaFX. The Trackie text UI runner is incompatible
-with this repository's GUI test plan; automated JavaFX tests exercise panel behavior.
+These manual GUI cases require JavaFX; automated JavaFX tests exercise the same panel and selection behavior.
 
 ## New email dot validation (#119)
 
@@ -108,11 +118,13 @@ before viewing the target client. Use displayed indexes, not the full-list index
 2. Add a second project, delete the first: only the remaining project appears.
 3. Delete the final project: keep the client selected and show No projects yet.
 4. Invalid indexes, invalid dates and missing project IDs leave selection/details unchanged.
-5. Simulate failed add/delete saves: retain the selected client and previous projects.
-6. Delete the selected client itself: clear selection and show the panel instructions.
+5. In a non-English locale such as Arabic (Egypt), add a project and confirm feedback uses ASCII `#1`.
+6. Simulate failed add/delete saves: retain the selected client and previous projects.
+7. Delete the selected client itself: clear selection and show the panel instructions.
 
 Automated coverage: ClientDetailsUiTest runs real command-box actions for both
 full and filtered client lists, using temporary JSON storage and simulated IO failures.
+`ProjectIdentifierWorkflowTest` checks locale-stable project ID feedback.
 
 ## Formatted phone search (#120)
 

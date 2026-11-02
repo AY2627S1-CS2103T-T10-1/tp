@@ -7,6 +7,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 import seedu.address.commons.core.index.Index;
@@ -89,7 +90,7 @@ public class AddProjectCommand extends Command {
         projects.add(project);
         Person updatedClient = client.withProjects(projects, client.getNextProjectId() + 1);
         model.setPerson(client, updatedClient);
-        String feedback = String.format(MESSAGE_SUCCESS, project.getId(), client.getName());
+        String feedback = String.format(Locale.ROOT, MESSAGE_SUCCESS, project.getId(), client.getName());
         if (deadline.getDate().isBefore(LocalDate.now(clock))) {
             feedback += "\n" + MESSAGE_OVERDUE;
         }

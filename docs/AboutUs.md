@@ -34,7 +34,8 @@ For ClientDesk questions and bug reports, use our [issue tracker](https://github
 [[github](https://github.com/iians0n)]
 
 * Role: Developer
-* Responsibilities: Project website and CI
+* Responsibilities: Find Clients and Add Project; project website and CI; contributions to data protection,
+  workspace UI, testing and documentation
 
 ### Pang Yi Jie
 

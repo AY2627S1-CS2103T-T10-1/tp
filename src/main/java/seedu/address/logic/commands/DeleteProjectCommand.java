@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 import seedu.address.commons.core.index.Index;
@@ -50,7 +51,8 @@ public class DeleteProjectCommand extends Command {
         remainingProjects.remove(projectIndex);
         Person updatedClient = client.withProjects(remainingProjects, client.getNextProjectId());
         model.setPerson(client, updatedClient);
-        return new CommandResult(String.format(MESSAGE_SUCCESS, projectId, client.getName()), updatedClient);
+        return new CommandResult(String.format(Locale.ROOT, MESSAGE_SUCCESS, projectId, client.getName()),
+                updatedClient);
     }
 
     private int findProjectIndex(List<Project> projects) {

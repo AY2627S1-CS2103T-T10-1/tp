@@ -10,7 +10,7 @@ title: Developer Guide
 ## **Acknowledgements**
 
 * Help retains the existing ClientDesk command catalogue and AddressBook-Level3 Help window.
-* Clarence Choo used OpenAI Codex to review PRs #161 and #163 and clarify the identifier and whitespace documentation.
+* Clarence Choo used OpenAI Codex to review PRs #161 and #163, clarify identifier and whitespace documentation, add the JSON error privacy regression test, and resolve their guide overlap.
 
 * The `edit-project` save-before-publish flow follows the existing `delete-client` staging approach. The shared project model and JSON storage come from Anson's merged [Add Project PR #58](https://github.com/AY2627S1-CS2103T-T10-1/tp/pull/58). The Edit Project prefix scanning and whitespace trimming adapt `AddProjectCommandParser` from [commit d64842b](https://github.com/iians0n/tp/commit/d64842b07ad207b1b264f44461af6a2ba1a763ed), and its JavaFX test follows `AddProjectUiTest` from that commit. Project display in `view` retains the implementation reused from Anson's earlier [commit f5e77fa](https://github.com/iians0n/tp/commit/f5e77fa407264a274d922d6fb679e7202daa3624). These reused contributions are credited to Anson.
 
@@ -43,7 +43,7 @@ The following provides a quick overview of the main components and their interac
 
 **Main components of the architecture**
 
-**`Main`** (consisting of classes [`Main`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/Main.java) and [`MainApp`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/MainApp.java)) is in charge of the app launch and shut down.
+**`Main`** (consisting of classes [`Main`](https://github.com/AY2627S1-CS2103T-T10-1/tp/blob/master/src/main/java/seedu/address/Main.java) and [`MainApp`](https://github.com/AY2627S1-CS2103T-T10-1/tp/blob/master/src/main/java/seedu/address/MainApp.java)) is in charge of the app launch and shut down.
 * At app launch, it initializes the other components in the correct sequence, and connects them up with each other.
 * At shut down, it shuts down the other components and invokes cleanup methods where necessary.
 
@@ -58,7 +58,7 @@ The bulk of the app's work is done by the following four components:
 
 **How the architecture components interact with each other**
 
-The *Sequence Diagram* below shows how the components interact with each other for the scenario where the user issues the command `delete 1`.
+The *Sequence Diagram* below shows how the architecture components interact with each other for the scenario where the user issues the command `delete 1`.
 
 <img src="images/ArchitectureSequenceDiagram.png" width="574" />
 
@@ -84,6 +84,11 @@ the client's name and contact summary, with **Projects** and **Details** tabs. P
 title, deadline, status and priority. The bottom command bar remains available for keyboard-based workflows, and Help
 is available from the menu and by pressing `F1`. On short screens the brand header collapses to keep the tabs
 and command bar visible; Help remains available through the menu, `F1` and the `help` command.
+
+`ClientDetailsPanel` keeps its active tab when the selected client changes. The Details `TextArea` is not editable,
+but its text can be selected and copied.
+The header abbreviates long name, phone and email values; Details contains the full record. Tags and project cards
+have separate scrollable areas so long lists do not hide the tabs.
 
 ![ClientDesk workspace showing the client list and selected client's projects](images/Ui.png)
 
@@ -134,19 +139,21 @@ The `UI` component,
 and projects; a null selection shows instructions, and a client with no projects shows
 the project empty state.
 
-`view`, legacy Add and Edit, Add Project, Edit Project and Delete Project return a `CommandResult` containing
+`view`, Add Client, legacy Add and Edit, Add Project, Edit Project and Delete Project return a `CommandResult` containing
 the client to select. For legacy Add/Edit and project mutations, `LogicManager` saves the proposed data before
 publishing it to the live model. After successful execution, `MainWindow` calls
 `PersonListPanel.selectClient` with the updated client. This restores selection after the
 list replacement and refreshes the details without another `view` command. Add and delete
 use the same result mechanism as edit; the UI does not parse command text to identify them.
 
+`MainWindow.executeCommand` records the selected client before executing the command.
 When a successful command does not request a selection, `MainWindow` restores the previously
 selected client's current record by its stored identity if it is still displayed. This keeps
-remark and email updates selected without retaining an outdated record. Otherwise, it clears selection. Deleting a
-client
-therefore cannot select the unrelated client that moves into the deleted row; deleting another
-client preserves the current selection.
+remark and email updates selected without retaining an outdated record. Otherwise, it clears selection.
+A `find` that hides the selected client therefore clears selection rather than selecting its first result. If a search
+has no matches, `FindCommand` restores the full list and the previous client is restored only if still present.
+With no restorable selection, the workspace continues to show its no-client instructions. Deleting a client cannot
+select the unrelated client that moves into the deleted row; deleting another client preserves the current selection.
 
 Validation or save failures produce no successful selection result and leave the selected
 client and details unchanged. Deleting the selected client clears the selection and returns
@@ -156,11 +163,12 @@ works with filtered lists and multiple clients rather than assuming the first ro
 `ClientDetailsUiTest` exercises project refresh, remaining and empty project lists,
 invalid commands, failed saves, and selected-client deletion with both full and filtered
 lists. `LegacyClientSelectionUiTest` covers legacy add/edit selection after list reorder
-and failed-save retention. Manual checks are recorded in `test/ui-test-plan.md`.
+and failed-save retention. Focused regression checks are recorded in
+[`test/ui-test-plan.md`](https://github.com/AY2627S1-CS2103T-T10-1/tp/blob/master/test/ui-test-plan.md).
 
 ### Logic component
 
-**API** : [`Logic.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/logic/Logic.java)
+**API** : [`Logic.java`](https://github.com/AY2627S1-CS2103T-T10-1/tp/blob/master/src/main/java/seedu/address/logic/Logic.java)
 
 Here's a (partial) class diagram of the `Logic` component:
 
@@ -185,7 +193,7 @@ All client, project and legacy mutations share `LogicManager#executeStagedMutati
 
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
 
-<img src="images/ParserClasses.png" width="600"/>
+<img src="images/ParserClasses.png" width="900" alt="Command parsers and their shared parsing helpers" />
 
 How the parsing works:
 * When called upon to parse a user command, the `AddressBookParser` class creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the other classes shown above to parse the user command and create an `XYZCommand` object (e.g., `AddCommand`). The `AddressBookParser` returns that object as a `Command` object.
@@ -231,13 +239,91 @@ The `Storage` component,
   Stored project fields and IDs are validated before a `Person` is created, so invalid project data is rejected on load.
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
 
-`MainApp` supplies the JAR's home folder to both JSON storage implementations, which capture its real location once.
+`AppPaths.getHome()` returns the containing folder when ClientDesk is launched from a packaged JAR. For an IDE or
+class-directory launch, or when the archive location cannot be resolved, it returns the process working directory.
+`MainApp` builds the data and preference paths from this home, and each JSON store captures its canonical location
+once at startup.
 Before each runtime read or save, `AppPaths.resolveWithinHome` resolves the normalized path's existing target or
 nearest existing ancestor against that fixed home folder. This rejects outside targets, including links above a
 missing data file. Saving also checks the destination's parent before creating temporary files, and the data sidecar
 lock before opening it. File logging checks existing rotation, instance and lock filenames
 before opening a `FileHandler`; console logging remains available when that check fails. These checks handle existing
 links and changes detected between storage operations; they do not claim protection against concurrent filesystem changes.
+
+#### Loading client data
+
+Client data is decoded as strict UTF-8 and must contain exactly one JSON root value, with only JSON whitespace
+allowed afterward. The root must contain a `persons` array. Stored clients, tags and projects are checked before
+model objects are created: required values must have the expected JSON types and satisfy their model constraints.
+Numeric, boolean or structured values are not converted into contact text. Null entries, malformed fields, duplicate
+client identities and invalid project records make the entire file fail to load rather than silently dropping records.
+
+Each person requires string fields `name`, `phone`, `email`, `address` and `remark`. A non-null `tags` value must be
+an array of strings; an omitted or null `tags` value loads as an empty set. Older files may omit `projects` and `nextProjectId`; these records load with no projects and the next
+project ID set to 1. An included project must be an object with a positive integer `id` and string `title`,
+`deadline`, `status` and `priority` fields. Those fields are validated against their model constraints, and a client's
+counter must be an integer greater than every saved project ID. An omitted counter defaults to 1, so it is valid for
+records with no projects; an explicit null or malformed project list or counter is rejected.
+
+For example, this is a valid one-client file with one saved project:
+
+```json
+{
+  "persons": [
+    {
+      "name": "Example Studio",
+      "phone": "91234567",
+      "email": "hello@example.com",
+      "address": "Not provided",
+      "remark": "",
+      "tags": ["web-design"],
+      "projects": [
+        {"id": 1, "title": "Website", "deadline": "2099-12-31", "status": "not-started", "priority": "medium"}
+      ],
+      "nextProjectId": 2
+    }
+  ]
+}
+```
+
+Tags are JSON strings in the `tags` array; projects are objects, with numeric IDs and string values for their other
+fields. Project adapters and `Person` model rules also reject repeated IDs,
+duplicate v1.4 title/deadline keys and counters that do not exceed the largest ID.
+
+`MainApp` treats a missing client data file as a first launch and starts with sample clients. If an existing file
+cannot be decoded or validated, it records the load failure before constructing `Logic` or the main window. The UI
+then displays a recovery alert with the file path and closes after the alert is dismissed. The failed startup does
+not rewrite the client file; restore a backup or correct it before restarting.
+
+Startup read logs retain the data-file path and a sanitized diagnostic category (and JSON line/column when available), but omit raw JSON snippets and client field values. Malformed UTF-8 has a fixed diagnostic; model-conversion failures use a generic invalid-stored-values message without nested validation text.
+
+Preferences are nonessential to loading client data. If the preference file is absent or cannot be read, startup
+uses default GUI settings and tries to save them. A null GUI-settings value is also replaced with defaults. If that
+preference save fails, ClientDesk logs a warning and continues startup; invalid client data instead prevents the
+main window from opening.
+
+#### Saving and coordinating instances
+
+Each client-data save creates or opens a sibling `<data-file>.lock` file and attempts a non-blocking exclusive
+filesystem lock. The lock file may remain after the application closes and is reused on later saves. If another
+process currently holds the lock, the save fails. While holding the lock, storage compares the data file's current
+bytes with the snapshot from the last successful read or save. A changed file is treated as stale, and the save
+fails; close and reopen ClientDesk to reload the latest file before trying again. Some commands show a general
+save-failure message rather than the underlying stale-data cause.
+
+Snapshots are tracked per normalized data-file path. A direct storage API caller that saves a path before reading it
+has no baseline and retains the first-save behavior without a stale-content comparison. Normal application startup
+reads the active path first, including recording a missing-file snapshot, so later user commands have a baseline.
+
+For a current snapshot, storage writes JSON to a temporary file beside the data file and requests an atomic replace
+of the destination. If the filesystem cannot perform that atomic move, the save fails; there is no non-atomic move
+fallback. `LogicManager` publishes the staged model only after storage reports success. Rejected stale or locked
+saves leave both the live data and saved file unchanged; other save failures do not publish the proposed records.
+The displayed filter and selection follow the command's existing behavior.
+
+`FileUtil` also uses a strict UTF-8 encoder when writing text. A malformed surrogate in an accepted free-text field
+causes an encoding error instead of silently replacing characters. Serialization/encoding failure occurs before
+replacing the destination, so the original saved data remains intact and the staged model is not published.
 
 ### Common classes
 
@@ -312,7 +398,7 @@ code points with `Usage: find KEYWORD [KEYWORD]...`. Validation happens before c
 `PersonContainsKeywordsPredicate` copies the original keywords and compiles each as a `Pattern` with
 `LITERAL | CASE_INSENSITIVE | UNICODE_CASE`. `Matcher.find()` applies locale-independent Unicode case matching to
 substrings, including Turkish I variants, Greek sigma variants and supplementary letters. Literal patterns preserve
-punctuation; matching does not remove accents or expand `ß` to `ss`.
+punctuation; matching does not remove accents or expand `ß` to `ss` (but `ß` and `ẞ` match each other).
 Every keyword must match a field of the same client. Name, email and tag matching uses literal substrings; phone
 matching also accepts phone-like keywords after removing a leading plus and formatting spaces or hyphens. Keywords
 may match different fields. Separate field, phone, tag and substring helpers keep matching at one level of abstraction.
@@ -338,8 +424,9 @@ future project editing. `ProjectPriority` represents the three priority levels.
 
 `ProjectTitle` counts Unicode code points, rejects control/format characters and unpaired surrogates, and requires
 a letter or number. Its display value retains internal spacing. `ProjectTitle.isSameTitle` collapses Unicode spaces
-and matches either the existing `Locale.ROOT` lowercase key or `String.equalsIgnoreCase`. This covers Unicode
-case variants such as dotless I, final sigma and supplementary letters without expanding `ß` to `ss`.
+and matches either the existing `Locale.ROOT` lowercase key or an NFC-normalized `String.equalsIgnoreCase`
+comparison. This covers canonically equivalent spellings and Unicode case variants such as dotless I, final sigma
+and supplementary letters without expanding `ß` to `ss`.
 `ProjectDeadline` accepts only an ASCII, strict ISO calendar date in
 years 0001–9999; impossible dates are not normalized into another day.
 
@@ -350,6 +437,8 @@ invalid or overflowing indexes and invalid scalar values. `AddressBookParser` re
 
 Each immutable `Person` owns an immutable list of `Project` values and a persisted `nextProjectId`. The constructor
 checks unique positive IDs, unique v1.4 normalized title/deadline pairs and a counter greater than every saved ID.
+New command operations additionally reject canonical NFC-equivalent title/deadline pairs; previously loadable pairs
+retain their saved spelling and remain available for status/priority edits and deletion.
 IDs are independent between clients. The counter can reach `Integer.MAX_VALUE + 1L` as an exhausted sentinel;
 the command then reports exhaustion instead of overflowing. Deleting a project retains the counter, so a deleted
 ID is never reused. Existing client edit and remark commands preserve both fields.
@@ -380,15 +469,15 @@ An invalid index, unknown client-scoped ID or failed save leaves the live model 
 
 `JsonAdaptedProject` validates the original JSON token types before constructing model values. Numeric strings,
 fractional IDs, invalid enums, impossible dates and missing/null project fields fail loading. `JsonAdaptedPerson`
-rejects malformed project collections, duplicate IDs/keys and stale counters. Omitted project fields remain valid
+rejects malformed project collections, duplicate IDs, duplicate v1.4 keys and stale counters. Omitted project fields remain valid
 for legacy files, with no projects and a next ID of 1. Nonempty project data must include its saved counter. Serialization
 writes both `projects` and `nextProjectId` for all clients. Project lists and counters must be retained by any future
 client-copy operation, including undo snapshots.
 
-Storage retains v1.4's `ProjectTitle.normalizedValue()` validation key so previously accepted Unicode title pairs
-remain readable and survive saving without changing their spelling, IDs or counter. New additions and title/deadline
-edits use the broader duplicate matching above. Status/priority edits and deletion remain available for existing
-pairs; duplicate IDs and pairs already invalid under v1.4 still fail loading.
+Storage retains v1.4's `ProjectTitle.normalizedValue()` validation key so previously accepted Unicode title pairs,
+including canonical NFC/NFD variants, remain readable and survive saving without changing their spelling, IDs or counter.
+New additions and title/deadline edits use the broader duplicate matching above. Status/priority edits and deletion
+remain available for existing pairs; duplicate IDs and pairs already invalid under v1.4 still fail loading.
 
 This subsection describes project creation and deletion. Project editing is described in the Edit project
 subsection below. Undo, notes, follow-ups and agenda are planned.
@@ -411,7 +500,7 @@ editing and `list-clients`. Command and parser tests cover successful deletion, 
 argument validation.
 ### Edit project
 
-`EditProjectCommandParser` reads a displayed client index and a stable, client-local project ID. It rejects repeated prefixes and invalid identifiers/field values and creates an immutable `EditProjectDescriptor` containing only supplied fields. `ProjectTitle` and `ProjectDeadline` centralize title/date validation; `ProjectStatus` and `ProjectPriority` provide the persisted command vocabulary. The descriptor can represent completion, reopening, and any combination of title/deadline/priority changes. Add and Edit Project use `ProjectParserUtil` for case-insensitive prefix scanning, whitespace trimming and unsigned ASCII identifier parsing. Command-specific field requirements and validation remain in their respective parsers. Known prefixes delimit fields; other slash-containing title words remain literal text. Boundary trimming uses linear scans so oversized inputs with long internal space runs are rejected promptly.
+`EditProjectCommandParser` reads a displayed client index and stable, client-local project ID. It rejects repeated prefixes and invalid identifiers/field values and creates an immutable `EditProjectDescriptor` containing only supplied fields. `ProjectTitle` and `ProjectDeadline` centralize title/date validation; `ProjectStatus` and `ProjectPriority` provide the persisted command vocabulary. The descriptor can represent completion, reopening, and any combination of title/deadline/priority changes. Add and Edit Project use `ProjectParserUtil` for case-insensitive prefix scanning and whitespace trimming. Command-specific field requirements and validation remain in their respective parsers. Known prefixes delimit fields; other slash-containing title words remain literal text. Boundary trimming uses linear scans so oversized inputs with long internal space runs are rejected promptly.
 
 `EditProjectCommand` finds the client in the displayed list and the project by ID within that client. It applies the descriptor without changing the ID or other projects, and checks for conflicting work under that client when the title or deadline changes. An exact no-op returns without mutation. Both failed lookup and duplicate validation happen before updating the proposed client.
 
@@ -426,7 +515,7 @@ The sequence below starts after parsing a valid edit that changes data. `LogicMa
 ![Edit Project sequence](images/EditProjectSequence.svg)
 
 * **Model:** `Person` owns an immutable list of immutable `Project` values, each with `id`, `title`, `deadline`, `status` and `priority`. IDs must be positive and unique within each client. Equality includes project data so snapshots and no-op checks detect edits correctly. `withProjects` copies the contact details, remark and tags and retains the per-client `nextProjectId` allocation counter during an edit. Existing contact and remark edits preserve project lists.
-* **Storage:** `JsonAdaptedProject` validates all five stored fields through the same domain rules as parsing. `JsonAdaptedPerson` reads an absent `projects` field as an empty list for legacy compatibility and requires a persisted `nextProjectId` for nonempty project lists; legacy clients without projects default to ID 1. Explicit null project lists, invalid fields/counters, duplicate IDs, duplicate work and null list entries fail through `IllegalValueException`/`DataLoadingException`. `view` includes project IDs and current values so users can identify the edit target.
+* **Storage:** `JsonAdaptedProject` validates all five stored fields through the same domain rules as parsing. `JsonAdaptedPerson` reads an absent `projects` field as an empty list for legacy compatibility and requires a persisted `nextProjectId` for nonempty project lists; legacy clients without projects default to ID 1. Explicit null project lists, invalid fields/counters, duplicate IDs, duplicate v1.4 title/deadline keys and null list entries fail through `IllegalValueException`/`DataLoadingException`. `view` includes project IDs and current values so users can identify the edit target.
 * **Design choice:** staging avoids showing an unsaved change or depending on a rollback after failure. It copies the client collection for each edit, trading modest allocation for a clear failure contract. Immutable values make shallow snapshots safe. Project ID allocation and project creation belong to Add Project, not this command. Editing never consumes an ID.
 * **Shared project support:** Edit Project uses the project values, client collection/counter and JSON schema introduced by Add Project. The edit command preserves `nextProjectId`; it neither allocates a project ID nor creates a project.
 
@@ -507,7 +596,7 @@ The following activity diagram summarizes what happens when a user executes a ne
 
 **Aspect: How undo & redo execute:**
 
-* **Alternative 1 (current choice):** Saves the entire address book.
+* **Alternative 1 (proposed choice):** Saves the entire address book.
   * Pros: Easy to implement.
   * Cons: May have performance issues in terms of memory usage.
 
@@ -516,11 +605,12 @@ The following activity diagram summarizes what happens when a user executes a ne
   * Pros: Will use less memory (e.g. for `delete`, just save the person being deleted).
   * Cons: We must ensure that the implementation of each individual command is correct.
 
-_{more aspects and alternatives to be added}_
-
 ### \[Proposed\] Data archiving
 
-_{Explain here how the data archiving feature will be implemented}_
+Archiving and restoring clients are future requirements. The current application has no archive command or
+archive flag in its data model. An archival design has not been implemented; deleting a client permanently removes
+its record and associated projects. To retain a copy of current records, use the backup procedure in the
+[User Guide](UserGuide.md#editing-the-data-file).
 
 
 --------------------------------------------------------------------------------------------------------------------
@@ -556,6 +646,12 @@ They include requirements considered for later versions; inclusion here does not
 Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unlikely to have) - `*`.
 High-priority stories support the core workflows in the agreed MVP feature specification.
 Medium- and low-priority stories record optional enhancements and deferred requirements.
+
+Priority expresses the original need, not release status. The current release implements client creation/deletion,
+contact and tag editing, clearing all records, one replaceable client remark, search/list/view, project creation/editing/deletion, Help and local
+persistence. Separate client/project notes, dated follow-ups, agenda views, undo/redo, archiving, custom sorting and
+dashboard/export commands are **future requirements**, including where they have high priority below. A remark is
+not a dated follow-up or a history of notes. Projects are displayed in ID order, not deadline order.
 
 IDs 1-30 refer to the original requirements list. Overlapping stories are combined while retaining their IDs.
 IDs 31-36 capture needs made explicit by the feature specification and usage narrative.
@@ -788,6 +884,10 @@ project with a past deadline. It does not yet provide agenda, note or dated foll
 
 ### Non-Functional Requirements
 
+These are product targets for the requirements above, including future features. References to notes, follow-ups
+and agenda do not imply current support. The current build and CI target Java 25; later Java releases are not
+guaranteed by those checks.
+
 1.  ClientDesk should work on any _mainstream OS_ with Java `25` or above installed.
 2.  ClientDesk should support at least 1000 clients and their associated projects, notes, tags and follow-ups without
     data loss.
@@ -799,15 +899,16 @@ project with a past deadline. It does not yet provide agenda, note or dated foll
 6.  ClientDesk should save each successful data-changing command before displaying its success message and should
     preserve the saved data after a normal shutdown and restart.
 7.  A failed save or invalid command should not cause a partial update or modify previously saved data.
-8.  A failed search, details load or agenda computation should retain the previously displayed information instead
-    of leaving the user with an empty or unusable view.
+8.  An invalid search or invalid details index should retain the previously displayed information instead of
+    leaving the user with an empty or unusable view. A valid search with zero matches intentionally restores the
+    full client list. Future agenda-computation failures should likewise leave the previous usable view available.
 
 ### Glossary
 
-* **Agenda**: A chronological view that brings together upcoming and overdue project deadlines and follow-ups.
+* **Agenda (future)**: A chronological view that brings together upcoming and overdue project deadlines and follow-ups.
 * **Client**: A person or organization that receives the user's professional services and whose information is managed in ClientDesk.
 * **Customer relationship management (CRM)**: The practice of organizing client information and interactions to manage ongoing professional relationships.
-* **Follow-up**: A dated action that the user plans to carry out for a client.
+* **Follow-up (future)**: A dated action that the user plans to carry out for a client. The current remark field is undated.
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
 * **Project**: A piece of work undertaken for a client and tracked by its required deadline, status and priority.
 
@@ -815,7 +916,10 @@ project with a past deadline. It does not yet provide agenda, note or dated foll
 
 ## **Appendix: Instructions for manual testing**
 
-Given below are instructions to test the app manually.
+Given below are instructions to test the app manually. Use a separate disposable copy of the JAR and data for each
+section unless its setup says otherwise. Start each section from its stated fixture and run numbered steps in order;
+deletion, clearing, file corruption and failed-save checks must not use your normal client data. Examples below assume
+the JAR is named `addressbook.jar`; substitute the actual downloaded filename if it differs.
 
 <div markdown="span" class="alert alert-info">:information_source: **Note:** These instructions only provide a starting point for testers to work on;
 testers are expected to do more *exploratory* testing.
@@ -828,14 +932,15 @@ testers are expected to do more *exploratory* testing.
 
    1. Download the JAR file and copy it into an empty folder.
 
-   1. Double-click the JAR file.<br>
-      Expected: The GUI opens with a set of sample contacts. The window size may not be optimal.
+   1. Open a terminal in that folder and run `java -jar addressbook.jar` with Java 25.<br>
+      Expected: The GUI opens with sample clients. Double-clicking is also possible when the operating system has a
+      suitable Java file association; if it does not launch the app, use the terminal command to see the error.
 
 1. Saving window preferences
 
    1. Resize the window to an optimal size. Move the window to a different location. Close the window.
 
-   1. Relaunch the app by double-clicking the JAR file.<br>
+   1. Relaunch the app with `java -jar addressbook.jar`.<br>
        Expected: The most recent window size and location are retained when they fit the available screen area.
        After changing screen resolution or disconnecting a screen, the window is resized or moved to remain visible.
 
@@ -868,6 +973,9 @@ testers are expected to do more *exploratory* testing.
 1. Select a client without projects, then select **Details**.<br>
    Expected: Projects shows its empty state, and Details still shows the client's contact information and other saved
    fields.
+1. Select **Details** for a client, then select a different client from the list.<br>
+   Expected: Details stays open and refreshes to the newly selected client's record. Select part of a field, copy it
+   with the platform's copy shortcut, and paste it into a text editor; the full selected text is copied.
 1. Open the command guide with its header button, the Help menu and `F1` in turn.<br>
    Expected: Each route opens the command guide. Close it, enter `view 1` in the bottom command bar and press Enter.<br>
    Expected: The command runs and updates the selected client's workspace without moving the command bar from the
@@ -879,6 +987,27 @@ testers are expected to do more *exploratory* testing.
    full value. A client with many tags must not push the tabs out of the window.
 1. Relaunch ClientDesk and type a command without clicking the input first.<br>
    Expected: The command field receives initial keyboard focus and Enter executes the command.
+
+1. **Selection after search:** Use a fresh disposable data folder. A first launch starts with sample clients, so enter
+   `clear` in this disposable folder before creating two clients whose alphabetical indexes are predictable:
+
+   ```text
+   clear
+   add-client n/Alpha Workspace p/91234567 e/alpha-workspace@example.com
+   add-client n/Beta Workspace p/92345678 e/beta-workspace@example.com
+   view 1
+   ```
+
+   Expected: Alpha Workspace is selected. Enter `find Beta Workspace`.<br>
+   Expected: Beta Workspace is the only result and the details workspace shows its no-client instructions; it does not
+   silently select the first search result. Enter `view 1`.<br>
+   Expected: Beta Workspace is selected and its details appear.
+
+   Enter `find no-such-workspace-client`.<br>
+   Expected: The full list returns and Beta Workspace remains selected. Enter `view 1`, then `find Beta Workspace`.<br>
+   Expected: Alpha Workspace is hidden and selection clears. Now enter `find no-such-workspace-client` again.<br>
+   Expected: The full list returns, but no client is selected and no details are shown. Enter `view 1` to select Alpha
+   Workspace explicitly.
 
 ### Viewing help
 
@@ -990,58 +1119,135 @@ normal ClientDesk data. Start the application with `java -jar addressbook.jar` f
 1. Enter `list-clients extra`.<br>
    Expected: A usage error is shown and the displayed list is unchanged.
 
-### Finding clients with Unicode names
+### Finding clients
 
-In a disposable data folder, run `add-client n/Işık Studio p/81234567 e/isik@example.com t/startup` and
-`add-client n/Beacon Design p/82345678 e/beacon@example.com`. Record the saved data file's contents before searching.
+**Setup:** Use a disposable data folder. The first command removes any sample clients before the test records are added.
+
+```text
+clear
+add-client n/Işık Studio p/+65 8123 4567 e/isik@example.com t/startup
+add-client n/Beacon Design p/82345678 e/beacon@example.com t/support
+add-client n/ΟΣ p/83456789 e/sigma@example.com
+add-client n/Acme Studio p/84567890 e/acme@example.com
+```
+
+Record the saved data file before testing; searches should not change it.
 
 1. Enter `find IŞIK`.<br>
-   Expected: Only `Işık Studio` is shown, with `Found 1 matching clients.`. The saved file is unchanged.
-1. Enter `find ŞI START`.<br>
-   Expected: The same client is found through partial matches across its name and tag.
+   Expected: Only `Işık Studio` appears, with `Found 1 matching clients.`.
+1. Enter `find startup 8123`.<br>
+   Expected: `Işık Studio` appears. The two keywords match different fields of the same client.
+1. Enter `find +65-8123`.<br>
+   Expected: `Işık Studio` appears by its stored phone digits; the leading plus and hyphen are ignored for phone matching.
+1. Enter `find acme`.<br>
+   Expected: Only `Acme Studio` appears.
+1. Enter `find acme.*`.<br>
+   Expected: No clients match: punctuation is literal, not wildcard syntax. The full list is restored.
 1. Enter `find IŞIK missing`.<br>
-   Expected: `No clients matched: IŞIK missing.` is shown and the full list is restored. The saved file is unchanged.
-1. Add a client named `ΟΣ`, then enter `find ς`.<br>
-   Expected: `ΟΣ` is found despite the different Unicode sigma case form.
+   Expected: `No clients matched: IŞIK missing.` appears and the full list is restored.
+1. Enter `find ς`.<br>
+   Expected: `ΟΣ` appears despite the different Greek sigma case form.
+1. Enter `find acme`, then try a `find` command with one keyword of 51 Unicode code points.<br>
+   Expected: The usage message appears and the existing `acme` result remains displayed.
+
+Confirm that the saved data file is unchanged by all searches.
 
 ### Adding projects
 
-Use a disposable data folder for these checks. Create two clients with different emails, and use `list-clients`
-to see their current indexes.
+**Setup:** Use a disposable data folder. The first command removes any sample clients. Create two clients, then use
+`list-clients` to confirm that Acme Studio is index 1 and Beacon Design is index 2:
 
-1. Run `add-project 1 title/Website redesign deadline/2026-10-15`.
-   Expected: success with project ID 1. After exiting, inspect the disposable data file for the title, deadline,
-   default `not-started` status and `medium` priority. A past date also shows the overdue warning.
-2. Add another project for client 1, then the same first title/date for client 2.
-   Expected: client 1 receives ID 2, client 2 receives ID 1. Restart and add another project; the saved counters continue.
-3. Run `find` for the second client, then add a project at displayed index 1.
-   Expected: only that client receives the project and the filter remains active.
-4. Repeat a saved title/date with changed capitalization, repeated spaces, status or priority.
-   Expected: duplicate error; no new project and no consumed ID. A different date is accepted.
-5. Try `deadline/2026-02-29`, `deadline/2026-04-31`, `status/completed`, an empty title, a 101-character title,
-   repeated prefixes, `CLIENT_INDEX` values 0, -1, 1.5 and 2147483648, and an index not in the displayed list.
-   Expected: an actionable error with unchanged data. A valid leap day such as 2028-02-29 is accepted.
-6. In a disposable copy, make the containing data directory unwritable and attempt another addition.
-   Expected: `Project could not be saved. No changes were made.`; data, filter and project count stay unchanged.
-   Restore the directory permissions and retry; the same proposed ID remains available.
-7. Edit the client's email, use the inherited `edit` and `remark` commands, then restart.
-   Expected: all projects and their IDs remain. Deleting a client removes its projects without affecting another client.
+```text
+clear
+add-client n/Acme Studio p/91234567 e/acme-project-test@example.com
+add-client n/Beacon Design p/92345678 e/beacon-project-test@example.com
+list-clients
+```
+
+1. Run `add-project 1 title/Website redesign deadline/2099-12-31`.<br>
+   Expected: `Added project #1 to Acme Studio.`. Run `view 1`: the project has status `not-started` and priority
+   `medium`. This future date produces no overdue warning.
+1. Repeat the same title and date with different capitalization, repeated spaces, status and priority:<br>
+   `add-project 1 title/website  redesign deadline/2099-12-31 status/in-progress priority/high`.<br>
+   Expected: `This project already exists for Acme Studio.`. `view 1` still shows only project #1. Add
+   `add-project 1 title/Content refresh deadline/2099-12-30`.<br>
+   Expected: the new project receives ID 2, so the rejected duplicate did not consume an ID.
+1. Run `add-project 2 title/Website redesign deadline/2099-12-31`.<br>
+   Expected: Beacon Design receives ID 1; the same title and date are allowed for a different client.
+1. Enter `find Beacon`, then `add-project 1 title/Client onboarding deadline/2099-12-29`.<br>
+   Expected: Beacon Design receives ID 2, remains the only displayed client, and is selected. `list-clients` restores
+   both clients; `view 1` shows Acme IDs 1 and 2, while `view 2` shows Beacon IDs 1 and 2.
+1. Restart the application in the same folder, run `list-clients`, then add another project to Acme Studio.<br>
+   Expected: its next project receives ID 3. The saved projects and counters survive restart.
+1. Try each command below. After each rejection, run `view 1` to inspect Acme Studio:
+
+   | Command | Expected |
+   | --- | --- |
+   | `add-project 1 title/Bad date deadline/2026-02-29` | Impossible leap date rejected. |
+   | `add-project 1 title/Bad date deadline/2026-04-31` | Impossible calendar date rejected. |
+   | `add-project 1 title/Bad status deadline/2099-12-30 status/completed` | `completed` rejected for a new project. |
+   | `add-project 1 title/ deadline/2099-12-30` | Empty title rejected. |
+   | Title with 101 Unicode code points (command below) | Title length rejected. |
+   | `add-project 1 title/Repeated deadline/2099-12-30 status/in-progress status/not-started` | Repeated prefix rejected. |
+   | `add-project 0 title/Invalid index deadline/2099-12-30` | Zero index rejected. |
+   | `add-project -1 title/Invalid index deadline/2099-12-30` | Signed index rejected. |
+   | `add-project ١ title/Invalid index deadline/2099-12-30` | Non-ASCII numeral rejected with `Client index must be a displayed positive number.` |
+   | `add-project 1.5 title/Invalid index deadline/2099-12-30` | Decimal index rejected. |
+   | `add-project 2147483648 title/Invalid index deadline/2099-12-30` | Overflowing index rejected. |
+   | `add-project 99 title/Hidden index deadline/2099-12-30` | Index outside the two displayed clients rejected. |
+
+   Use this command for the title with 101 Unicode code points:
+
+   ```text
+   add-project 1 title/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa deadline/2099-12-30
+   ```
+
+   Expected after each: the error is shown, and Acme's projects and next ID are unchanged. As a valid date control,
+   `add-project 1 title/Leap-date deadline/2028-02-29` succeeds.
+1. In another disposable copy, use the controlled save-failure setup in [Saving data](#saving-data), then attempt to
+   add a project.<br>
+   Expected: `Project could not be saved. No changes were made.`; saved data, displayed filter, selected client and
+   project list stay unchanged. Remove the obstruction as instructed there and retry; the same proposed ID is available.
+1. In separate disposable data, add `Café launch` with deadline `2099-12-31`, then try adding `Café launch` with
+   the same deadline.<br>
+   Expected: the second project is rejected as a duplicate; composed/decomposed spelling does not change the rule.
+   A file that already contains both spellings remains loadable and retains each title; status/priority edits and
+   deletion remain available, while a title/deadline change that creates a duplicate is rejected.
+1. Edit the client's email, use the inherited `edit` and `remark` commands, then restart.<br>
+   Expected: all projects and IDs remain. Deleting a client removes that client's projects without affecting another
+   client's projects.
 
 ### Deleting projects
 
-1. Create two clients, then add project ID 1 to each. Run `delete-project 1 1`.
-   Expected: only the first displayed client's project is removed; the other client's ID 1 remains.
-2. Filter the client list and delete a project using its filtered client index. Run `list-clients` afterwards.
-   Expected: the selected project is gone, the filter remains until `list-clients`, and the full client list is intact.
-3. Try project ID 0, an unknown ID, and a client index outside the displayed list.
-   Expected: each command reports an error without changing the saved data.
-4. Try `delete-project x 1`, `delete-project 1 0`, `delete-project ١ 1` and `delete-project 1 １`.
+**Setup:** In a fresh disposable folder, run these commands. They remove the sample records and give both clients
+their own project #1; Acme is displayed at index 1 and Beacon at index 2.
+
+```text
+clear
+add-client n/Acme Delete Studio p/91234567 e/acme-delete-project@example.com
+add-client n/Beacon Delete Design p/92345678 e/beacon-delete-project@example.com
+add-project 1 title/First project deadline/2099-12-31
+add-project 2 title/First project deadline/2099-12-31
+```
+
+1. Run `delete-project 1 1`, then `view 1` and `view 2`.<br>
+   Expected: only Acme's project is removed; Beacon's project #1 remains.
+1. Run `find Beacon`, then `delete-project 1 1`.<br>
+   Expected: Beacon's project is removed and Beacon remains the only displayed client. Run `list-clients`:
+   both clients still exist, with no projects.
+1. Try `delete-project 0 1`, `delete-project 1 0`, `delete-project 1 99`, `delete-project 99 1`,
+   and `delete-project 1 1 extra`.<br>
+   Expected: Each reports an error and leaves saved data unchanged.
+1. Try `delete-project x 1`, `delete-project 1 0`, `delete-project ١ 1` and `delete-project 1 １`.<br>
    Expected: the command identifies whether the client index or project ID is invalid, and project data is unchanged.
-5. Delete the highest project ID from a client and add another project.
-   Expected: the new project receives the next unused ID; the deleted ID is not reused.
-6. In a disposable copy, make the containing data directory unwritable and attempt deletion.
-   Expected: `Project could not be deleted. No changes were made.`; project data, file bytes and filter remain unchanged.
-   Restore permissions and retry; the project is deleted successfully.
+1. Run `add-project 1 title/Retired work deadline/2099-12-30`.<br>
+   Expected: Acme receives project #2. Run `delete-project 1 2`, then
+   `add-project 1 title/Replacement work deadline/2099-12-29`.<br>
+   Expected: the replacement receives ID 3; neither deleted ID is reused.
+1. Use the controlled save-failure setup in [Saving data](#saving-data) with this disposable data, then run
+   `delete-project 1 3`.<br>
+   Expected: `Project could not be deleted. No changes were made.`; project #3, file bytes and filter remain unchanged.
+   Close the app, remove the obstruction as instructed, restart and retry: project #3 is deleted successfully.
 
 ### Saving data
 
@@ -1065,10 +1271,57 @@ Use a disposable folder containing the JAR for these tests. Close ClientDesk bef
 
    1. Back up `data/addressbook.json`, replace its contents with `{ invalid json`, then start ClientDesk.<br>
       Expected: ClientDesk shows an error identifying the data file and closes without opening the command window.
-      The corrupted file is not overwritten.
+   The corrupted file is not overwritten. Inspect `addressbook.log.0`: the read error includes the data path and a
+   sanitized `Invalid JSON` diagnostic with line/column when available, not a raw JSON snippet or client field value.
 
    1. Restore the backup and restart ClientDesk.<br>
       Expected: ClientDesk opens with the restored clients and projects.
+
+1. Rejecting trailing content and wrongly typed stored fields
+
+   1. In a disposable data file, append `extra text` after the closing JSON root, then start ClientDesk.<br>
+      Expected: Startup is rejected, the file bytes are unchanged, and the command window does not open.
+
+   1. Restore the backup. Change one stored phone value from a JSON string (for example, `"phone": "91234567"`)
+      to a JSON number (`"phone": 91234567`), then start ClientDesk.<br>
+      Expected: Startup is rejected rather than converting the number to text. The edited file is unchanged by
+      ClientDesk. Restore the valid backup before continuing.
+
+1. Running from a malformed preferences file
+
+   1. Back up `preferences.json`, then replace it with `{ invalid json` and start ClientDesk.<br>
+      Expected: ClientDesk opens with default window settings and tries to replace the invalid preferences with
+      defaults. The client data file remains unchanged. Restore the preference backup after closing the app if you
+      want to keep the previous window settings.
+
+1. Controlled save failure and retry
+
+   1. Close every ClientDesk instance using the disposable home folder and back up `data/addressbook.json`.
+      Move `data/addressbook.json.lock` aside if that regular sidecar file exists, then create an **empty directory**
+      named `addressbook.json.lock` in `data`. Do not replace a lock file while an instance is running.
+
+   1. Start ClientDesk from the same home and attempt a data-changing command, for example
+      `add-project 1 title/Save-failure check deadline/2099-12-31` when client 1 exists.<br>
+      Expected: loading still works, but saving fails because the lock path is a directory. Add Project reports
+      `Project could not be saved. No changes were made.`; the existing client/project data, file bytes, filter and
+      selection remain unchanged. Other mutation commands show their own save-failure message.
+
+   1. Close ClientDesk, remove only the empty test directory, and restore the moved regular sidecar if one existed.
+      Restart ClientDesk and retry the rejected command.<br>
+      Expected: it succeeds normally; a failed project addition did not consume an ID. Keep the valid data backup
+      until the check is complete. This setup avoids relying on operating-system permission switches.
+
+1. Rejecting stale data from another ClientDesk instance
+
+   1. From the same disposable home folder, start two ClientDesk instances and leave both open. In the first
+      instance, run `remark 1 r/Changed in first window` and wait for its success message. In the second, run
+      `remark 1 r/Changed in second window`.<br>
+      Expected: The second instance reports a save error and does not show success. Close both instances, then inspect
+      the data file: `Changed in first window` is saved, and the rejected second remark is absent.
+
+   1. Reopen ClientDesk from that same home and repeat the second remark.<br>
+      Expected: It saves successfully because this instance has loaded the latest file. The `.lock` sidecar may
+      remain after both instances have closed; leave it in place.
 
 1. Keeping runtime files inside the home folder (on systems supporting symbolic links)
 
@@ -1085,7 +1338,7 @@ Use a disposable folder containing the JAR for these tests. Close ClientDesk bef
 
 ### Editing a project
 
-**Setup:** Use Java 25 and a freshly built JAR in an isolated test folder. Create its `data` subfolder and copy [`edit-project-clients.json`](files/edit-project-clients.json) to `data/addressbook.json` before starting the app. Launch from that folder, for example with `java -jar addressbook.jar`. Do not replace a running application's data file. This fixture provides existing projects even before Add Project is integrated. Run the following steps in order.
+**Setup:** Use Java 25 and the release JAR in an isolated test folder. Create its `data` subfolder and copy [`edit-project-clients.json`](files/edit-project-clients.json) to `data/addressbook.json` before starting the app. Launch from that folder, for example with `java -jar addressbook.jar`. Do not replace a running application's data file. This fixture provides existing, non-consecutive project IDs so the checks do not depend on earlier Add Project tests. Run the following steps in order.
 
 The fixture has two clients, Acme Studio and Beacon Design. Each has project #11; Acme also has #3. Both clients have `nextProjectId` set to 12.
 
@@ -1114,6 +1367,7 @@ For each invalid-input case below, run `view 1` afterward and confirm Acme's pro
 | `edit-project 1 11 title/` | A title constraint error. |
 | `edit-project 1 11` | `Specify at least one project field to update.` |
 | `edit-project 1 11 status/completed status/in-progress` | A repeated-prefix error. |
+   | `edit-project 1 ١ status/completed` | `Project ID must be a positive integer.` |
 | `edit-project 99 11 status/completed` | `No client at index 99.` |
 | `edit-project 1 999 status/completed` | `No project with ID 999 for Acme Studio.` |
 | `edit-project 1 0 status/completed` | A project-ID constraint error. |

@@ -13,7 +13,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Handler;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -83,6 +88,72 @@ public class MainAppTest {
     @Test
     public void init_malformedJson_blocksCommandsAndPreservesBytes() throws Exception {
         assertFailedStartupPreservesFile("malformed.json", "{\"persons\": [");
+    }
+
+    @Test
+    public void init_malformedJson_doesNotLogClientDetailsAndPreservesBytes() throws Exception {
+        String privateName = "CLIENT_CANARY_NAME_731";
+        String privateRemark = "CLIENT_CANARY_REMARK_942";
+        byte[] original = ("{\"persons\":[{\"name\":\"" + privateName
+                + "\",\"phone\":\"81234567\",\"email\":\"a@example.com\",\"address\":\"Somewhere\","
+                + "\"remark\":\"" + privateRemark + "\" \"tags\":[]}]}"
+        ).getBytes(StandardCharsets.UTF_8);
+        Path dataFile = temporaryFolder.resolve("private-malformed.json");
+        String malformedLogs = String.join("\n", captureFailedStartupLogs(dataFile, original));
+        assertFalse(malformedLogs.contains(privateName));
+        assertFalse(malformedLogs.contains(privateRemark));
+        assertTrue(malformedLogs.contains("Invalid JSON at line"), malformedLogs);
+        assertTrue(malformedLogs.contains("column"), malformedLogs);
+
+        String privateDate = "PRIVATE_DATE_CANARY_386";
+        byte[] invalidValue = ("{\"persons\":[{\"name\":\"" + privateName
+                + "\",\"phone\":\"81234567\",\"email\":\"a@example.com\",\"address\":\"Somewhere\","
+                + "\"remark\":\"" + privateRemark + "\",\"tags\":[],\"projects\":["
+                + "{\"id\":1,\"title\":\"Work\",\"deadline\":\"" + privateDate
+                + "\",\"status\":\"active\",\"priority\":\"high\"}],\"nextProjectId\":2}]}")
+                .getBytes(StandardCharsets.UTF_8);
+        Path invalidValuePath = temporaryFolder.resolve("private-invalid-value.json");
+        String invalidValueLogs = String.join("\n", captureFailedStartupLogs(invalidValuePath, invalidValue));
+        assertFalse(invalidValueLogs.contains(privateName));
+        assertFalse(invalidValueLogs.contains(privateRemark));
+        assertFalse(invalidValueLogs.contains(privateDate));
+        assertTrue(invalidValueLogs.contains("Stored client data contains invalid values."), invalidValueLogs);
+    }
+
+    private List<String> captureFailedStartupLogs(Path dataFile, byte[] original) throws Exception {
+        Files.write(dataFile, original);
+        TestMainApp app = new TestMainApp(dataFile);
+        Logger logger = Logger.getLogger("ab3");
+        List<String> messages = new ArrayList<>();
+        Handler capture = new Handler() {
+            @Override
+            public void publish(LogRecord record) {
+                messages.add(record.getMessage());
+                if (record.getThrown() != null) {
+                    messages.add(record.getThrown().toString());
+                }
+            }
+
+            @Override
+            public void flush() { }
+
+            @Override
+            public void close() { }
+        };
+        logger.addHandler(capture);
+        try {
+            app.init();
+            assertNull(app.model);
+            assertNull(app.logic);
+            assertNull(app.ui);
+            app.start(null);
+            assertTrue(app.errorShown);
+            app.stop();
+            assertArrayEquals(original, Files.readAllBytes(dataFile));
+            return messages;
+        } finally {
+            logger.removeHandler(capture);
+        }
     }
 
     @Test

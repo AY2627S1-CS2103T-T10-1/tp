@@ -27,6 +27,8 @@ import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
 
+import com.fasterxml.jackson.core.JsonParseException;
+
 import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
@@ -99,6 +101,15 @@ public class JsonAddressBookStorageTest {
     @Test
     public void read_notJsonFormat_exceptionThrown() {
         assertThrows(DataLoadingException.class, () -> readAddressBook("notJsonFormatAddressBook.json"));
+    }
+
+    @Test
+    public void getSafeReadError_jsonErrorWithoutLocation_omitsPrivateData() throws Exception {
+        // Exercise a location-free Jackson error without exposing the sanitizer in the production API.
+        var sanitizer = JsonAddressBookStorage.class.getDeclaredMethod("getSafeReadError", IOException.class);
+        sanitizer.setAccessible(true);
+        JsonParseException error = new JsonParseException("Invalid client: private-client@example.com", null);
+        assertEquals("Invalid JSON", sanitizer.invoke(null, error));
     }
 
     @Test
