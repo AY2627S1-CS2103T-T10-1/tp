@@ -195,7 +195,30 @@ All client, project and legacy mutations share `LogicManager#executeStagedMutati
 
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
 
-<img src="images/ParserClasses.png" width="900" alt="Command parsers and their shared parsing helpers" />
+<img src="images/ParserClasses.png" width="400" alt="Command parsers realize Parser and create commands inheriting from the abstract Command class"/>
+
+[Command-creation diagram source](diagrams/ParserClasses.puml)
+
+The command-creation diagram uses `XYZCommandParser`/`XYZCommand` as placeholders for representative
+prefixed commands, such as legacy Add. `AddressBookParser` creates the appropriate parser; it produces a
+command implementing the requested action. `XYZCommandParser` realizes `Parser<T>`, and `XYZCommand`
+inherits from the abstract `Command` class.
+
+The argument-parsing relationships are shown separately to keep both diagrams readable.
+
+<img src="images/ParserTokenization.png" width="100%" alt="Prefixed argument tokenization dependencies and the map association to Prefix keys"/>
+
+[Tokenization diagram source](diagrams/ParserTokenization.puml)
+
+`CliSyntax` creates the prefix constants. `ArgumentTokenizer` uses prefixes to split input and creates an
+`ArgumentMultimap`, whose map stores prefixes as keys. `ParserUtil` validates field values and does not use
+`Prefix`. Dashed open-arrow lines show dependencies (with creation labelled); the solid open-arrow line shows
+the map's navigable association to its prefix keys. Hollow triangles point to the implemented interface
+(dashed line) or superclass (solid line).
+
+Both diagrams are representative subsets, not a claim that every command uses tokenization. Project commands share
+`ProjectParserUtil`. Simpler index/keyword parsers, value classes and generic type arguments are omitted for
+readability. Individual parsing rules remain in their command sections.
 
 How the parsing works:
 * When called upon to parse a user command, the `AddressBookParser` class creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the other classes shown above to parse the user command and create an `XYZCommand` object (e.g., `AddCommand`). The `AddressBookParser` returns that object as a `Command` object.

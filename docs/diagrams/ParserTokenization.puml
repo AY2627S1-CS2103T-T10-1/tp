@@ -1,0 +1,26 @@
+@startuml
+!pragma layout smetana
+!include style.puml
+skinparam arrowColor LOGIC_COLOR_T4
+skinparam classBackgroundColor LOGIC_COLOR
+skinparam ArrowFontStyle plain
+skinparam dpi 150
+skinparam nodesep 40
+skinparam ranksep 55
+
+class XYZCommandParser
+class CliSyntax
+class ParserUtil
+class ArgumentMultimap
+class ArgumentTokenizer
+class Prefix
+
+XYZCommandParser ..> CliSyntax : prefix constants
+XYZCommandParser ..> ParserUtil : validate values
+XYZCommandParser ..> ArgumentTokenizer : tokenize
+XYZCommandParser ..> ArgumentMultimap : read values
+CliSyntax ..> Prefix : <<create>>
+ArgumentTokenizer ..> ArgumentMultimap : <<create>>
+ArgumentTokenizer ..> Prefix : token boundaries
+ArgumentMultimap --> "0..*" Prefix : keys
+@enduml
