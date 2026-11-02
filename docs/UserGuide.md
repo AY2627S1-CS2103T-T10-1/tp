@@ -71,9 +71,7 @@ Help menu or `F1`.
 
 * Indexes refer to the **currently displayed client list**, including search results. Project IDs belong to individual clients and do not change when the list is reordered. ClientDesk has no undo command; deletions and clearing take effect without a confirmation dialog.
 
-* Write indexes and project IDs using the ASCII digits `0`–`9`, and separate command parameters with ordinary
-  spaces. Unicode digits and typographic spaces copied from formatted documents are not supported. Retype an
-  affected digit or space if a pasted command is rejected.
+* Write indexes and project IDs using the ASCII digits `0`–`9`, and separate command parameters with ordinary spaces. Unicode digits are not supported for identifiers. If a pasted command is rejected, retype any typographic spaces as ordinary spaces. The `find` command also accepts Unicode spaces between keywords.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </div>
