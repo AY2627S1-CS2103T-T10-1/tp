@@ -603,13 +603,16 @@ professional, unless specified otherwise.)
 
 **Preconditions:** ClientDesk is running and the client has already been added.
 
-**MSS**
+**Current workflow (available in v1.6)**
 
 1.  User searches for the client by name.
 2.  ClientDesk shows the matching client.
 3.  User views the client's details.
 4.  User adds a project with a title and deadline to the client.
 5.  ClientDesk validates and saves the project.
+
+**Planned continuation (Coming soon; unavailable in v1.6)**
+
 6.  User adds a note describing the latest client interaction.
 7.  ClientDesk validates and saves the note.
 8.  User sets a follow-up date and optional follow-up details for the client.
@@ -641,23 +644,27 @@ professional, unless specified otherwise.)
 
     Use case resumes at step 4.
 
-* 7a. The note is invalid or cannot be saved.
+* 7a. [Coming soon] The note is invalid or cannot be saved.
 
   * 7a1. ClientDesk shows the relevant error and does not add the note.
 
     Use case resumes at step 6.
 
-* 9a. The follow-up date or details are invalid, or the follow-up cannot be saved.
+* 9a. [Coming soon] The follow-up date or details are invalid, or the follow-up cannot be saved.
 
   * 9a1. ClientDesk shows the relevant error and retains the previous follow-up.
 
     Use case resumes at step 8.
 
-#### UC02: Resolve overdue work
+#### UC02: Resolve overdue work (Coming soon)
 
 **Preconditions:** At least one client has an overdue project or follow-up in ClientDesk.
 
-**MSS**
+This end-to-end agenda and follow-up workflow is planned and is not available in v1.6. The current release lets users
+view a client's project values, edit a project's status and other values, and see an overdue warning when adding a
+project with a past deadline. It does not yet provide agenda, note or dated follow-up operations.
+
+**Planned MSS**
 
 1.  User requests to view overdue agenda items.
 2.  ClientDesk shows all pending projects and follow-ups dated before today.
