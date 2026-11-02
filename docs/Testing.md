@@ -23,6 +23,7 @@ Before submitting a Java change, use Java 25 and run `./gradlew check coverage` 
 On Linux, the JavaFX tests require a display: use `xvfb-run --auto-servernum ./gradlew check coverage`, as CI does.
 On macOS, use the prescribed Zulu JDK+FX runtime and a desktop session.
 CI uses `macos-15-intel` after `macos-latest` jobs failed to obtain a runner during ARM64 capacity constraints.
+It retains the required check name `build (macos-latest)` for compatibility with existing branch protection.
 That macOS runner omits the JavaFX display tests (`*UiTest`, `MainWindowLayoutTest`, and the alert methods in
 `UiManagerDataLoadingTest`) because its test JVM has aborted with `SIGABRT` while running the GUI suite.
 The remaining tests and both Checkstyle tasks still run there; Linux, Windows and local runs retain the full suite.

@@ -4,6 +4,7 @@ on: [push, pull_request]
 
 jobs:
   build:
+    name: build (${{ matrix.platform == 'macos-15-intel' && 'macos-latest' || matrix.platform }})
     strategy:
       matrix:
         platform: [ubuntu-latest, macos-15-intel, windows-latest]
