@@ -9,7 +9,7 @@ title: Developer Guide
 
 ## **Acknowledgements**
 
-* Clarence Choo used OpenAI Codex to implement the client-name and phone-input fixes for issues #167, #169 and #170, including their regression tests and guide updates.
+* Clarence Choo used OpenAI Codex to implement the client-name and phone-input fixes for issues #167, #169 and #170, including their regression tests and guide updates, and to repair Java CI and check PR compatibility.
 
 * Help retains the existing ClientDesk command catalogue and AddressBook-Level3 Help window.
 
