@@ -30,6 +30,14 @@ checkstyle {
 
 test {
     useJUnitPlatform()
+    // Hosted macOS GUI tests can abort the JVM; retain them on other runners and local desktops.
+    if (System.getenv('GITHUB_ACTIONS') == 'true' && System.getenv('RUNNER_OS') == 'macOS') {
+        filter {
+            excludeTestsMatching 'seedu.address.ui.*UiTest'
+            excludeTestsMatching 'seedu.address.ui.MainWindowLayoutTest'
+            excludeTestsMatching 'seedu.address.ui.UiManagerDataLoadingTest.*Alert*'
+        }
+    }
     finalizedBy jacocoTestReport
     testLogging {
         exceptionFormat = 'full'

@@ -28,12 +28,14 @@ import seedu.address.model.tag.Tag;
 public class AddClientCommandParser implements Parser<AddClientCommand> {
 
     public static final String MESSAGE_PHONE_CONSTRAINTS =
-            "Phone must contain 7–15 digits and may use a leading +, spaces, or hyphens.";
+            "Phone must contain 7–15 digits; a leading +, spaces, hyphens, and parenthesized digit groups are allowed.";
 
     public static final String MESSAGE_TAG_CONSTRAINTS =
             "Tag must be 1–30 lowercase letters, numbers, or internal hyphens.";
 
-    private static final Pattern PARAMETER_PREFIX = Pattern.compile("(?<!\\S)([^\\s/]+/)");
+    // Single-character prefixes stay reserved; S/O and D/O are relationship notation in names.
+    private static final Pattern PARAMETER_PREFIX =
+            Pattern.compile("(?<!\\S)(?![sSdD]/[oO](?:\\s|$))([^\\s/]/)");
     private static final Set<String> SUPPORTED_PREFIXES = Set.of("n/", "p/", "e/", "t/");
 
     @Override
@@ -93,10 +95,10 @@ public class AddClientCommandParser implements Parser<AddClientCommand> {
      * Parses a formatted phone number into its digit-only stored representation.
      */
     private Phone parseClientPhone(String value) throws ParseException {
-        if (!value.matches("\\+?[0-9 -]+")) {
+        if (!value.matches("\\+?(?:[0-9 -]|\\([0-9]+\\))++")) {
             throw new ParseException(MESSAGE_PHONE_CONSTRAINTS);
         }
-        String digits = value.replaceAll("[ -]", "");
+        String digits = value.replaceAll("[ ()-]", "");
         if (digits.startsWith("+")) {
             digits = digits.substring(1);
         }

@@ -54,7 +54,7 @@ public class PersonContainsKeywordsPredicate implements Predicate<Person> {
     }
 
     /**
-     * Matches stored digits using a phone keyword with an optional plus and formatting hyphens.
+     * Matches stored digits using a phone keyword with an optional plus, hyphens and parenthesized digit groups.
      * Other fields still match the original keyword literally.
      */
     private boolean hasMatchingPhone(String phone, Pattern keyword) {
@@ -62,10 +62,10 @@ public class PersonContainsKeywordsPredicate implements Predicate<Person> {
             return true;
         }
         String phoneKeyword = keyword.pattern();
-        if (!phoneKeyword.matches("\\+?[0-9 -]+")) {
+        if (!phoneKeyword.matches("\\+?(?:[0-9 -]|\\([0-9]+\\))++")) {
             return false;
         }
-        String digits = phoneKeyword.replaceAll("[+ -]", "");
+        String digits = phoneKeyword.replaceAll("[+ ()-]", "");
         return !digits.isEmpty() && phone.contains(digits);
     }
 

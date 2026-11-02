@@ -114,16 +114,22 @@ can be supplied in any order. Command names and prefixes are case-insensitive.
 Repeated name, phone or email prefixes and unknown prefixes are rejected.
 Field | Rules
 ------|------
-Name | 1–80 Unicode code points with at least one letter or number. Letters, combining marks, numbers, spaces, straight or curly apostrophes, hyphens, periods, ampersands and parentheses are allowed. Combining marks count towards the limit; names such as `अनिल`, `วิชัย` and `José` are accepted with their spelling preserved.
-Phone | 7–15 digits, with an optional leading `+`, spaces or hyphens. Formatting is removed before storage.
+Name | 1–80 Unicode code points with at least one letter or number. Letters, combining marks, numbers, spaces, straight or curly apostrophes, hyphens, periods, ampersands, slashes and parentheses are allowed. Combining marks count towards the limit; names such as `अनिल`, `วิชัย` and `José` are accepted with their spelling preserved.
+Phone | 7–15 digits, with an optional leading `+`, spaces, hyphens or parenthesized digit groups, such as `+1 (212) 555-0123`. Each pair of parentheses must enclose one or more digits, without nesting or separators inside. Formatting is removed before storage.
 Email | 3–254 characters, exactly one `@`, non-empty local and domain parts, no spaces and a dot in the domain. Domain labels cannot start or end with a hyphen.
 Tag | 1–30 lowercase letters, numbers or internal hyphens; no leading or trailing hyphen. Repeated tags are stored once.
 
 For example, `t/VIP` is rejected with `Tag must be 1–30 lowercase letters, numbers, or internal hyphens.` Use `t/vip` instead.
 
+Slashes within names are preserved, including `S/O Ravi Kumar`, `Priya D/O Kumar` and `Acme Design/Consulting`.
+Parameter prefixes are whitespace-separated single-character markers, except standalone `S/O` and `D/O`
+(ignoring case), which are treated as name text.
+
 A duplicate has the same email (ignoring case), or the same name (ignoring case,
-outer spaces and repeated internal spaces) **and** normalized phone. The same name
+outer spaces, repeated internal spaces and canonically equivalent Unicode spellings) **and** normalized phone. The same name
 alone is allowed. Unicode case variants such as `Işık` and `IŞIK` are also duplicates when their phones match. Duplicates report `This client already exists: <name>.`
+For example, `José` and `José` (the latter using a separate combining accent) are duplicates with the same phone.
+Displayed spelling is preserved; accents are not removed. Previously saved pairs remain readable and support unrelated edits.
 Missing required fields report `Usage: add-client n/NAME p/PHONE e/EMAIL [t/TAG]...`.
 If saving fails, ClientDesk reports `Client could not be saved. No changes were made.`
 and keeps the existing data and displayed list.
@@ -168,7 +174,7 @@ Format: `find KEYWORD [KEYWORD]...`
   and restore the full client list in name order. Feedback preserves keyword case and uses single spaces.
 * Missing keywords or a keyword exceeding 50 Unicode code points produce `Usage: find KEYWORD [KEYWORD]...`.
   The previously displayed list stays visible.
-* Phone searches also accept a leading `+` and hyphens, such as `find 8123-4567`.
+* Phone searches also accept a leading `+`, hyphens and parenthesized digit groups, such as `find +1 (212) 555-0123`.
   These are ignored only when matching phone digits; names, emails and tags still match literal text.
   Space-separated phone groups are separate keywords and must all match the same client.
 * Searching does not change client records or write the data file.
@@ -384,13 +390,13 @@ Name, phone, email and address are required. Tags are optional and repeatable. U
 
 Field | Legacy Add/Edit rules
 ------|------
-Name | 1–80 Unicode code points containing at least one letter or number; allows letters, combining marks, numbers, spaces, straight or curly apostrophes, hyphens, periods, ampersands and parentheses. Combining marks count towards the limit and the supplied spelling is preserved.
-Phone | At least 3 digits, with no spaces, hyphens or leading `+`. This differs from `add-client`'s 7–15-digit formatted-phone rule.
+Name | 1–80 Unicode code points containing at least one letter or number; allows letters, combining marks, numbers, spaces, straight or curly apostrophes, hyphens, periods, ampersands, slashes and parentheses. Combining marks count towards the limit and the supplied spelling is preserved. Known whitespace-separated prefixes still delimit fields.
+Phone | At least 3 digits, with no spaces, hyphens, parentheses or leading `+`. This differs from `add-client`'s 7–15-digit formatted-phone rule.
 Email | 3–254 characters, exactly one `@`, no spaces, and a dotted domain whose labels do not start or end with a hyphen.
 Address | A non-blank value; an address containing only spaces, including Unicode spaces, is rejected.
 Tag | 1–30 letters, numbers or internal hyphens. Uppercase is accepted and preserved; `add-client` requires lowercase tags.
 
-A duplicate is a client with the same email ignoring case, or the same normalized name and phone. The same name alone is allowed. A new legacy record starts with no projects or remark. Unicode name case variants use the same duplicate check as `add-client`.
+A duplicate is a client with the same email ignoring case, or the same normalized name and phone. The same name alone is allowed. A new legacy record starts with no projects or remark. Unicode name case variants and canonically equivalent spellings use the same duplicate check as `add-client`.
 
 Previously saved addresses remain readable. Use `edit INDEX a/ADDRESS` to correct an older blank address.
 

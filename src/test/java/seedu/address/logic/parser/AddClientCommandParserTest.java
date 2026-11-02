@@ -1,5 +1,6 @@
 package seedu.address.logic.parser;
 
+import static seedu.address.logic.parser.AddClientCommandParser.MESSAGE_PHONE_CONSTRAINTS;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 
@@ -25,6 +26,39 @@ public class AddClientCommandParserTest {
         assertParseSuccess(parser, "\tE/Bob@acme.com\tP/6591234567\tN/Acme Studio  ",
                 new AddClientCommand(client));
         assertParseSuccess(parser, "n/Acme Studio p/6591234567 e/Bob@acme.com", new AddClientCommand(client));
+    }
+
+    @Test
+    public void parse_slashNames_preservesCaseAndParameterBoundaries() {
+        for (String name : new String[] {"S/O Ravi Kumar", "Ravi S/O Kumar", "Priya D/O Kumar", "Priya d/o Kumar",
+            "Acme Design/Consulting", "Acme/p/Studio"}) {
+            Person expected = new PersonBuilder(client).withName(name).build();
+            assertParseSuccess(parser, "P/6591234567 N/" + name + " E/Bob@acme.com",
+                    new AddClientCommand(expected));
+            assertParseSuccess(parser, "P/6591234567 E/Bob@acme.com N/" + name,
+                    new AddClientCommand(expected));
+        }
+        assertParseFailure(parser, "n/Ravi S/O Kumar x/extra p/6591234567 e/Bob@acme.com",
+                "Unknown client parameter: x/.\n" + AddClientCommand.MESSAGE_USAGE);
+        assertParseFailure(parser, "n/Ravi S/O Kumar p/6591234567 e/Bob@acme.com N/Other",
+                Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_NAME));
+    }
+
+    @Test
+    public void parse_parenthesizedPhone_validatesGroupsAndDigitCount() {
+        for (String phone : new String[] {"+65 (9123)-4567", "(65)91234567", "+(65)(9123)4567"}) {
+            assertParseSuccess(parser, "n/Acme Studio p/" + phone + " e/Bob@acme.com",
+                    new AddClientCommand(client));
+        }
+        for (String digits : new String[] {"1234567", "123456789012345"}) {
+            assertParseSuccess(parser, "n/Acme Studio p/(" + digits + ") e/Bob@acme.com",
+                    new AddClientCommand(new PersonBuilder(client).withPhone(digits).build()));
+        }
+        for (String phone : new String[] {"()91234567", "((9123))4567", "(91234567", "91234567)",
+            "9123)(4567", "(91 23)4567", "(91-23)4567", "(+65)91234567", "(123456)", "(1234567890123456)",
+            "9".repeat(10000), "(1)".repeat(3000)}) {
+            assertParseFailure(parser, "n/Acme Studio p/" + phone + " e/Bob@acme.com", MESSAGE_PHONE_CONSTRAINTS);
+        }
     }
 
     @Test

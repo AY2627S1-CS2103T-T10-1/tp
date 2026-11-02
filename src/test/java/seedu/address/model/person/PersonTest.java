@@ -36,7 +36,9 @@ public class PersonTest {
                 Locale.setDefault(locale);
                 for (List<String> names : List.of(List.of("Işık", "IŞIK"), List.of("İ", "i"),
                         List.of("ΟΣ", "ος"), List.of("Σ", "ς"), List.of("\uD801\uDC00", "\uD801\uDC28"),
-                        List.of("Straße", "STRAẞE"), List.of("Acme Studio", " acme   STUDIO "))) {
+                        List.of("Straße", "STRAẞE"), List.of("Acme Studio", " acme   STUDIO "),
+                        List.of("José", " JOSE\u0301 "), List.of("Å", "A\u030a"),
+                        List.of("A\u0327\u0301", "A\u0301\u0327"))) {
                     Person first = new PersonBuilder().withName(names.get(0)).withEmail("first@example.com").build();
                     Person second = new PersonBuilder(first).withName(names.get(1))
                             .withEmail("second@example.com").build();
@@ -58,6 +60,17 @@ public class PersonTest {
         assertTrue(first.hasSameClientIdentity(first));
         assertTrue(first.hasSameClientIdentity(new PersonBuilder(first).withName("Other")
                 .withPhone("81234567").withEmail("FIRST@EXAMPLE.COM").build()));
+    }
+
+    @Test
+    public void hasSameClientIdentity_canonicalNames_preservesStoredIdentityAndDistinctAccents() {
+        Person first = new PersonBuilder().withName("José").withEmail("first@example.com").build();
+        Person second = new PersonBuilder(first).withName("Jose\u0301").withEmail("second@example.com").build();
+        assertTrue(first.hasSameClientIdentity(second));
+        assertFalse(first.isSamePerson(second));
+        assertFalse(first.equals(second));
+        assertFalse(first.hasSameClientIdentity(new PersonBuilder(second).withName("Jose").build()));
+        assertFalse(first.hasSameClientIdentity(new PersonBuilder(second).withName("Ｊosé").build()));
     }
 
     @Test

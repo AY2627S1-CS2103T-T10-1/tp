@@ -3,6 +3,7 @@ package seedu.address.model.person;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
+import java.text.Normalizer;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -145,12 +146,13 @@ public class Person {
 
     /**
      * Returns whether client input would duplicate an email or a case-insensitive name and phone.
-     * Retains the stored comparison and adds Unicode simple case matching without changing displayed names.
+     * Retains stored identity and adds NFC and Unicode simple case matching without changing displayed names.
      */
     public boolean hasSameClientIdentity(Person otherPerson) {
         return isSamePerson(otherPerson) || (otherPerson != null && phone.equals(otherPerson.phone)
-                && name.fullName.trim().replaceAll("\\s+", " ")
-                        .equalsIgnoreCase(otherPerson.name.fullName.trim().replaceAll("\\s+", " ")));
+                && Normalizer.normalize(name.fullName.trim().replaceAll("\\s+", " "), Normalizer.Form.NFC)
+                        .equalsIgnoreCase(Normalizer.normalize(otherPerson.name.fullName.trim()
+                                .replaceAll("\\s+", " "), Normalizer.Form.NFC)));
     }
 
     /**
