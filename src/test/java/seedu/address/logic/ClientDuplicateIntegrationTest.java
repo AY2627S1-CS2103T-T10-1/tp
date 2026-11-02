@@ -43,6 +43,50 @@ public class ClientDuplicateIntegrationTest {
     }
 
     @Test
+    public void execute_canonicalNameDuplicates_rejectsNewAddsAndEditsWithoutChangingData() throws Exception {
+        logic.execute("add-client n/José p/98765432 e/first@example.com");
+        logic.execute("add-client n/Other p/87654321 e/second@example.com");
+        logic.execute("find Other");
+        assertRejectedWithoutChanges("add-client n/Jose\u0301 p/98765432 e/third@example.com",
+                "This client already exists: Jose\u0301.");
+        assertRejectedWithoutChanges("add n/Jose\u0301 p/98765432 e/third@example.com a/Office",
+                AddCommand.MESSAGE_DUPLICATE_PERSON);
+        assertRejectedWithoutChanges("edit 1 n/Jose\u0301 p/98765432", EditCommand.MESSAGE_DUPLICATE_PERSON);
+
+        logic.execute("add-client n/Jose\u0301 p/81234567 e/third@example.com");
+        assertEquals("Jose\u0301", storage.readAddressBook().orElseThrow()
+                .getPersonList().getLast().getName().fullName);
+    }
+
+    @Test
+    public void execute_legacyCanonicalPair_preservesSpellingAndProjectsAcrossEditsAndReload() throws Exception {
+        Person first = new PersonBuilder().withName("José").withPhone("98765432")
+                .withEmail("first@example.com").build();
+        Person second = new PersonBuilder(first).withName("Jose\u0301").withEmail("second@example.com").build();
+        model.addPerson(first);
+        model.addPerson(second);
+        storage.saveAddressBook(model.getAddressBook());
+        model = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
+        logic = createLogic();
+        assertEquals(List.of(first, second), model.getAddressBook().getPersonList());
+
+        logic.execute("edit " + indexOfEmail("first@example.com") + " a/New office");
+        logic.execute("remark " + indexOfEmail("second@example.com") + " r/Keep this record");
+        logic.execute("add-project " + indexOfEmail("second@example.com") + " title/Website deadline/2099-12-01");
+        logic.execute("edit-client " + indexOfEmail("second@example.com") + " e/updated@example.com");
+        assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+        List<Person> saved = storage.readAddressBook().orElseThrow().getPersonList();
+        assertEquals(List.of("José", "Jose\u0301"), saved.stream().map(person -> person.getName().fullName).toList());
+        assertEquals("Keep this record", saved.get(1).getRemark().value);
+        assertEquals(1, saved.get(1).getProjects().size());
+        assertEquals(2, saved.get(1).getNextProjectId());
+        assertRejectedWithoutChanges("edit " + indexOfEmail("first@example.com") + " n/Jose\u0301",
+                EditCommand.MESSAGE_DUPLICATE_PERSON);
+        assertRejectedWithoutChanges("add-client n/JOSE\u0301 p/98765432 e/third@example.com",
+                "This client already exists: JOSE\u0301.");
+    }
+
+    @Test
     public void execute_caseEquivalentAdd_rejectsHiddenDuplicateAndPreservesData() throws Exception {
         logic.execute("add-client n/Işık p/81234567 e/first@example.com");
         model.updateFilteredPersonList(person -> false);

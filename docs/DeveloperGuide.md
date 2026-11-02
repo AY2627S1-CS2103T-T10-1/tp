@@ -9,6 +9,8 @@ title: Developer Guide
 
 ## **Acknowledgements**
 
+* Clarence Choo used OpenAI Codex to implement the client-name and phone-input fixes for issues #167, #169 and #170, including their regression tests and guide updates.
+
 * Help retains the existing ClientDesk command catalogue and AddressBook-Level3 Help window.
 
 * The `edit-project` save-before-publish flow follows the existing `delete-client` staging approach. The shared project model and JSON storage come from Anson's merged [Add Project PR #58](https://github.com/AY2627S1-CS2103T-T10-1/tp/pull/58). The Edit Project prefix scanning and whitespace trimming adapt `AddProjectCommandParser` from [commit d64842b](https://github.com/iians0n/tp/commit/d64842b07ad207b1b264f44461af6a2ba1a763ed), and its JavaFX test follows `AddProjectUiTest` from that commit. Project display in `view` retains the implementation reused from Anson's earlier [commit f5e77fa](https://github.com/iians0n/tp/commit/f5e77fa407264a274d922d6fb679e7202daa3624). These reused contributions are credited to Anson.
@@ -277,20 +279,25 @@ With no command name, `help` returns the catalogue overview instead. The Help me
 
 
 `AddClientCommandParser` requires name, phone and email, accepts repeated tags, and rejects repeated required
-prefixes or unknown prefixes. It validates the creation rules before building a `Person`. Phone formatting is
-removed and tags are lowercase. The new client has the address `Not provided`, no projects and next project ID 1.
+prefixes or unknown single-character prefixes. It validates the creation rules before building a `Person`. Phone
+formatting, including parentheses around nonempty digit groups, is removed and tags are lowercase. Empty, nested
+or unmatched parentheses and separators inside a group are rejected. The new client has the address `Not provided`,
+no projects and next project ID 1.
 
 The shared `Name` validator accepts Unicode letters, marks and numbers plus the documented punctuation, with
 at least one letter or number. Its 1–80 limit counts code points, including each combining mark. `ParserUtil`
 applies this rule to `add-client`, legacy `add` and legacy `edit`; JSON loading uses the same validator. Spelling
 is preserved without Unicode normalization, including decomposed accents. The character whitelist continues to
 reject control characters, format characters and unpaired surrogates; it does not enforce mark placement.
+Slashes are allowed. Add Client's prefix scanner reserves single-character markers but exempts standalone `S/O`
+and `D/O` (case-insensitive), preserving relationship notation and business names such as `Acme Design/Consulting`.
+Known whitespace-separated prefixes still delimit fields; legacy Add/Edit retain their existing tokenization.
 
 `AddClientCommand` checks duplicates against all stored clients, including clients hidden by the current filter.
 A duplicate has the same email ignoring case, or the same normalized name and phone. A matching name alone
-does not prevent creation. `Person.hasSameClientIdentity()` combines the v1.4 identity comparison with Unicode `equalsIgnoreCase()` on whitespace-normalized names. Both add commands use it against the full stored list; inherited `edit` rejects new collisions, including hidden clients.
+does not prevent creation. `Person.hasSameClientIdentity()` combines the v1.4 identity comparison with Unicode `equalsIgnoreCase()` on whitespace-normalized, NFC-normalized names. Both add commands use it against the full stored list; inherited `edit` rejects new collisions, including hidden clients. Canonically equivalent spellings such as `José` and `José` compare alike without removing accents or changing displayed text.
 
-`Person.isSamePerson()` and the stored-list invariant retain v1.4 semantics so formerly accepted Unicode case pairs can load, be staged and round-trip without losing records. Unrelated edits may preserve an existing case collision; edits that introduce a new collision or violate the original identity rule are rejected before mutation.
+`Person.isSamePerson()` and the stored-list invariant retain v1.4 semantics so formerly accepted Unicode case and NFC/NFD pairs can load, be staged and round-trip without losing records. Unrelated edits may preserve an existing collision; edits that introduce a new collision or violate the original identity rule are rejected before mutation. `ClientDuplicateIntegrationTest` covers new-add/edit rejection and existing-pair persistence with remarks and projects.
 
 `LogicManager` runs Add Client on a staged model and saves that model before publishing it to the live model.
 If saving fails, the live data and displayed filter stay unchanged. A successful save publishes the new client,
@@ -313,7 +320,8 @@ code points with `Usage: find KEYWORD [KEYWORD]...`. Validation happens before c
 substrings, including Turkish I variants, Greek sigma variants and supplementary letters. Literal patterns preserve
 punctuation; matching does not remove accents or expand `ß` to `ss`.
 Every keyword must match a field of the same client. Name, email and tag matching uses literal substrings; phone
-matching also accepts phone-like keywords after removing a leading plus and formatting spaces or hyphens. Keywords
+matching also accepts phone-like keywords after removing a leading plus, formatting spaces, hyphens and valid
+parentheses around digit groups. Malformed parentheses do not match phone digits. Keywords
 may match different fields. Separate field, phone, tag and substring helpers keep matching at one level of abstraction.
 
 `ModelManager` wraps its `FilteredList` in a `SortedList`, ordered case-insensitively by name and then by the client's
@@ -920,6 +928,23 @@ normal ClientDesk data. Start the application with `java -jar addressbook.jar` f
    Expected: A duplicate-client error appears even though the studio is hidden by the filter. No client is added.
 1. Enter `add-client n/Invalid Client p/123 e/invalid@weeknine.sg`.<br>
    Expected: A phone-validation error appears and no client is added.
+
+### Client-name and formatted-phone regressions
+
+Use disposable data for these checks.
+
+1. Enter `add-client n/Ravi S/O Kumar p/+1 (212) 555-0123 e/slash@example.com`, then
+   `find +1 (212) 555-0123`.<br>
+   Expected: The full name is preserved, the phone is stored as `12125550123`, and Find returns that client.
+1. Enter `add n/Priya D/O Kumar p/87654321 e/legacy@example.com a/Office`, then restart the app.<br>
+   Expected: Both clients reload with their supplied name spelling and digit-only phones.
+1. Enter `add-client n/Ravi S/O Kumar p/12125550123 e/duplicate@example.com`.<br>
+   Expected: A duplicate error; no client is added.
+1. Enter `add-client n/Invalid p/+1 ((212)) 555-0123 e/invalid@example.com`.<br>
+   Expected: A phone-validation error; no client is added. Empty or unmatched parentheses also fail.
+1. Enter `add-client n/José p/98765432 e/composed@example.com`, then
+   `add-client n/José p/98765432 e/decomposed@example.com` (the second name uses a separate combining accent).<br>
+   Expected: The second command reports a duplicate, preserving the first record and the saved file.
 
 ### Deleting a person
 

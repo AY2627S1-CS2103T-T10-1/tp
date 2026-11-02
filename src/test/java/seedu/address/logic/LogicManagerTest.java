@@ -304,6 +304,46 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_parenthesizedPhone_normalizesPersistsFindsAndRejectsDuplicates() throws Exception {
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("formattedPhone.json"));
+        logic = createLogic(storage);
+        logic.execute("add-client n/Formatted Contact p/+1 (212) 555-0123 e/paren@example.com");
+        logic.execute("add-client n/Other p/87654321 e/other@example.com");
+        model = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
+        logic = createLogic(storage);
+        Person contact = model.getAddressBook().getPersonList().getFirst();
+        assertEquals("12125550123", contact.getPhone().value);
+        String saved = Files.readString(storage.getAddressBookFilePath());
+        for (String query : List.of("+1 (212) 555-0123", "(212)", "+1(212)555-0123", "12125550123")) {
+            logic.execute("find " + query);
+            assertEquals(List.of(contact), model.getFilteredPersonList());
+        }
+        assertThrows(CommandException.class, () -> logic.execute(
+                "add-client n/Formatted Contact p/12125550123 e/new@example.com"));
+        assertThrows(CommandException.class, () -> logic.execute(
+                "add-client n/Formatted Contact p/+1(212)5550123 e/new@example.com"));
+        assertEquals(2, model.getAddressBook().getPersonList().size());
+        assertEquals(saved, Files.readString(storage.getAddressBookFilePath()));
+    }
+
+    @Test
+    public void execute_slashNames_preservesSpellingThroughAddEditAndReload() throws Exception {
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("slashNames.json"));
+        for (String name : List.of("S/O Ravi Kumar", "Ravi S/O Kumar", "D/O Priya", "Priya d/o Kumar",
+                "Acme/Studio", "Acme Design/Consulting", "Acme/p/Studio")) {
+            model = new ModelManager();
+            logic = createLogic(storage);
+            logic.execute("add-client N/" + name + " P/91234567 E/first@example.com T/client");
+            logic.execute("add n/" + name + " p/87654321 e/second@example.com a/Office");
+            logic.execute("edit 1 n/" + name + " & Co.");
+            List<Person> saved = storage.readAddressBook().orElseThrow().getPersonList();
+            assertEquals(name + " & Co.", saved.getFirst().getName().fullName);
+            assertEquals(name, saved.getLast().getName().fullName);
+            assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+        }
+    }
+
+    @Test
     public void execute_combiningMarkNames_surviveClientAndLegacyCommandsAndReload() throws Exception {
         JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(
                 temporaryFolder.resolve("combiningNames.json"));
