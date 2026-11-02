@@ -108,10 +108,7 @@ Examples:
 
 The name, phone and email are required; tags are optional and repeatable. Parameters
 can be supplied in any order. Command names and prefixes are case-insensitive.
-Repeated name, phone or email prefixes and unknown single-character prefixes are rejected.
-Slashes within names are preserved, including `S/O Ravi Kumar`, `Priya D/O Kumar` and `Acme Design/Consulting`.
-Whitespace-separated single-character prefixes remain parameter markers, except standalone `S/O` and `D/O`
-(ignoring case), which are treated as name text.
+Repeated name, phone or email prefixes and unknown prefixes are rejected.
 
 Field | Rules
 ------|------
@@ -121,6 +118,10 @@ Email | 3–254 characters, exactly one `@`, non-empty local and domain parts, n
 Tag | 1–30 lowercase letters, numbers or internal hyphens; no leading or trailing hyphen. Repeated tags are stored once.
 
 For example, `t/VIP` is rejected with `Tag must be 1–30 lowercase letters, numbers, or internal hyphens.` Use `t/vip` instead.
+
+Slashes within names are preserved, including `S/O Ravi Kumar`, `Priya D/O Kumar` and `Acme Design/Consulting`.
+Parameter prefixes are whitespace-separated single-character markers, except standalone `S/O` and `D/O`
+(ignoring case), which are treated as name text.
 
 A duplicate has the same email (ignoring case), or the same name (ignoring case,
 outer spaces, repeated internal spaces and canonically equivalent Unicode spellings) **and** normalized phone. The same name
