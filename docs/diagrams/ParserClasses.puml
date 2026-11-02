@@ -1,38 +1,22 @@
 @startuml
+!pragma layout smetana
 !include style.puml
-skinparam arrowThickness 1.1
 skinparam arrowColor LOGIC_COLOR_T4
 skinparam classBackgroundColor LOGIC_COLOR
+skinparam ArrowFontStyle plain
+skinparam dpi 150
+skinparam nodesep 35
+skinparam ranksep 45
 
-Class "{abstract}\nCommand" as Command
-Class XYZCommand
+class AddressBookParser
+class XYZCommandParser
+class Parser <<interface>>
+class XYZCommand
+abstract class Command
 
-package "Parser classes"{
-Class "<<interface>>\nParser" as Parser
-Class AddressBookParser
-Class XYZCommandParser
-Class CliSyntax
-Class ParserUtil
-Class ArgumentMultimap
-Class ArgumentTokenizer
-Class Prefix
-}
-
-Class HiddenOutside #FFFFFF
-HiddenOutside ..> AddressBookParser
-
-AddressBookParser .down.> XYZCommandParser: <<create>>
-
+AddressBookParser ..> XYZCommandParser : <<create>>
+AddressBookParser ..> Command : returns
+XYZCommandParser ..|> Parser
 XYZCommandParser ..> XYZCommand : <<create>>
-AddressBookParser ..> Command : <<use>>
-XYZCommandParser .up.|> Parser
-XYZCommandParser ..> ArgumentMultimap
-XYZCommandParser ..> ArgumentTokenizer
-ArgumentTokenizer .left.> ArgumentMultimap
-XYZCommandParser ..> CliSyntax
-CliSyntax ..> Prefix
-XYZCommandParser ..> ParserUtil
-ParserUtil .down.> Prefix
-ArgumentTokenizer .down.> Prefix
-XYZCommand -up-|> Command
+XYZCommand --|> Command
 @enduml
