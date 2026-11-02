@@ -28,7 +28,7 @@ import seedu.address.model.tag.Tag;
 public class AddClientCommandParser implements Parser<AddClientCommand> {
 
     public static final String MESSAGE_PHONE_CONSTRAINTS =
-            "Phone needs 7–15 digits; optional leading +, spaces, hyphens, or one parenthesized digit group.";
+            "Phone must contain 7–15 digits and may use a leading +, spaces, or hyphens.";
 
     public static final String MESSAGE_TAG_CONSTRAINTS =
             "Tag must be 1–30 lowercase letters, numbers, or internal hyphens.";
@@ -77,38 +77,26 @@ public class AddClientCommandParser implements Parser<AddClientCommand> {
         String spacedArgs = " " + args.replace('\t', ' ').replace('\n', ' ').replace('\r', ' ');
         Matcher matcher = PARAMETER_PREFIX.matcher(spacedArgs);
         StringBuilder normalized = new StringBuilder();
-        String currentPrefix = "";
         while (matcher.find()) {
             String prefix = matcher.group(1).toLowerCase(Locale.ROOT);
             if (!SUPPORTED_PREFIXES.contains(prefix)) {
-                if (currentPrefix.equals("n/") && isRelationshipNotation(spacedArgs, matcher.end(), prefix)) {
-                    matcher.appendReplacement(normalized, Matcher.quoteReplacement(matcher.group(1)));
-                    continue;
-                }
                 throw new ParseException("Unknown client parameter: " + matcher.group(1)
                         + ".\n" + AddClientCommand.MESSAGE_USAGE);
             }
             matcher.appendReplacement(normalized, Matcher.quoteReplacement(prefix));
-            currentPrefix = prefix;
         }
         matcher.appendTail(normalized);
         return normalized.toString();
-    }
-
-    private static boolean isRelationshipNotation(String args, int valueStart, String prefix) {
-        return (prefix.equals("s/") || prefix.equals("d/")) && valueStart < args.length()
-                && (args.charAt(valueStart) == 'O' || args.charAt(valueStart) == 'o')
-                && (valueStart + 1 == args.length() || Character.isWhitespace(args.charAt(valueStart + 1)));
     }
 
     /**
      * Parses a formatted phone number into its digit-only stored representation.
      */
     private Phone parseClientPhone(String value) throws ParseException {
-        if (!value.matches("\\+?[0-9 -]*(?:\\([0-9]+\\)[0-9 -]*)?")) {
+        if (!value.matches("\\+?[0-9 -]+")) {
             throw new ParseException(MESSAGE_PHONE_CONSTRAINTS);
         }
-        String digits = value.replaceAll("[ ()-]", "");
+        String digits = value.replaceAll("[ -]", "");
         if (digits.startsWith("+")) {
             digits = digits.substring(1);
         }
@@ -117,5 +105,4 @@ public class AddClientCommandParser implements Parser<AddClientCommand> {
         }
         return new Phone(digits);
     }
-
 }

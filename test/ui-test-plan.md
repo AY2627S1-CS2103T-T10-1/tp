@@ -23,9 +23,7 @@ Run ClientDesk with Java 25 and its sample data.
    list stays unchanged.
 3. Enter `view 999`. Expect `The client index provided is invalid.`
 4. Enter `view`, `view 0`, `view -1`, `view abc` and `view 1 extra`.
-   Missing/extra arguments show the view usage message. Invalid or non-ASCII indexes report
-   `Index must be a positive integer.`; a positive index outside the displayed list reports
-   `The client index provided is invalid.`
+   Each should show invalid command format and the view usage message.
 5. Enter `list`, then `edit 1 p/91234567`, then `view 1`.
    Expect the new phone number and all other fields preserved.
 6. Restart the app, then `view 1`. Expect the edited phone number to persist.
@@ -41,28 +39,12 @@ Both must report `Found 1 matching clients.` and show only Acme Studio.
 Repeat with U+2003 and U+202F. A whitespace-only search reports usage and preserves the list.
 Automated coverage: FindCommandParserTest.
 
-## Unicode normalization, slash names and formatted phones
+## Project title normalization (#168)
 
-Use disposable data. Add `n/Café Search p/85678901 e/cafe-one@example.com` and
-`n/Café Search p/86789012 e/cafe-two@example.com`; then run `find Café Search` and
-`find Café Search`. Both searches should find both clients without changing either displayed spelling.
-`find Cafe Search` should not match because search preserves accent distinctions.
-
-Try adding a second `José Duplicate` with the same phone but a decomposed accent and a different email.
-Expect `This client already exists: José Duplicate.`. Existing data containing both spellings should still load
-without merging or rewriting either record.
-
-Add `n/S/O Ravi Kumar p/+1 (212) 555-0123 e/ravi@example.com` and
-`n/Acme/Studio p/92345678 e/acme-slash@example.com`. Expect the exact names to be preserved and the first phone
-to be stored as `12125550123`. Search for `find +1 (212) 555-0123`; it should find Ravi. Try empty, unmatched,
-nested or multiple parenthesized groups; each should report
-`Phone needs 7–15 digits; optional leading +, spaces, hyphens, or one parenthesized digit group.`
-
-For project duplicate identity, add `Café launch` and then try `Café launch` for the same client and deadline.
+In disposable data, add `Café launch` and then try `Café launch` for the same client and deadline.
 The second add should report a duplicate. A pre-existing NFC/NFD pair should load with its saved spelling; a
 status-only update should work, while changing a title/deadline into a duplicate should be rejected.
-Automated coverage: `AddClientCommandParserTest`, `ClientDuplicateIntegrationTest`,
-`PersonContainsKeywordsPredicateTest`, `PersonTest`, and `ProjectTitleTest`.
+Automated coverage: `ProjectTitleTest` and project command tests.
 
 ## Edit client email (first increment)
 
@@ -136,15 +118,13 @@ before viewing the target client. Use displayed indexes, not the full-list index
 2. Add a second project, delete the first: only the remaining project appears.
 3. Delete the final project: keep the client selected and show No projects yet.
 4. Invalid indexes, invalid dates and missing project IDs leave selection/details unchanged.
-5. In a non-English locale such as Arabic (Egypt), add a project and confirm feedback uses ASCII `#1`; enter
-   `edit-project 1 ١ status/completed` and `delete-project ١ 1`. Expect field-specific positive-integer errors and
-   unchanged data. `edit-project 01 01 status/completed` remains valid when client/project #1 exists.
+5. In a non-English locale such as Arabic (Egypt), add a project and confirm feedback uses ASCII `#1`.
 6. Simulate failed add/delete saves: retain the selected client and previous projects.
 7. Delete the selected client itself: clear selection and show the panel instructions.
 
 Automated coverage: ClientDetailsUiTest runs real command-box actions for both
 full and filtered client lists, using temporary JSON storage and simulated IO failures.
-`ProjectIdentifierWorkflowTest` checks ASCII parsing, field-specific `delete-project` errors and locale-stable IDs.
+`ProjectIdentifierWorkflowTest` checks locale-stable project ID feedback.
 
 ## Formatted phone search (#120)
 

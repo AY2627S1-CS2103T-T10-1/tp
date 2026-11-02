@@ -57,11 +57,9 @@ The bulk of the app's work is done by the following four components:
 
 **How the architecture components interact with each other**
 
-The *Sequence Diagram* below shows a successful `delete 1`. The proposed model is separate from the live model:
-deletion is published to the live model only after storage succeeds. Parsing and command objects are omitted here;
-the [Logic component](#logic-component) shows their detailed interactions and the save-failure path.
+The *Sequence Diagram* below shows how the architecture components interact with each other for the scenario where the user issues the command `delete 1`.
 
-<img src="images/ArchitectureSequenceDiagram.png" width="900" alt="Deletion changes a proposed model, saves it, then publishes to the live model" />
+<img src="images/ArchitectureSequenceDiagram.png" width="574" />
 
 Each of the four main components (also shown in the diagram above),
 
@@ -371,15 +369,14 @@ removed and tags are lowercase. The new client has the address `Not provided`, n
 The shared `Name` validator accepts Unicode letters, marks and numbers plus the documented punctuation, with
 at least one letter or number. Its 1–80 limit counts code points, including each combining mark. `ParserUtil`
 applies this rule to `add-client`, legacy `add` and legacy `edit`; JSON loading uses the same validator. Spelling
-is preserved without Unicode normalization, including decomposed accents. Slash is allowed in a name, so `n/Acme/Studio` remains unchanged. Within whitespace-separated names, `S/O` and `D/O` relationship abbreviations are accepted while later `p/` and `e/` fields still delimit parameters; other slash-prefixed tokens remain reserved for unknown-parameter errors. `add-client` phone input accepts 7–15 digits, an optional leading plus, spaces and hyphens, plus at most one parenthesized nonempty digit group. Formatting is removed before storage; unmatched, empty or nested parentheses use the phone error. The character whitelist continues to
+is preserved without Unicode normalization, including decomposed accents. The character whitelist continues to
 reject control characters, format characters and unpaired surrogates; it does not enforce mark placement.
 
 `AddClientCommand` checks duplicates against all stored clients, including clients hidden by the current filter.
-A duplicate has the same email ignoring case, or the same name and phone after trimming/collapsing whitespace,
-NFC-normalizing for comparison, and applying Unicode case-insensitive comparison. A matching name alone
-does not prevent creation. `Person.hasSameClientIdentity()` combines the v1.4 identity comparison with a whitespace-normalized, NFC-normalized name comparison using Unicode case-insensitive equality. Both add commands use it against the full stored list; inherited `edit` rejects new collisions, including hidden clients.
+A duplicate has the same email ignoring case, or the same normalized name and phone. A matching name alone
+does not prevent creation. `Person.hasSameClientIdentity()` combines the v1.4 identity comparison with Unicode `equalsIgnoreCase()` on whitespace-normalized names. Both add commands use it against the full stored list; inherited `edit` rejects new collisions, including hidden clients.
 
-`Person.isSamePerson()` and the stored-list invariant retain v1.4 semantics so formerly accepted Unicode case pairs and NFC/NFD spelling pairs can load, be staged and round-trip without losing records. Existing spelling is not rewritten or merged. Unrelated edits may preserve an existing identity pair; edits that introduce a new collision or violate the original identity rule are rejected before mutation.
+`Person.isSamePerson()` and the stored-list invariant retain v1.4 semantics so formerly accepted Unicode case pairs can load, be staged and round-trip without losing records. Unrelated edits may preserve an existing case collision; edits that introduce a new collision or violate the original identity rule are rejected before mutation.
 
 `LogicManager` runs Add Client on a staged model and saves that model before publishing it to the live model.
 If saving fails, the live data and displayed filter stay unchanged. A successful save publishes the new client,
@@ -399,10 +396,10 @@ code points with `Usage: find KEYWORD [KEYWORD]...`. Validation happens before c
 
 `PersonContainsKeywordsPredicate` copies the original keywords and compiles each as a `Pattern` with
 `LITERAL | CASE_INSENSITIVE | UNICODE_CASE`. `Matcher.find()` applies locale-independent Unicode case matching to
-substrings after NFC-normalizing the search keyword and candidate text for comparison; stored display values are unchanged. Composed and decomposed accents therefore match, but an unaccented query does not match an accented name. Matching includes Turkish I variants, Greek sigma variants and supplementary letters. Literal patterns preserve
+substrings, including Turkish I variants, Greek sigma variants and supplementary letters. Literal patterns preserve
 punctuation; matching does not remove accents or expand `ß` to `ss` (but `ß` and `ẞ` match each other).
 Every keyword must match a field of the same client. Name, email and tag matching uses literal substrings; phone
-matching also accepts phone-like keywords after removing a leading plus, spaces, hyphens and parentheses. Keywords
+matching also accepts phone-like keywords after removing a leading plus and formatting spaces or hyphens. Keywords
 may match different fields. Separate field, phone, tag and substring helpers keep matching at one level of abstraction.
 
 `ModelManager` wraps its `FilteredList` in a `SortedList`, ordered case-insensitively by name and then by the client's
@@ -426,7 +423,9 @@ future project editing. `ProjectPriority` represents the three priority levels.
 
 `ProjectTitle` counts Unicode code points, rejects control/format characters and unpaired surrogates, and requires
 a letter or number. Its display value retains internal spacing. `ProjectTitle.isSameTitle` collapses Unicode spaces
-and matches either the existing `Locale.ROOT` lowercase key or an NFC-normalized `String.equalsIgnoreCase` comparison. This covers canonically equivalent spellings, Unicode case variants such as dotless I, final sigma and supplementary letters without expanding `ß` to `ss`.
+and matches either the existing `Locale.ROOT` lowercase key or an NFC-normalized `String.equalsIgnoreCase`
+comparison. This covers canonically equivalent spellings and Unicode case variants such as dotless I, final sigma
+and supplementary letters without expanding `ß` to `ss`.
 `ProjectDeadline` accepts only an ASCII, strict ISO calendar date in
 years 0001–9999; impossible dates are not normalized into another day.
 
@@ -459,7 +458,7 @@ Immutable values prevent the proposed transaction from mutating the live snapsho
 
 #### Deleting a project
 
-`DeleteProjectCommandParser` accepts unsigned ASCII client-index and project-ID digits (with leading zeroes allowed); the values must be positive. Invalid index syntax reports `Index must be a positive integer.`, while an index that is not displayed reports `Client index must be a displayed positive number.` Invalid project-ID syntax reports `Project ID must be a positive integer.` A valid ID absent from that client reports `No project with ID <id> exists for this client.` The command resolves the
+`DeleteProjectCommandParser` accepts a displayed client index and a positive project ID. The command resolves the
 index against the current displayed list, then searches only that client's projects. It creates a replacement
 client with the selected project removed and the existing `nextProjectId` retained. `LogicManager` performs this
 operation in a proposed model, saves the proposed address book, and publishes it only after storage succeeds.
@@ -500,7 +499,7 @@ editing and `list-clients`. Command and parser tests cover successful deletion, 
 argument validation.
 ### Edit project
 
-`EditProjectCommandParser` reads an unsigned ASCII displayed client index and stable, client-local project ID; leading zeroes are accepted. It rejects repeated prefixes and invalid identifiers/field values and creates an immutable `EditProjectDescriptor` containing only supplied fields. `ProjectTitle` and `ProjectDeadline` centralize title/date validation; `ProjectStatus` and `ProjectPriority` provide the persisted command vocabulary. The descriptor can represent completion, reopening, and any combination of title/deadline/priority changes. Add and Edit Project use `ProjectParserUtil` for case-insensitive prefix scanning, whitespace trimming and ASCII identifier parsing. `ParserUtil.parseIndex` delegates positive-index parsing to the same identifier parser, which is also used by Delete Project. Command-specific field requirements and validation remain in their respective parsers. Known prefixes delimit fields; other slash-containing title words remain literal text. Boundary trimming uses linear scans so oversized inputs with long internal space runs are rejected promptly.
+`EditProjectCommandParser` reads a displayed client index and stable, client-local project ID. It rejects repeated prefixes and invalid identifiers/field values and creates an immutable `EditProjectDescriptor` containing only supplied fields. `ProjectTitle` and `ProjectDeadline` centralize title/date validation; `ProjectStatus` and `ProjectPriority` provide the persisted command vocabulary. The descriptor can represent completion, reopening, and any combination of title/deadline/priority changes. Add and Edit Project use `ProjectParserUtil` for case-insensitive prefix scanning and whitespace trimming. Command-specific field requirements and validation remain in their respective parsers. Known prefixes delimit fields; other slash-containing title words remain literal text. Boundary trimming uses linear scans so oversized inputs with long internal space runs are rejected promptly.
 
 `EditProjectCommand` finds the client in the displayed list and the project by ID within that client. It applies the descriptor without changing the ID or other projects, and checks for conflicting work under that client when the title or deadline changes. An exact no-op returns without mutation. Both failed lookup and duplicate validation happen before updating the proposed client.
 
@@ -696,12 +695,7 @@ IDs 31-36 capture needs made explicit by the feature specification and usage nar
 (For all use cases below, the **System** is `ClientDesk` and the **Actor** is a freelancer or independent
 professional, unless specified otherwise.)
 
-#### UC01: Record new work for a client — future end-to-end workflow
-
-**Status:** Steps 1–5 are supported by `find`, `view` and `add-project`. Steps 6–11 and extensions 7a/9a describe
-future note, dated follow-up and agenda features; no current commands perform them. The supported workflow ends
-after the project has been saved. The existing `remark` command stores one replaceable client remark and does not
-implement the separate notes or follow-ups described here.
+#### UC01: Record new work for a client
 
 **Preconditions:** ClientDesk is running and the client has already been added.
 
@@ -755,12 +749,7 @@ implement the separate notes or follow-ups described here.
 
     Use case resumes at step 8.
 
-#### UC02: Resolve overdue work — future agenda workflow
-
-**Status:** This use case specifies a future agenda/follow-up workflow. The current application can display a
-client's projects with `view` and mark a project completed with `edit-project ... status/completed`, but it has no
-overdue agenda, dated follow-ups or automatic overdue list. The warning on creation of a project with a past deadline
-is feedback for that addition, not an implementation of this use case.
+#### UC02: Resolve overdue work
 
 **Preconditions:** At least one client has an overdue project or follow-up in ClientDesk.
 
@@ -1060,14 +1049,6 @@ normal ClientDesk data. Start the application with `java -jar addressbook.jar` f
    Expected: A duplicate-client error appears even though the studio is hidden by the filter. No client is added.
 1. Enter `add-client n/Invalid Client p/123 e/invalid@weeknine.sg`.<br>
    Expected: A phone-validation error appears and no client is added.
-1. Enter `add-client n/S/O Ravi Kumar p/+1 (212) 555-0123 e/ravi@weeknine.sg` and
-   `add-client n/Acme/Studio p/92345678 e/acme-slash@weeknine.sg`.<br>
-   Expected: Both names are preserved exactly. The first phone is stored as `12125550123`; following `p/` and `e/`
-   fields are still parsed. Unmatched parentheses such as `p/+1 (212 555-0123`, an empty group `p/() 1234567`,
-   or nested parentheses `p/((212)) 555-0123` produce the phone constraint error and add no client.
-1. Add `n/José Duplicate p/2025550199 e/jose-one@weeknine.sg`, then try
-   `n/José Duplicate p/2025550199 e/jose-two@weeknine.sg`.<br>
-   Expected: The second command reports `This client already exists: José Duplicate.`; no record is merged or added.
 
 ### Deleting a person
 
@@ -1138,9 +1119,6 @@ add-client n/Işık Studio p/+65 8123 4567 e/isik@example.com t/startup
 add-client n/Beacon Design p/82345678 e/beacon@example.com t/support
 add-client n/ΟΣ p/83456789 e/sigma@example.com
 add-client n/Acme Studio p/84567890 e/acme@example.com
-add-client n/Café Search p/85678901 e/cafe-one@example.com
-add-client n/Café Search p/86789012 e/cafe-two@example.com
-add-client n/Numbered Phone p/+1 (212) 555-0123 e/phone-search@example.com
 ```
 
 Record the saved data file before testing; searches should not change it.
@@ -1151,8 +1129,6 @@ Record the saved data file before testing; searches should not change it.
    Expected: `Işık Studio` appears. The two keywords match different fields of the same client.
 1. Enter `find +65-8123`.<br>
    Expected: `Işık Studio` appears by its stored phone digits; the leading plus and hyphen are ignored for phone matching.
-1. Enter `find +1 (212) 555-0123`.<br>
-   Expected: `Numbered Phone` appears by its stored phone digits; plus, spaces, parentheses and hyphens are ignored for phone matching.
 1. Enter `find acme`.<br>
    Expected: Only `Acme Studio` appears.
 1. Enter `find acme.*`.<br>
@@ -1161,9 +1137,6 @@ Record the saved data file before testing; searches should not change it.
    Expected: `No clients matched: IŞIK missing.` appears and the full list is restored.
 1. Enter `find ς`.<br>
    Expected: `ΟΣ` appears despite the different Greek sigma case form.
-1. Enter `find Café Search`, then `find Café Search`.<br>
-   Expected: Each search finds both the composed and decomposed spelling; the client rows preserve their respective
-   original spellings. `find Cafe` does not match either name because search does not remove accents.
 1. Enter `find acme`, then try a `find` command with one keyword of 51 Unicode code points.<br>
    Expected: The usage message appears and the existing `acme` result remains displayed.
 
@@ -1253,11 +1226,8 @@ add-project 2 title/First project deadline/2099-12-31
    Expected: Beacon's project is removed and Beacon remains the only displayed client. Run `list-clients`:
    both clients still exist, with no projects.
 1. Try `delete-project 0 1`, `delete-project 1 0`, `delete-project 1 99`, `delete-project 99 1`,
-   `delete-project 1 1 extra`, and `delete-project ١ 1`.<br>
-   Expected: respectively, invalid index syntax (`Index must be a positive integer.`), invalid project ID syntax
-   (`Project ID must be a positive integer.`), missing project (`No project with ID 99 exists for this client.`),
-   undisplayed client (`Client index must be a displayed positive number.`), usage text, and invalid ASCII index
-   syntax. Each leaves saved data unchanged.
+   and `delete-project 1 1 extra`.<br>
+   Expected: Each reports an error and leaves saved data unchanged.
 1. Run `add-project 1 title/Retired work deadline/2099-12-30`.<br>
    Expected: Acme receives project #2. Run `delete-project 1 2`, then
    `add-project 1 title/Replacement work deadline/2099-12-29`.<br>

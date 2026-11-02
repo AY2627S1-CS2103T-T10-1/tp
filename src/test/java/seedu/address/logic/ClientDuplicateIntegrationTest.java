@@ -67,29 +67,6 @@ public class ClientDuplicateIntegrationTest {
     }
 
     @Test
-    public void execute_canonicalUnicodeDuplicate_rejectsNewClientButPreservesLoadedPair() throws Exception {
-        AddressBook legacy = new AddressBook();
-        Person composed = new PersonBuilder().withName("José").withPhone("81234567")
-                .withEmail("first@example.com").build();
-        Person decomposed = new PersonBuilder(composed).withName("Jose\u0301")
-                .withEmail("second@example.com").build();
-        legacy.addPerson(composed);
-        legacy.addPerson(decomposed);
-        storage.saveAddressBook(legacy);
-        model = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
-        logic = createLogic();
-
-        assertEquals(List.of(composed, decomposed), model.getAddressBook().getPersonList());
-        assertRejectedWithoutChanges("add-client n/JOSE\u0301 p/81234567 e/third@example.com",
-                "This client already exists: JOSE\u0301.");
-        logic.execute("add-client n/Other p/82345678 e/third@example.com");
-        logic.execute("find third@example.com");
-        assertRejectedWithoutChanges("edit 1 n/JOSE\u0301 p/81234567", EditCommand.MESSAGE_DUPLICATE_PERSON);
-        assertEquals(List.of("José", "Jose\u0301", "Other"), storage.readAddressBook().orElseThrow()
-                .getPersonList().stream().map(person -> person.getName().fullName).toList());
-    }
-
-    @Test
     public void execute_legacyCasePair_remainsReadableEditableAndDeletable() throws Exception {
         AddressBook legacy = new AddressBook();
         Person first = new PersonBuilder().withName("Işık").withPhone("81234567")

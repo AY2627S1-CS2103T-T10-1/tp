@@ -13,7 +13,6 @@ Class AddressBookParser
 Class XYZCommandParser
 Class CliSyntax
 Class ParserUtil
-Class ProjectParserUtil
 Class ArgumentMultimap
 Class ArgumentTokenizer
 Class Prefix
@@ -33,13 +32,7 @@ ArgumentTokenizer .left.> ArgumentMultimap
 XYZCommandParser ..> CliSyntax
 CliSyntax ..> Prefix
 XYZCommandParser ..> ParserUtil
-note bottom of ProjectParserUtil
-  Shared project and index parsing:
-  prefixes, whitespace,
-  ASCII identifiers.
-end note
-XYZCommandParser ..> ProjectParserUtil : Add/Edit Project only
-ParserUtil ..> ProjectParserUtil : parseIndex
+ParserUtil .down.> Prefix
 ArgumentTokenizer .down.> Prefix
 XYZCommand -up-|> Command
 @enduml

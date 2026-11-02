@@ -28,22 +28,6 @@ public class AddClientCommandParserTest {
     }
 
     @Test
-    public void parse_slashNameAndParenthesizedPhone_preservesNameAndNormalizesPhone() {
-        Person expected = new PersonBuilder(client).withName("S/O Ravi Kumar").withPhone("12125550123").build();
-        assertParseSuccess(parser, " n/S/O Ravi Kumar p/+1 (212) 555-0123 e/Bob@acme.com",
-                new AddClientCommand(expected));
-        assertParseSuccess(parser, " n/Acme/Studio p/(212)555-0123 e/Bob@acme.com",
-                new AddClientCommand(new PersonBuilder(client).withName("Acme/Studio")
-                        .withPhone("2125550123").build()));
-        assertParseSuccess(parser, " n/Ravi S/O Kumar p/91234567 e/Bob@acme.com",
-                new AddClientCommand(new PersonBuilder(client).withName("Ravi S/O Kumar")
-                        .withPhone("91234567").build()));
-        assertParseSuccess(parser, " n/Ravi D/O Kumar p/91234567 e/Bob@acme.com",
-                new AddClientCommand(new PersonBuilder(client).withName("Ravi D/O Kumar")
-                        .withPhone("91234567").build()));
-    }
-
-    @Test
     public void parse_missingFields_reportsMissingField() {
         assertParseFailure(parser, " p/91234567 e/bob@acme.com",
                 AddClientCommand.MESSAGE_FORMAT);
@@ -70,8 +54,6 @@ public class AddClientCommandParserTest {
                 "Unknown client parameter: a/.\n" + AddClientCommand.MESSAGE_USAGE);
         assertParseFailure(parser, " n/Acme x/extra p/91234567 e/bob@acme.com",
                 "Unknown client parameter: x/.\n" + AddClientCommand.MESSAGE_USAGE);
-        assertParseFailure(parser, " n/Acme q/extra p/91234567 e/bob@acme.com",
-                "Unknown client parameter: q/.\n" + AddClientCommand.MESSAGE_USAGE);
         assertParseFailure(parser, " extra n/Acme p/91234567 e/bob@acme.com",
                 AddClientCommand.MESSAGE_FORMAT);
     }
@@ -86,8 +68,7 @@ public class AddClientCommandParserTest {
     @Test
     public void parse_invalidPhone_reportsPhoneConstraint() {
         for (String phone : new String[] {"", "123456", "1234567890123456", "9123abc4567",
-            "123.456", "+()-", "65+91234567", "+1 (212 555-0123", "+1 212) 555-0123",
-            "+1 )(212 (555)-0123"}) {
+            "123.456", "+()-", "65+91234567"}) {
             assertParseFailure(parser, " n/Acme p/" + phone + " e/bob@acme.com",
                     AddClientCommandParser.MESSAGE_PHONE_CONSTRAINTS);
         }

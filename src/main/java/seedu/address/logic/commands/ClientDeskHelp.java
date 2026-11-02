@@ -11,7 +11,7 @@ public class ClientDeskHelp {
 
     private static final String LEGACY_FIELD_RULES =
             "Name: 1–80 Unicode code points with a letter or number; letters, combining marks, numbers, "
-            + "spaces, apostrophes, hyphens, periods, slashes, & and parentheses are allowed.\n"
+            + "spaces, apostrophes, hyphens, periods, & and parentheses are allowed.\n"
             + "Phone: at least 3 digits, without spaces, hyphens or +. Email: 3–254 characters, "
             + "one @, no spaces and a dotted domain whose labels do not start or end with a hyphen.\n"
             + "Address must not be blank, including Unicode spaces. "
@@ -37,8 +37,7 @@ public class ClientDeskHelp {
     public static String getOverview() {
         StringBuilder result = new StringBuilder("ClientDesk commands:\n");
         COMMANDS.forEach((name, help) -> result.append(name).append(" - ").append(help.purpose()).append("\n"));
-        return result.append("Indexes and project IDs use positive ASCII integers; leading zeros are allowed.\n")
-                .append("Type help COMMAND to view syntax, rules and examples.").toString();
+        return result.append("Type help COMMAND to view syntax, rules and examples.").toString();
     }
 
     /**
@@ -64,8 +63,8 @@ public class ClientDeskHelp {
                 "Create a client with contact information and optional tags.",
                 "add-client n/NAME p/PHONE e/EMAIL [t/TAG]...",
                 "Name: 1–80 Unicode code points with at least one letter or number; letters, combining marks, "
-                + "numbers, spaces, apostrophes, hyphens, periods, slashes, & and parentheses are allowed.\n"
-                + "Phone: 7–15 digits; optional leading +, spaces, hyphens and one parenthesized digit group.\n"
+                + "numbers, spaces, apostrophes, hyphens, periods, & and parentheses are allowed.\n"
+                + "Phone: 7–15 digits; optional leading +, spaces and hyphens.\n"
                 + "Email: 3–254 characters, one @, non-empty local and domain parts, no spaces, "
                 + "and a dot in the domain. Domain labels cannot start or end with a hyphen.\n"
                 + "Tags: 1–30 lowercase letters, numbers or internal hyphens; no leading/trailing hyphen. "
@@ -95,7 +94,7 @@ public class ClientDeskHelp {
         commands.put("view", new CommandHelp(
                 "Show a client's contact information, remark, tags and projects.",
                 "view CLIENT_INDEX",
-                "CLIENT_INDEX must be a displayed positive ASCII integer without a sign or decimal.",
+                "CLIENT_INDEX must be a displayed positive integer without a sign or decimal.",
                 "view 1; view 12"));
         commands.put("edit-client", new CommandHelp(
                 "Update a client's email while preserving the other fields.",
@@ -135,8 +134,7 @@ public class ClientDeskHelp {
         commands.put("find", new CommandHelp(
                 "Locate clients by partial name, phone, email or tag.",
                 "find KEYWORD [KEYWORD]...",
-                "Each keyword is 1–50 characters. Matching ignores case and equivalent Unicode spellings. "
-                + "All keywords must match the"
+                "Each keyword is 1–50 characters. Matching ignores case. All keywords must match the"
                 + " same client. If no clients match, the full client list is restored. "
                 + "Check the displayed indexes before running an indexed command.",
                 "find acme; find startup web-design; find 8123"));
@@ -166,7 +164,7 @@ public class ClientDeskHelp {
         commands.put("delete-project", new CommandHelp(
                 "Remove a project from a client.",
                 "delete-project CLIENT_INDEX PROJECT_ID",
-                "Use positive ASCII integers for the client index and project ID. IDs belong to one client.",
+                "Use a displayed client index and a project ID belonging to that client. IDs are client-scoped.",
                 "delete-project 1 2"));
         commands.put("clear", new CommandHelp(
                 "Remove every client and project.",

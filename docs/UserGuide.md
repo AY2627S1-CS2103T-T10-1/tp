@@ -70,7 +70,7 @@ Help menu or `F1`.
 * Extraneous parameters for legacy `list`, `exit`, and `clear` are ignored.<br>
   For example, `list 123` is interpreted as `list`.
 
-* Indexes refer to the **currently displayed client list**, including search results. Project IDs belong to individual clients and do not change when the list is reordered. Enter every client index and project ID with unsigned ASCII digits (0–9); leading zeroes are accepted, but signs, decimals and localized numerals are not. Values must be positive and fit in a 32-bit signed integer. ClientDesk has no undo command; deletions and clearing take effect without a confirmation dialog.
+* Indexes refer to the **currently displayed client list**, including search results. Project IDs belong to individual clients and do not change when the list is reordered. ClientDesk has no undo command; deletions and clearing take effect without a confirmation dialog.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </div>
@@ -110,21 +110,17 @@ Examples:
 The name, phone and email are required; tags are optional and repeatable. Parameters
 can be supplied in any order. Command names and prefixes are case-insensitive.
 Repeated name, phone or email prefixes and unknown prefixes are rejected.
-Names may contain slash punctuation, including `Acme/Studio`; whitespace-separated `S/O` and `D/O` relationship
-abbreviations are also accepted within the name. Other whitespace-separated slash tokens are treated as command
-parameters and must be one of the supported prefixes.
-
 Field | Rules
 ------|------
-Name | 1–80 Unicode code points with at least one letter or number. Letters, combining marks, numbers, spaces, slashes, straight or curly apostrophes, hyphens, periods, ampersands and parentheses are allowed. Combining marks count towards the limit; names such as `अनिल`, `วิชัย`, `José`, `S/O Ravi Kumar` and `Acme/Studio` are accepted with their spelling preserved. In `add-client`, the `S/O` and `D/O` relationship abbreviations are also accepted when separated by spaces within the name.
-Phone | 7–15 digits, with an optional leading `+`, spaces and hyphens, plus at most one parenthesized group of digits. The group cannot be empty or nested. Formatting is removed before storage; `+1 (212) 555-0123` is stored as `12125550123`. Invalid formatting reports `Phone needs 7–15 digits; optional leading +, spaces, hyphens, or one parenthesized digit group.`
+Name | 1–80 Unicode code points with at least one letter or number. Letters, combining marks, numbers, spaces, straight or curly apostrophes, hyphens, periods, ampersands and parentheses are allowed. Combining marks count towards the limit; names such as `अनिल`, `วิชัย` and `José` are accepted with their spelling preserved.
+Phone | 7–15 digits, with an optional leading `+`, spaces or hyphens. Formatting is removed before storage.
 Email | 3–254 characters, exactly one `@`, non-empty local and domain parts, no spaces and a dot in the domain. Domain labels cannot start or end with a hyphen.
 Tag | 1–30 lowercase letters, numbers or internal hyphens; no leading or trailing hyphen. Repeated tags are stored once.
 
 For example, `t/VIP` is rejected with `Tag must be 1–30 lowercase letters, numbers, or internal hyphens.` Use `t/vip` instead.
 
 A duplicate has the same email (ignoring case), or the same name (ignoring case,
-outer spaces and repeated internal spaces, with canonically equivalent Unicode spelling treated as equal) **and** normalized phone. The same name
+outer spaces and repeated internal spaces) **and** normalized phone. The same name
 alone is allowed. Unicode case variants such as `Işık` and `IŞIK` are also duplicates when their phones match. Duplicates report `This client already exists: <name>.`
 Missing required fields report `Usage: add-client n/NAME p/PHONE e/EMAIL [t/TAG]...`.
 If saving fails, ClientDesk reports `Client could not be saved. No changes were made.`
@@ -139,7 +135,7 @@ Email validation does not verify that the address can receive messages.
 
 The inherited address field displays `Not provided` for a new client because
 `add-client` does not require an address.
-Existing records that differ only by canonical Unicode spelling or previously missed Unicode case variants remain readable and retain their original spelling; they are not merged or removed. New additions and edits cannot introduce another such duplicate.
+Existing records that differ only by previously missed Unicode case variants remain readable and editable; they are not merged or removed. New additions and edits cannot introduce another such duplicate.
 
 Adding a client preserves existing clients' projects and their next project IDs.
 The new client starts with no projects; its first project receives ID 1.
@@ -161,7 +157,7 @@ Finds clients using partial names, phone numbers, email addresses, or tags.
 Format: `find KEYWORD [KEYWORD]...`
 
 * Supply at least one keyword, each containing 1 to 50 Unicode code points. Separate keywords with whitespace, including non-breaking spaces pasted from documents. A supplementary symbol counts as one code point.
-* Matching uses case-insensitive substrings; for example, `cme` matches `Acme Studio`. Unicode case matching does not depend on your computer's language setting. Canonically equivalent Unicode spellings match: `find José` and `find José` both match a stored `José` or `José`. This does not remove accents or expand one letter to several: `Jose` does not match `José`, and `Straße` matches `STRAẞE` but not `STRASSE`.
+* Matching uses case-insensitive substrings; for example, `cme` matches `Acme Studio`. Unicode case matching does not depend on your computer's language setting. It does not remove accents or expand one letter to several: `Straße` matches `STRAẞE`, but not `STRASSE`.
   Punctuation is matched literally; it is not a wildcard.
 * **Every keyword must match the same client** (an `AND` search). Keywords may match different fields.
   For example, `find acme startup` matches `Acme Studio` with the tag `startup`. Each client appears once.
@@ -170,7 +166,7 @@ Format: `find KEYWORD [KEYWORD]...`
   and restore the full client list in name order. Feedback preserves keyword case and uses single spaces.
 * Missing keywords or a keyword exceeding 50 Unicode code points produce `Usage: find KEYWORD [KEYWORD]...`.
   The previously displayed list stays visible.
-* Phone searches also accept phone formatting such as a leading `+`, hyphens and parentheses; for example, `find +1 (212) 555-0123` matches a stored `12125550123`.
+* Phone searches also accept a leading `+` and hyphens, such as `find 8123-4567`.
   These are ignored only when matching phone digits; names, emails and tags still match literal text.
   Space-separated phone groups are separate keywords and must all match the same client.
 * Searching does not change client records or write the data file.
@@ -274,12 +270,13 @@ are case-insensitive. Use spaces between parameters. Inside a title, slash-conta
 are ordinary text; a whitespace-separated `title/`, `deadline/`, `status/` or `priority/` starts a parameter and cannot
 be used as literal title text.
 
-On success, ClientDesk reports `Added project #<id> to <client>.` Project IDs in messages always use ASCII decimal digits, independent of computer locale. Project IDs start at
+On success, ClientDesk reports `Added project #<id> to <client>.` Project IDs in success messages use ASCII decimal digits,
+independent of the computer's locale. Project IDs start at
 1 independently for each client and increase after successful saves. A past deadline is accepted and adds
 `Warning: This project is overdue.`. Today's deadline is not overdue; the comparison uses your computer's local date.
 
 A project is a duplicate when the same client already has its title and deadline. Title comparison ignores case,
-canonical Unicode spelling, surrounding spaces and repeated spaces, including Unicode spaces. Status and priority do not affect duplicate
+canonically equivalent Unicode spelling, surrounding spaces and repeated spaces, including Unicode spaces. Status and priority do not affect duplicate
 handling. A duplicate reports `This project already exists for <client>.`; matching projects under different clients
 are allowed. Unicode case variants such as `IşıkWebsite` and `IŞIKWEBSITE` match regardless of your computer's
 language settings. `Straße` and `STRASSE` remain distinct.
@@ -295,7 +292,7 @@ Updates an existing project's title, deadline, status or priority. Use this when
 
 Format: `edit-project CLIENT_INDEX PROJECT_ID [title/TITLE] [deadline/DATE] [status/STATUS] [priority/PRIORITY]`
 
-`CLIENT_INDEX` is the positive number beside a client in the currently displayed list. After `find`, use the number in those search results. `PROJECT_ID` is the positive ID shown by `view CLIENT_INDEX`, **not the project's position in the displayed project list**. Both identifiers must be unsigned ASCII integers from 1 to 2147483647, without a sign or decimal. IDs belong to individual clients, so two clients can each have project #1.
+`CLIENT_INDEX` is the positive number beside a client in the currently displayed list. After `find`, use the number in those search results. `PROJECT_ID` is the positive ID shown by `view CLIENT_INDEX`, **not the project's position in the displayed project list**. IDs belong to individual clients, so two clients can each have project #1.
 
 Supply at least one field. Fields you omit retain their existing values. The client index and project ID come first; the prefixed fields may follow in any order. Command words, prefixes, status and priority are case-insensitive. Titles retain their capitalization and internal spacing.
 
@@ -324,9 +321,9 @@ Updated project #11 for Acme Studio: Website launch | Deadline: 2026-10-30 | Sta
 
 The updated client is selected and the current client filter is preserved. Use `view 1` again to inspect its projects. Changes are saved automatically and survive restarting ClientDesk. Other clients and projects are unchanged.
 
-Adding a project or changing its title or deadline cannot duplicate another project for the same client. Title comparison ignores case, canonical Unicode spelling and repeated spaces, regardless of status or priority. The same title with a different deadline, or matching work under another client, is allowed.
+Adding a project or changing its title or deadline cannot duplicate another project for the same client. Title comparison ignores case and repeated spaces, regardless of status or priority. The same title with a different deadline, or matching work under another client, is allowed.
 
-Existing projects whose titles differ only by canonical Unicode spelling remain available and keep their saved spelling. You can update their status or priority and delete them. Changing their title or deadline must satisfy the current duplicate rule.
+Projects saved in v1.4 remain available even if their Unicode title variants now match. You can update their status or priority and delete them. Changing their title or deadline must satisfy the current duplicate rule.
 
 | Situation | Result |
 | --- | --- |
@@ -345,10 +342,10 @@ Removes one project from a client. Use `view CLIENT_INDEX` to find a project's I
 
 Format: `delete-project CLIENT_INDEX PROJECT_ID`
 
-* `CLIENT_INDEX` is an unsigned ASCII integer in the currently displayed client list, including `find` results. It must name a displayed client.
-* `PROJECT_ID` is an unsigned ASCII integer belonging to that client. Project IDs are client-scoped. Both inputs must be positive; leading zeroes are accepted, while signs, decimals and non-ASCII numerals are rejected.
-* A successful deletion is saved immediately. Its success message uses ASCII digits for the project ID. The next project ID is retained, so a deleted ID is not reused.
-* Invalid index syntax reports `Index must be a positive integer.`; an index that does not name a displayed client reports `Client index must be a displayed positive number.` Invalid project ID syntax reports `Project ID must be a positive integer.`; a well-formed ID not owned by that client reports `No project with ID <id> exists for this client.` Wrong argument counts show the command format. Each error leaves the data unchanged. If saving fails, the project remains in the client record.
+* `CLIENT_INDEX` is a positive integer in the currently displayed client list, including `find` results.
+* `PROJECT_ID` is a positive integer belonging to that client. Project IDs are client-scoped.
+* A successful deletion is saved immediately. The next project ID is retained, so a deleted ID is not reused.
+* If the client index or project ID is invalid, no data changes. If saving fails, the project remains in the client record.
 
 Example: `delete-project 1 2` removes project 2 from the first displayed client.
 
@@ -389,7 +386,7 @@ Email | 3–254 characters, exactly one `@`, no spaces, and a dotted domain whos
 Address | A non-blank value; an address containing only spaces, including Unicode spaces, is rejected.
 Tag | 1–30 letters, numbers or internal hyphens. Uppercase is accepted and preserved; `add-client` requires lowercase tags.
 
-A duplicate is a client with the same email ignoring case, or the same name and phone after normalizing spaces and canonical Unicode spelling for comparison. The same name alone is allowed. A new legacy record starts with no projects or remark. Unicode name case variants use the same duplicate check as `add-client`.
+A duplicate is a client with the same email ignoring case, or the same normalized name and phone. The same name alone is allowed. A new legacy record starts with no projects or remark. Unicode name case variants use the same duplicate check as `add-client`.
 
 Previously saved addresses remain readable. Use `edit INDEX a/ADDRESS` to correct an older blank address.
 

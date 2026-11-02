@@ -61,17 +61,6 @@ public class PersonTest {
     }
 
     @Test
-    public void hasSameClientIdentity_canonicalUnicodeNames_rejectsNewDuplicateButKeepsStoredIdentity() {
-        Person composed = new PersonBuilder().withName("José").withEmail("first@example.com").build();
-        Person decomposed = new PersonBuilder(composed).withName("Jose\u0301")
-                .withEmail("second@example.com").build();
-        assertFalse(composed.isSamePerson(decomposed));
-        assertTrue(composed.hasSameClientIdentity(decomposed));
-        assertEquals("José", composed.getName().fullName);
-        assertEquals("Jose\u0301", decomposed.getName().fullName);
-    }
-
-    @Test
     public void asObservableList_modifyList_throwsUnsupportedOperationException() {
         Person person = new PersonBuilder().build();
         assertThrows(UnsupportedOperationException.class, () -> person.getTags().remove(0));
