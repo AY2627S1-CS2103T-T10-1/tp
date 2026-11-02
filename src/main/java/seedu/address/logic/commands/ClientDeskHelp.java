@@ -134,7 +134,8 @@ public class ClientDeskHelp {
         commands.put("find", new CommandHelp(
                 "Locate clients by partial name, phone, email or tag.",
                 "find KEYWORD [KEYWORD]...",
-                "Each keyword is 1–50 characters. Matching ignores case. All keywords must match the"
+                "Each keyword is 1–50 characters. Matching ignores case and treats canonically equivalent Unicode "
+                + "spellings alike; accents remain significant. All keywords must match the"
                 + " same client. If no clients match, the full client list is restored. "
                 + "Phone keywords accept +, hyphens and parenthesized digit groups. "
                 + "Check the displayed indexes before running an indexed command.",
