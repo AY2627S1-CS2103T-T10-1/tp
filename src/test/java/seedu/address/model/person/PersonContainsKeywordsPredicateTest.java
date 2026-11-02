@@ -122,6 +122,19 @@ public class PersonContainsKeywordsPredicateTest {
     }
 
     @Test
+    public void test_canonicallyEquivalentNames_matchesWithoutRemovingAccents() {
+        for (String name : List.of("José", "Jose\u0301")) {
+            var accentedClient = new PersonBuilder().withName(name).build();
+            for (String query : List.of("José", "Jose\u0301", "JOSÉ", "é", "e\u0301")) {
+                assertTrue(new PersonContainsKeywordsPredicate(List.of(query)).test(accentedClient));
+            }
+            assertFalse(new PersonContainsKeywordsPredicate(List.of("Jose")).test(accentedClient));
+            assertFalse(new PersonContainsKeywordsPredicate(List.of("Jos.")).test(accentedClient));
+            assertEquals(name, accentedClient.getName().fullName);
+        }
+    }
+
+    @Test
     public void constructor_mutableKeywords_copiesKeywords() {
         List<String> keywords = new ArrayList<>(List.of("acme"));
         PersonContainsKeywordsPredicate predicate = new PersonContainsKeywordsPredicate(keywords);

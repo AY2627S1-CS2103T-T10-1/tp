@@ -2,6 +2,7 @@ package seedu.address.model.person;
 
 import static java.util.Objects.requireNonNull;
 
+import java.text.Normalizer;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -24,7 +25,7 @@ public class PersonContainsKeywordsPredicate implements Predicate<Person> {
     public PersonContainsKeywordsPredicate(List<String> keywords) {
         this.keywords = List.copyOf(keywords);
         keywordPatterns = this.keywords.stream()
-                .map(keyword -> Pattern.compile(keyword,
+                .map(keyword -> Pattern.compile(Normalizer.normalize(keyword, Normalizer.Form.NFC),
                         Pattern.LITERAL | Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE))
                 .toList();
     }
@@ -78,10 +79,10 @@ public class PersonContainsKeywordsPredicate implements Predicate<Person> {
 
     /**
      * Returns whether {@code value} contains the literal {@code keyword}, using locale-independent Unicode case
-     * matching.
+     * matching after canonical Unicode normalization. Displayed values remain unchanged.
      */
     private boolean containsKeyword(String value, Pattern keyword) {
-        return keyword.matcher(value).find();
+        return keyword.matcher(Normalizer.normalize(value, Normalizer.Form.NFC)).find();
     }
 
     @Override

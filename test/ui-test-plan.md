@@ -133,3 +133,12 @@ In disposable data, add Benson with `p/8123-4567` and another client with a diff
 `find Benson 8123-4567` must retain AND semantics; `find missing 8123-4567` must not match.
 `find +` and `find -` must not match every phone. Search must not save data.
 Automated coverage: PersonContainsKeywordsPredicateTest.
+
+## Canonically equivalent Unicode search (#166)
+
+In disposable data, add `José` and `José` (e + U+0301) with different phones and emails,
+plus an unrelated client. `find José`, `find José` and `find JOSÉ` must each report two matches.
+`find Jose` must report no matches and restore the full list; accents are not removed.
+Combine the accented name with one unique email keyword to verify AND matching.
+Use `view` on both results and restart: their original spellings and data must be unchanged.
+Automated coverage: PersonContainsKeywordsPredicateTest and CanonicalFindIntegrationTest.
