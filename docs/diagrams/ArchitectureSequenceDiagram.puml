@@ -1,39 +1,34 @@
 @startuml
 !include style.puml
 skinparam ArrowFontStyle plain
+skinparam sequenceMessageAlign left
+skinparam BoxPadding 8
+skinparam dpi 140
 
-Actor User as user USER_COLOR
-Participant ":UI" as ui UI_COLOR
-Participant ":Logic" as logic LOGIC_COLOR
-Participant ":Model" as model MODEL_COLOR
-Participant ":Storage" as storage STORAGE_COLOR
+participant ":UI" as ui UI_COLOR
+participant ":Logic" as logic LOGIC_COLOR
+participant "live:Model" as live MODEL_COLOR
+participant "proposed:ModelManager" as proposed MODEL_COLOR
+participant ":Storage" as storage STORAGE_COLOR
 
-user -[USER_COLOR]> ui : "delete 1"
-activate ui UI_COLOR
+ui -> logic : execute("delete 1")
 
-ui -[UI_COLOR]> logic : execute("delete 1")
-activate logic LOGIC_COLOR
+logic -> live : read snapshot inputs
+live --> logic : snapshot inputs
+create proposed
+logic -> proposed : create snapshot
+logic -> proposed : delete client 1
+proposed --> logic : proposed records
 
-logic -[LOGIC_COLOR]> model : deletePerson(p)
-activate model MODEL_COLOR
-
-model -[MODEL_COLOR]-> logic
-deactivate model
-
-logic -[LOGIC_COLOR]> storage : saveAddressBook(addressBook)
-activate storage STORAGE_COLOR
-
-storage -[STORAGE_COLOR]> storage : Save to file
-activate storage STORAGE_COLOR_T1
-storage --[STORAGE_COLOR]> storage
-deactivate storage
-
-storage --[STORAGE_COLOR]> logic
-deactivate storage
-
-logic --[LOGIC_COLOR]> ui
-deactivate logic
-
-ui--[UI_COLOR]> user
-deactivate ui
+logic -> storage : saveAddressBook(...)
+alt save succeeds
+    storage --> logic : saved
+    logic -> live : setAddressBook(...)
+    live --> logic
+    logic --> ui : success result
+else save fails
+    storage --> logic : save failure
+    note over live, proposed : Live records and filter remain unchanged.\nThe proposed snapshot is not published.
+    logic --> ui : command error
+end
 @enduml

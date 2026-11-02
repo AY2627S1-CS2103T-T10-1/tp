@@ -62,7 +62,19 @@ The bulk of the app's work is done by the following four components:
 
 The *Sequence Diagram* below shows how the architecture components interact with each other for the scenario where the user issues the command `delete 1`.
 
-<img src="images/ArchitectureSequenceDiagram.png" width="574" />
+<img src="images/ArchitectureSequenceDiagram.png" width="100%" alt="Delete command changes a proposed model, saves it, then publishes to the live model only on success" />
+
+This component-level sequence follows `delete 1` after a valid command is entered. `live:Model` and
+`proposed:ModelManager` distinguish the live Model interface from the concrete staged snapshot; the proposed snapshot contains copied records/preferences
+and the currently displayed clients, so index 1 targets the same client the user saw. Only the proposal is
+changed before saving. A successful save is followed by publication through `setAddressBook`; a failed save
+returns an error without changing the live records or filter.
+
+The omitted `...` arguments to save/publication are the proposed records, not live data. Messages such as
+*read snapshot inputs*, *create snapshot* and *delete client 1* summarize
+interactions at the component boundary. Parser/command objects, activation bars and storage internals are
+omitted consistently to keep this architectural view focused. Solid arrows show calls/actions; dashed arrows
+show returns. The detailed [deletion sequence](#logic-component) expands the Logic interactions.
 
 Each of the four main components (also shown in the diagram above),
 
