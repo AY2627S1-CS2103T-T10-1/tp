@@ -10,6 +10,7 @@ title: Developer Guide
 ## **Acknowledgements**
 
 * Help retains the existing ClientDesk command catalogue and AddressBook-Level3 Help window.
+* Clarence Choo used OpenAI Codex to review PRs #161 and #163, clarify identifier and whitespace documentation, add the JSON error privacy regression test, and resolve their guide overlap.
 
 * The `edit-project` save-before-publish flow follows the existing `delete-client` staging approach. The shared project model and JSON storage come from Anson's merged [Add Project PR #58](https://github.com/AY2627S1-CS2103T-T10-1/tp/pull/58). The Edit Project prefix scanning and whitespace trimming adapt `AddProjectCommandParser` from [commit d64842b](https://github.com/iians0n/tp/commit/d64842b07ad207b1b264f44461af6a2ba1a763ed), and its JavaFX test follows `AddProjectUiTest` from that commit. Project display in `view` retains the implementation reused from Anson's earlier [commit f5e77fa](https://github.com/iians0n/tp/commit/f5e77fa407264a274d922d6fb679e7202daa3624). These reused contributions are credited to Anson.
 
@@ -699,13 +700,16 @@ professional, unless specified otherwise.)
 
 **Preconditions:** ClientDesk is running and the client has already been added.
 
-**MSS**
+**Current workflow (available in v1.6)**
 
 1.  User searches for the client by name.
 2.  ClientDesk shows the matching client.
 3.  User views the client's details.
 4.  User adds a project with a title and deadline to the client.
 5.  ClientDesk validates and saves the project.
+
+**Planned continuation (Coming soon; unavailable in v1.6)**
+
 6.  User adds a note describing the latest client interaction.
 7.  ClientDesk validates and saves the note.
 8.  User sets a follow-up date and optional follow-up details for the client.
@@ -737,23 +741,27 @@ professional, unless specified otherwise.)
 
     Use case resumes at step 4.
 
-* 7a. The note is invalid or cannot be saved.
+* 7a. [Coming soon] The note is invalid or cannot be saved.
 
   * 7a1. ClientDesk shows the relevant error and does not add the note.
 
     Use case resumes at step 6.
 
-* 9a. The follow-up date or details are invalid, or the follow-up cannot be saved.
+* 9a. [Coming soon] The follow-up date or details are invalid, or the follow-up cannot be saved.
 
   * 9a1. ClientDesk shows the relevant error and retains the previous follow-up.
 
     Use case resumes at step 8.
 
-#### UC02: Resolve overdue work
+#### UC02: Resolve overdue work (Coming soon)
 
 **Preconditions:** At least one client has an overdue project or follow-up in ClientDesk.
 
-**MSS**
+This end-to-end agenda and follow-up workflow is planned and is not available in v1.6. The current release lets users
+view a client's project values, edit a project's status and other values, and see an overdue warning when adding a
+project with a past deadline. It does not yet provide agenda, note or dated follow-up operations.
+
+**Planned MSS**
 
 1.  User requests to view overdue agenda items.
 2.  ClientDesk shows all pending projects and follow-ups dated before today.
@@ -1093,6 +1101,8 @@ normal ClientDesk data. Start the application with `java -jar addressbook.jar` f
       Expected: Exactly one match, named AlphaDeleteKeep. Other clients remain unchanged.
 1. Enter `delete-client 999` when fewer than 999 clients are displayed.<br>
    Expected: An invalid client index error is shown and no client is deleted.
+1. Enter `delete-client ١` and `delete-client １` using Arabic-Indic and full-width digits.<br>
+   Expected: A usage error is shown and no client is deleted. Retype the index using ASCII digits `0`–`9`.
 1. In disposable data with at least three clients, enter `list-clients`, `view 1`, then `delete-client 1`.<br>
    Expected: The selected client is removed and the details panel shows its instructions, even though
    another client now occupies row 1. Restore the disposable data before repeating with a selected middle
@@ -1228,6 +1238,8 @@ add-project 2 title/First project deadline/2099-12-31
 1. Try `delete-project 0 1`, `delete-project 1 0`, `delete-project 1 99`, `delete-project 99 1`,
    and `delete-project 1 1 extra`.<br>
    Expected: Each reports an error and leaves saved data unchanged.
+1. Try `delete-project x 1`, `delete-project 1 0`, `delete-project ١ 1` and `delete-project 1 １`.<br>
+   Expected: the command identifies whether the client index or project ID is invalid, and project data is unchanged.
 1. Run `add-project 1 title/Retired work deadline/2099-12-30`.<br>
    Expected: Acme receives project #2. Run `delete-project 1 2`, then
    `add-project 1 title/Replacement work deadline/2099-12-29`.<br>

@@ -13,15 +13,9 @@ public class DeleteProjectCommandParser implements Parser<DeleteProjectCommand> 
         if (identifiers.length != 2) {
             throw new ParseException(DeleteProjectCommand.MESSAGE_USAGE);
         }
-        Index clientIndex;
-        int projectId;
-        try {
-            clientIndex = ProjectParserUtil.parseIdentifier(identifiers[0], ParserUtil.MESSAGE_INVALID_INDEX);
-            projectId = ProjectParserUtil.parseIdentifier(identifiers[1], "Project ID must be a positive integer.")
-                    .getOneBased();
-        } catch (ParseException exception) {
-            throw new ParseException(DeleteProjectCommand.MESSAGE_USAGE, exception);
-        }
+        Index clientIndex = ProjectParserUtil.parseIdentifier(identifiers[0], ParserUtil.MESSAGE_INVALID_INDEX);
+        int projectId = ProjectParserUtil.parseIdentifier(identifiers[1],
+                "Project ID must be a positive integer.").getOneBased();
         return new DeleteProjectCommand(clientIndex, projectId);
     }
 }
