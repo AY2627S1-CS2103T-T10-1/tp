@@ -3,6 +3,7 @@ package seedu.address.model.project;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
+import java.text.Normalizer;
 import java.util.Locale;
 
 /**
@@ -50,7 +51,11 @@ public final class ProjectTitle {
      */
     public boolean isSameTitle(ProjectTitle other) {
         return other != null && (normalizedValue().equals(other.normalizedValue())
-                || value.replaceAll("\\p{Zs}+", " ").equalsIgnoreCase(other.value.replaceAll("\\p{Zs}+", " ")));
+                || canonicalValue().equalsIgnoreCase(other.canonicalValue()));
+    }
+
+    private String canonicalValue() {
+        return Normalizer.normalize(value.replaceAll("\\p{Zs}+", " "), Normalizer.Form.NFC);
     }
 
     private static boolean isPrintable(int codePoint) {

@@ -107,6 +107,18 @@ public class ProjectTitleTest {
     }
 
     @Test
+    public void isSameTitle_canonicalUnicodeForms_matchAndPreserveDisplayValues() {
+        ProjectTitle composed = new ProjectTitle("Café");
+        ProjectTitle decomposed = new ProjectTitle("Cafe\u0301");
+        assertTrue(composed.isSameTitle(decomposed));
+        assertTrue(decomposed.isSameTitle(composed));
+        assertTrue(decomposed.isSameTitle(new ProjectTitle("CAFÉ")));
+        assertEquals("Café", composed.value);
+        assertEquals("Cafe\u0301", decomposed.value);
+        assertEquals("cafe\u0301", decomposed.normalizedValue());
+    }
+
+    @Test
     public void equalsAndHashCode_compareDisplayValues() {
         ProjectTitle title = new ProjectTitle("Website redesign");
         assertEquals(title, title);

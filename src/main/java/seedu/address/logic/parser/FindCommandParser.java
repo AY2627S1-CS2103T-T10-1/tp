@@ -13,7 +13,7 @@ public class FindCommandParser implements Parser<FindCommand> {
     private static final int MAX_KEYWORD_LENGTH = 50;
 
     /**
-     * Parses whitespace-separated keywords, each containing 1 to 50 characters.
+     * Parses whitespace-separated keywords, each containing 1 to 50 Unicode code points.
      *
      * @throws ParseException if no keywords are provided or a keyword is invalid.
      */

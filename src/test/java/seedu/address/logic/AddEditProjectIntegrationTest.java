@@ -16,6 +16,7 @@ import seedu.address.logic.commands.EditProjectCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
+import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
 import seedu.address.model.project.Project;
 import seedu.address.model.project.ProjectPriority;
@@ -142,6 +143,42 @@ public class AddEditProjectIntegrationTest {
         Person afterAddition = storage.readAddressBook().orElseThrow().getPersonList().getFirst();
         assertEquals(List.of(1, 3), afterAddition.getProjects().stream().map(Project::getId).toList());
         assertEquals(4, afterAddition.getNextProjectId());
+    }
+
+    @Test
+    public void execute_canonicalTitlePair_remainsLoadableAndBlocksNewDuplicate() throws Exception {
+        Path path = temporaryFolder.resolve("canonical-clients.json");
+        Files.writeString(path, """
+                {"persons":[{"name":"Alice","phone":"81234567","email":"alice@example.com",
+                "address":"Not provided","remark":"","tags":[],"projects":[
+                {"id":1,"title":"Café","deadline":"2026-10-15","status":"not-started","priority":"medium"},
+                {"id":2,"title":"Café","deadline":"2026-10-15","status":"in-progress","priority":"low"}
+                ],"nextProjectId":3}]}
+                """);
+        JsonAddressBookStorage canonicalStorage = new JsonAddressBookStorage(path);
+        Model model = new ModelManager(canonicalStorage.readAddressBook().orElseThrow(), new UserPrefs());
+        Logic logic = createLogic(model, canonicalStorage);
+        Person loaded = model.getFilteredPersonList().getFirst();
+        assertEquals(List.of("Café", "Café"), loaded.getProjects().stream()
+                .map(project -> project.getTitle().value).toList());
+        assertRejectedWithoutChanges(logic, model, canonicalStorage,
+                "add-project 1 title/Café deadline/2026-10-15",
+                String.format(AddProjectCommand.MESSAGE_DUPLICATE_PROJECT, loaded.getName()));
+        logic.execute("edit-project 1 1 status/completed");
+        assertEquals(List.of("Café", "Café"), canonicalStorage.readAddressBook().orElseThrow().getPersonList()
+                .getFirst().getProjects().stream().map(project -> project.getTitle().value).toList());
+    }
+
+    @Test
+    public void execute_canonicalTitleEdit_rejectsNewDuplicateWithoutChangingData() throws Exception {
+        Model model = new ModelManager();
+        model.addPerson(ALICE);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("edit-canonical.json"));
+        Logic logic = createLogic(model, storage);
+        logic.execute("add-project 1 title/Café deadline/2026-10-15");
+        logic.execute("add-project 1 title/Other deadline/2026-10-15");
+        assertRejectedWithoutChanges(logic, model, storage,
+                "edit-project 1 2 title/Café", EditProjectCommand.MESSAGE_DUPLICATE);
     }
 
     private void assertRejectedWithoutChanges(Logic logic, Model model, JsonAddressBookStorage storage,
