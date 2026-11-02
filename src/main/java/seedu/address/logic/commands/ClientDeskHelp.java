@@ -122,8 +122,8 @@ public class ClientDeskHelp {
         commands.put("delete-client", new CommandHelp(
                 "Remove a client and all their data.",
                 "delete-client CLIENT_INDEX",
-                "CLIENT_INDEX must be a displayed positive integer. Deletion is saved immediately and cannot be "
-                + "undone in the app.",
+                "CLIENT_INDEX must be a displayed positive integer using digits 0-9. Deletion is saved immediately "
+                + "and cannot be undone in the app.",
                 "delete-client 3"));
         commands.put("delete", new CommandHelp(
                 "Remove a client and their projects using the legacy command.",
@@ -164,7 +164,8 @@ public class ClientDeskHelp {
         commands.put("delete-project", new CommandHelp(
                 "Remove a project from a client.",
                 "delete-project CLIENT_INDEX PROJECT_ID",
-                "Use a displayed client index and a project ID belonging to that client. IDs are client-scoped.",
+                "Use a displayed client index and a project ID belonging to that client. Both identifiers must be "
+                + "positive integers using digits 0-9. IDs are client-scoped.",
                 "delete-project 1 2"));
         commands.put("clear", new CommandHelp(
                 "Remove every client and project.",
