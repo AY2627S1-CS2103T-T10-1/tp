@@ -167,6 +167,8 @@ Format: `find KEYWORD [KEYWORD]...`
 * Supply at least one keyword, each containing 1 to 50 Unicode code points. Separate keywords with whitespace, including non-breaking spaces pasted from documents. A supplementary symbol counts as one code point.
 * Matching uses case-insensitive substrings; for example, `cme` matches `Acme Studio`. Unicode case matching does not depend on your computer's language setting. It does not remove accents or expand one letter to several: `Straße` matches `STRAẞE`, but not `STRASSE`.
   Punctuation is matched literally; it is not a wildcard.
+  Canonically equivalent Unicode spellings match: `José` and `José` are both found with either spelling.
+  Accents remain significant: `Jose` does not match either spelling of `José`. Stored spelling is unchanged.
 * **Every keyword must match the same client** (an `AND` search). Keywords may match different fields.
   For example, `find acme startup` matches `Acme Studio` with the tag `startup`. Each client appears once.
 * Results appear in case-insensitive name order, with ties in creation order. Indexed commands use the displayed order.

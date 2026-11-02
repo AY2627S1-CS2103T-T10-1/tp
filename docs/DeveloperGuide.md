@@ -437,7 +437,7 @@ each existing client's projects and next project ID.
 `FindCommandParser` splits the input into keywords and rejects empty input or keywords longer than 50 Unicode
 code points with `Usage: find KEYWORD [KEYWORD]...`. Validation happens before changing the displayed list.
 
-`PersonContainsKeywordsPredicate` copies the original keywords and compiles each as a `Pattern` with
+`PersonContainsKeywordsPredicate` copies the original keywords, normalizes a search copy to NFC, and compiles each as a `Pattern` with
 `LITERAL | CASE_INSENSITIVE | UNICODE_CASE`. `Matcher.find()` applies locale-independent Unicode case matching to
 substrings, including Turkish I variants, Greek sigma variants and supplementary letters. Literal patterns preserve
 punctuation; matching does not remove accents or expand `ß` to `ss` (but `ß` and `ẞ` match each other).
