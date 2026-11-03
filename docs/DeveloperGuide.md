@@ -9,7 +9,7 @@ title: Developer Guide
 
 ## **Acknowledgements**
 
-* Anson Ng used OpenAI Codex to check final submission requirements, review the release, run automated tests and packaged-JAR checks, and prepare the v1.6 version and documentation updates.
+* Anson Ng used OpenAI Codex throughout the project for planning, coding, debugging, testing, code reviews, documentation and release preparation.
 
 * Clarence Choo used OpenAI Codex across his project contributions for code implementation, debugging, testing, documentation, PR reviews, and CI troubleshooting.
 
