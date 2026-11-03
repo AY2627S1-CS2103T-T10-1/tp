@@ -13,7 +13,7 @@ title: Developer Guide
 
 * Clarence Choo used OpenAI Codex across his project contributions for code implementation, debugging, testing, documentation, PR reviews, and CI troubleshooting.
 
-* @pang16334 used OpenAI Codex to assist with implementing bug fixes, generating regression tests, reviewing code, and updating documentation and UML diagrams.
+* Pang Yi Jie used OpenAI Codex to assist with implementing bug fixes, generating regression tests, reviewing code, and updating documentation and UML diagrams.
 
 * Help retains the existing ClientDesk command catalogue and AddressBook-Level3 Help window.
 
