@@ -16,8 +16,8 @@ and records their projects, deadlines, status and priority, with a graphical cli
 1. Ensure that Java `25` is installed on your computer.<br>
    **Mac users:** Ensure you have the precise JDK version prescribed [here](https://se-education.org/guides/tutorials/javaInstallationMac.html).
 
-1. Download the latest `.jar` file from the [ClientDesk releases page](https://github.com/AY2627S1-CS2103T-T10-1/tp/releases)
-   when a release is available. Developers can build it using the [setup instructions](SettingUp.md).
+1. Download the latest `addressbook.jar` from the [ClientDesk releases page](https://github.com/AY2627S1-CS2103T-T10-1/tp/releases).
+   Developers can build it using the [setup instructions](SettingUp.md).
 
 1. Copy the file to the folder you want to use as the home folder for ClientDesk.
 
