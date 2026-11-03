@@ -9,6 +9,8 @@ title: Developer Guide
 
 ## **Acknowledgements**
 
+* Anson Ng used OpenAI Codex to check final submission requirements, review the release, run automated tests and packaged-JAR checks, and prepare the v1.6 version and documentation updates.
+
 * Clarence Choo used OpenAI Codex to implement the client-name and phone-input fixes for issues #167, #169 and #170, including their regression tests and guide updates, and to repair Java CI and check PR compatibility.
 
 * Help retains the existing ClientDesk command catalogue and AddressBook-Level3 Help window.
