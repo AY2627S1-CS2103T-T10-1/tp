@@ -1,6 +1,7 @@
 # ClientDesk
 
 [![CI Status](https://github.com/AY2627S1-CS2103T-T10-1/tp/workflows/Java%20CI/badge.svg)](https://github.com/AY2627S1-CS2103T-T10-1/tp/actions)
+[![Code coverage](https://codecov.io/gh/AY2627S1-CS2103T-T10-1/tp/graph/badge.svg)](https://codecov.io/gh/AY2627S1-CS2103T-T10-1/tp)
 
 ClientDesk is a keyboard-first desktop CRM for freelancers and independent professionals who type fast and prefer typing to mouse interactions. It is designed to keep client details, projects, deadlines and follow-ups in one place.
 
